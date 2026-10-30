@@ -257,6 +257,7 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     storedLabels: storedFrom(spec, allRows, modules),
     shapes: [],
     acknowledgements: [],
+    dimensions: [],
   };
   return { project, notes };
 }

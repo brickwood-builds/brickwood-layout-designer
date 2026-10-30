@@ -111,6 +111,17 @@ export const ShapeSchema = z.object({
   round: z.boolean().optional(),
 });
 
+/** A saved measurement on a level (FR-01.05), end points in studs. */
+export const DimensionSchema = z.object({
+  id,
+  levelId: id,
+  x1: studs,
+  y1: studs,
+  x2: studs,
+  y2: studs,
+  label: z.string().default(''),
+});
+
 /** A warning the user marked as intended (e.g. a deliberate overhang). Kept for audit. */
 export const AcknowledgementSchema = z.object({
   /** Warning kind + sorted item IDs, e.g. "overhang:<id>". */
@@ -168,6 +179,7 @@ export const ProjectSchema = z.object({
   storedLabels: z.array(z.string()).default([]),
   shapes: z.array(ShapeSchema).default([]),
   acknowledgements: z.array(AcknowledgementSchema).default([]),
+  dimensions: z.array(DimensionSchema).default([]),
 });
 
 export type Level = z.infer<typeof LevelSchema>;
@@ -179,6 +191,7 @@ export type Layer = z.infer<typeof LayerSchema>;
 export type Group = z.infer<typeof GroupSchema>;
 export type Shape = z.infer<typeof ShapeSchema>;
 export type Acknowledgement = z.infer<typeof AcknowledgementSchema>;
+export type Dimension = z.infer<typeof DimensionSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Features = z.infer<typeof FeaturesSchema>;
 export type Project = z.infer<typeof ProjectSchema>;

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { footprint } from '../domain/geometry';
-import { findItem, isModule, resizeModule, setItemPosition, updateModule, updateObject, type Item } from '../domain/edits';
+import { addDimension, deleteDimension, dimensionLength, findItem, isModule, resizeModule, setItemPosition, updateModule, updateObject, type Item } from '../domain/edits';
 import { storedNotPlaced, validateLabel } from '../domain/labels';
 import { MILS_KINDS, MILS_SIZES, milsKindForSize, moduleDisplayName, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
 import { formatLength } from '../domain/units';
@@ -74,7 +74,9 @@ const positiveOrError = (v: string) => numberOrError(v) ?? (Number(v) > 0 ? null
 export function Properties({ store }: { store: EditorStore }) {
   const project = useStore(store, (s) => s.project);
   const selection = useStore(store, (s) => s.selection);
+  const mode = useStore(store, (s) => s.mode);
   const unit = project.settings.displayUnit;
+  if (mode === 'measure') return <MeasurePanel store={store} />;
   if (selection.length === 0) {
     return (
       <aside className="props empty" aria-label="Properties">
@@ -316,3 +318,66 @@ function SelectionActions({ store }: { store: EditorStore }) {
     </div>
   );
 }
+
+/** Measure mode: the current measurement, keeping it, and the level's saved dimensions. */
+function MeasurePanel({ store }: { store: EditorStore }) {
+  const project = useStore(store, (s) => s.project);
+  const levelId = useStore(store, (s) => s.levelId);
+  const measure = useStore(store, (s) => s.measure);
+  const [label, setLabel] = useState('');
+  const unit = project.settings.displayUnit;
+  const saved = project.dimensions.filter((d) => d.levelId === levelId);
+  const show = (studs: number) => `${formatLength(studs, unit)}${unit === 'studs' ? '' : ` · ${+studs.toFixed(2)} studs`}`;
+  return (
+    <aside className="props" aria-label="Properties">
+      <h2>Measure</h2>
+      <p className="muted small">Drag between two points. Hold Shift for a straight line. Ends snap like modules do.</p>
+      {measure && dimensionLength(measure) > 0 ? (
+        <>
+          <p className="measure-result" data-testid="measure-result">
+            {show(dimensionLength(measure))}
+          </p>
+          <p className="muted small">
+            Across {show(Math.abs(measure.x2 - measure.x1))}, down {show(Math.abs(measure.y2 - measure.y1))}
+          </p>
+          <label className="field">
+            <span>Label (optional)</span>
+            <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Aisle clearance" />
+          </label>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => {
+              store.getState().commit((p) => addDimension(p, { levelId, ...measure, label: label.trim() }).project);
+              store.getState().set({ measure: null });
+              setLabel('');
+            }}
+          >
+            Keep this dimension
+          </button>
+        </>
+      ) : (
+        <p className="muted">No measurement yet.</p>
+      )}
+      {saved.length > 0 && (
+        <>
+          <h2>Saved dimensions</h2>
+          <ul className="dim-list">
+            {saved.map((d) => (
+              <li key={d.id}>
+                <span>
+                  {d.label ? `${d.label}: ` : ''}
+                  {formatLength(dimensionLength(d), unit)}
+                </span>
+                <button type="button" className="icon" aria-label={`Delete dimension ${d.label || formatLength(dimensionLength(d), unit)}`} onClick={() => store.getState().commit((p) => deleteDimension(p, d.id))}>
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </aside>
+  );
+}
+

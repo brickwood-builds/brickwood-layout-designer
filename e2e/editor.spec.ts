@@ -177,7 +177,8 @@ test.describe('mouse (desktop Chrome)', () => {
   });
 
   test('add a shelf level, place a module on it, overview of both, survives reload', async ({ page }) => {
-    await page.getByRole('button', { name: '+ Level' }).click();
+    await page.getByRole('button', { name: 'Table…' }).click();
+    await page.getByRole('button', { name: 'Add a level…' }).click();
     await page.getByLabel('Level name').fill('Upper shelf');
     await page.getByLabel('Table width (in)').fill('96');
     await page.getByLabel('Table depth (in)').fill('12');

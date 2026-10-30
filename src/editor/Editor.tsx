@@ -25,6 +25,8 @@ import { startAutosave, type Autosave } from './autosave';
 import { Canvas } from './Canvas';
 import { Properties } from './Panels';
 import { Palette } from './Palette';
+import { LayersMenu } from './LayersMenu';
+import { HelpButton } from '../help/HelpDialog';
 import { createEditorStore, type EditorStore } from './store';
 import { toScreen } from './view';
 
@@ -77,7 +79,14 @@ function EditorScreen({ store, autosave, repo, onBack }: { store: EditorStore; a
 
   return (
     <div className="editor">
-      <Toolbar store={store} onBack={back} />
+      <Toolbar
+        store={store}
+        onBack={back}
+        onPrint={async () => {
+          await autosave.flush();
+          window.location.hash = `#/project/${project.id}/print`;
+        }}
+      />
       {saveState === 'conflict' && (
         <div className="banner error" role="alert">
           <span>This project was changed in another tab or window, so your latest changes here were not saved.</span>
@@ -111,7 +120,7 @@ function EditorScreen({ store, autosave, repo, onBack }: { store: EditorStore; a
   );
 }
 
-function Toolbar({ store, onBack }: { store: EditorStore; onBack: () => void }) {
+function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () => void; onPrint: () => void }) {
   const project = useStore(store, (s) => s.project);
   const canUndo = useStore(store, (s) => s.past.length > 0);
   const canRedo = useStore(store, (s) => s.future.length > 0);
@@ -130,8 +139,9 @@ function Toolbar({ store, onBack }: { store: EditorStore; onBack: () => void }) 
         <button type="button" onClick={s.redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
       </div>
       <div className="tool-group" role="group" aria-label="Pointer mode">
-        <button type="button" aria-pressed={mode === 'select'} onClick={() => s.set({ mode: 'select' })} title="Select and move (V)">Select</button>
-        <button type="button" aria-pressed={mode === 'pan'} onClick={() => s.set({ mode: 'pan' })} title="Pan (H, or hold Space)">Pan</button>
+        <button type="button" aria-pressed={mode === 'select'} onClick={() => s.set({ mode: 'select', measure: null })} title="Select and move (V)">Select</button>
+        <button type="button" aria-pressed={mode === 'pan'} onClick={() => s.set({ mode: 'pan', measure: null })} title="Pan (H, or hold Space)">Pan</button>
+        <button type="button" aria-pressed={mode === 'measure'} onClick={() => s.set({ mode: 'measure' })} title="Measure: drag between two points (M)">Measure</button>
       </div>
       <div className="tool-group">
         <button type="button" onClick={() => zoomBy(store, 1 / 1.25)} title="Zoom out (−)" aria-label="Zoom out">−</button>
@@ -150,6 +160,9 @@ function Toolbar({ store, onBack }: { store: EditorStore; onBack: () => void }) 
         </select>
       </label>
       <LevelControls store={store} />
+      <LayersMenu store={store} />
+      <button type="button" onClick={onPrint} title="Printable plan, PDF and picture downloads">Print…</button>
+      <HelpButton context={mode === 'measure' ? 'measure' : 'editor'} />
     </header>
   );
 }
@@ -179,8 +192,7 @@ function LevelControls({ store }: { store: EditorStore }) {
           </select>
         </label>
       )}
-      <button type="button" onClick={() => setDialog('edit')} title="Table and level settings">Table…</button>
-      <button type="button" onClick={() => setDialog('add')} title="Add another display level, e.g. a shelf">+ Level</button>
+      <button type="button" onClick={() => setDialog('edit')} title="Table size and display levels">Table…</button>
       {levels.length > 1 && (
         <label className="check" title="Show the other levels faintly, for alignment">
           <input type="checkbox" checked={showOther} onChange={(e) => store.getState().set({ showOtherLevels: e.target.checked })} />
@@ -189,8 +201,10 @@ function LevelControls({ store }: { store: EditorStore }) {
       )}
       {dialog && (
         <LevelDialog
+          key={dialog}
           store={store}
           levelId={dialog === 'edit' ? levelId : null}
+          onAddLevel={() => setDialog('add')}
           onClose={() => setDialog(null)}
           onCreated={(id) => {
             setDialog(null);
@@ -202,7 +216,19 @@ function LevelControls({ store }: { store: EditorStore }) {
   );
 }
 
-function LevelDialog({ store, levelId, onClose, onCreated }: { store: EditorStore; levelId: string | null; onClose: () => void; onCreated: (id: string) => void }) {
+function LevelDialog({
+  store,
+  levelId,
+  onAddLevel,
+  onClose,
+  onCreated,
+}: {
+  store: EditorStore;
+  levelId: string | null;
+  onAddLevel: () => void;
+  onClose: () => void;
+  onCreated: (id: string) => void;
+}) {
   const project = store.getState().project;
   const level = levelId ? project.levels.find((l) => l.id === levelId) : undefined;
   const table = level ? project.tables.find((t) => t.levelId === level.id) : undefined;
@@ -288,6 +314,11 @@ function LevelDialog({ store, levelId, onClose, onCreated }: { store: EditorStor
           </>
         )}
         <footer className="modal-actions">
+          {level && (
+            <button type="button" className="footer-left" onClick={onAddLevel} title="Another surface, e.g. a shelf above this table">
+              Add a level…
+            </button>
+          )}
           {level && canDeleteLevel(project, level.id) && (
             <button
               type="button"
@@ -439,12 +470,13 @@ function useKeyboard(store: EditorStore) {
         case 'ArrowDown': return handled(), nudgeSelection(store, 0, big);
         case 'Delete':
         case 'Backspace': return handled(), deleteSelection(store);
-        case 'Escape': return s.drag ? s.set({ drag: null }) : s.select([]);
+        case 'Escape': return s.drag ? s.set({ drag: null }) : s.measure ? s.set({ measure: null }) : s.select([]);
       }
       if (key === 'r') return handled(), rotateSelection(store, e.shiftKey ? -1 : 1);
       if (key === 'f') return handled(), fitToLevel(store);
-      if (key === 'v') return s.set({ mode: 'select' });
-      if (key === 'h') return s.set({ mode: 'pan' });
+      if (key === 'v') return s.set({ mode: 'select', measure: null });
+      if (key === 'h') return s.set({ mode: 'pan', measure: null });
+      if (key === 'm') return s.set({ mode: 'measure' });
       if (e.key === '+' || e.key === '=') return handled(), zoomBy(store, 1.25);
       if (e.key === '-' || e.key === '_') return handled(), zoomBy(store, 1 / 1.25);
     };

@@ -5,7 +5,7 @@ import { nextLabel } from './labels';
 import { footprint, rectContains, snap, unionRect, type Rect } from './geometry';
 import { SpatialIndex } from './spatial';
 import { inchesToStuds } from './units';
-import { MILS_SIZES, type CanvasObject, type Level, type MilsKind, type MilsModule, type Project, type Rotation, type Table } from './schema';
+import { MILS_SIZES, type CanvasObject, type Dimension, type Level, type MilsKind, type MilsModule, type Project, type Rotation, type Table } from './schema';
 
 export type Item = MilsModule | CanvasObject;
 export type SnapMode = Project['settings']['snap'];
@@ -287,3 +287,42 @@ export function setLevelTable(p: Project, levelId: string, name: string, widthIn
   };
   return { ...p, tables: [...p.tables, table] };
 }
+
+// ---------- Layers ----------
+
+export function addLayer(p: Project, name: string): { project: Project; id: string } {
+  const id = newId();
+  const order = Math.max(...p.layers.map((l) => l.order)) + 1;
+  return { project: { ...p, layers: [...p.layers, { id, name: name.trim() || `Layer ${p.layers.length + 1}`, visible: true, locked: false, order }] }, id };
+}
+
+export function updateLayer(p: Project, id: string, patch: Partial<Omit<Project['layers'][number], 'id'>>): Project {
+  return { ...p, layers: p.layers.map((l) => (l.id === id ? { ...l, ...patch } : l)) };
+}
+
+/** Only an empty layer can be removed, and never the last one. */
+export function canDeleteLayer(p: Project, id: string): boolean {
+  return p.layers.length > 1 && !allItems(p).some((i) => i.layerId === id) && !p.tables.some((t) => t.layerId === id);
+}
+
+export function deleteLayer(p: Project, id: string): Project {
+  return canDeleteLayer(p, id) ? { ...p, layers: p.layers.filter((l) => l.id !== id) } : p;
+}
+
+export function moveToLayer(p: Project, ids: Iterable<string>, layerId: string): Project {
+  if (!p.layers.some((l) => l.id === layerId)) return p;
+  return mapItems(p, new Set(ids), (i) => ({ ...i, layerId }));
+}
+
+// ---------- Saved dimensions ----------
+
+export function addDimension(p: Project, d: Omit<Dimension, 'id' | 'label'> & { label?: string }): { project: Project; id: string } {
+  const id = newId();
+  return { project: { ...p, dimensions: [...p.dimensions, { id, label: d.label ?? '', ...d }] }, id };
+}
+
+export function deleteDimension(p: Project, id: string): Project {
+  return { ...p, dimensions: p.dimensions.filter((d) => d.id !== id) };
+}
+
+export const dimensionLength = (d: Pick<Dimension, 'x1' | 'y1' | 'x2' | 'y2'>) => Math.hypot(d.x2 - d.x1, d.y2 - d.y1);

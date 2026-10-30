@@ -19,7 +19,9 @@ export interface EditorState {
   selection: string[];
   levelId: string;
   view: View;
-  mode: 'select' | 'pan';
+  mode: 'select' | 'pan' | 'measure';
+  /** Current measurement in measure mode (not saved until the user keeps it). */
+  measure: { x1: number; y1: number; x2: number; y2: number } | null;
   showOtherLevels: boolean;
   drag: DragPreview | null;
   saveState: SaveState;
@@ -36,7 +38,7 @@ export interface EditorState {
   redo: () => void;
   select: (ids: string[]) => void;
   setView: (view: View) => void;
-  set: (patch: Partial<Pick<EditorState, 'mode' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer'>>) => void;
+  set: (patch: Partial<Pick<EditorState, 'mode' | 'measure' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer'>>) => void;
   /** Called by autosave once a revision is stored. Not an undoable change. */
   markSaved: (saved: Pick<Project, 'revision' | 'revisionId' | 'updatedAt'>) => void;
   setSaveState: (state: SaveState, error?: string) => void;
@@ -70,6 +72,7 @@ export function createEditorStore(project: Project): EditorStore {
     levelId: firstLevel.id,
     view: { scale: 1, x: 0, y: 0 },
     mode: 'select',
+    measure: null,
     showOtherLevels: false,
     drag: null,
     saveState: 'saved',

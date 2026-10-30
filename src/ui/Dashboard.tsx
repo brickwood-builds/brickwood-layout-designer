@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { OverheadPreview } from './OverheadPreview';
+import { HelpButton } from '../help/HelpDialog';
 import { CheckpointsDialog, NewProjectDialog, RenameDialog } from './dialogs';
 import { formatDate, summary, tableSize } from './format';
 import { exportFileName, exportProject, parseProjectFile } from '../domain/exchange';
@@ -83,6 +84,7 @@ export function Dashboard({ repo, onOpen }: { repo: ProjectRepository; onOpen: (
           <button type="button" onClick={() => fileInput.current?.click()}>
             Import…
           </button>
+          <HelpButton context="dashboard" />
           <input
             ref={fileInput}
             type="file"

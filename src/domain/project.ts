@@ -65,6 +65,7 @@ export function createProject(opts: NewProjectOptions): Project {
     storedLabels: [],
     shapes: [],
     acknowledgements: [],
+    dimensions: [],
   };
 }
 
