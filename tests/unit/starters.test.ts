@@ -13,12 +13,14 @@ describe('starter projects from Visio CSV', () => {
     expect(ProjectSchema.safeParse(kingdom!.project).success).toBe(true);
   });
 
-  it('Adventure Park has the current v5 modules: 17×32x32, 56×16x16, 31×16x8', () => {
+  it('Adventure Park has the 12 ft v7 modules: 13×32x32, 52×16x16, 27×16x8', () => {
     const s = projectStats(park!.project);
-    expect(s.modules).toBe(104);
-    expect(s.modulesByKind).toEqual({ '32x32': 17, '16x16': 56, '16x8': 31 });
+    expect(s.modules).toBe(92);
+    expect(s.modulesByKind).toEqual({ '32x32': 13, '16x16': 52, '16x8': 27 });
     const labels = park!.project.modules.map((m) => m.label);
-    expect(new Set(labels).size).toBe(104);
+    expect(new Set(labels).size).toBe(92);
+    for (const l of ['AA', 'BB', 'CC', 'DD', 'EE']) expect(labels).toContain(l);
+    for (const l of ['C-14', 'C-17', 'B-50', 'B-60', 'A-28']) expect(labels).not.toContain(l);
     expect(labels).toContain('C-10');
     expect(labels).not.toContain('C10');
     expect(labels.some((l) => /^B-2[4-7]$/.test(l))).toBe(false);
@@ -29,18 +31,19 @@ describe('starter projects from Visio CSV', () => {
   it('Adventure Park ride footprints carry names and power', () => {
     const rides = park!.project.objects.filter((o) => o.type === 'footprint');
     const names = rides.map((r) => r.name);
-    for (const n of ['Ferris Wheel', 'Timber Wolf', 'Roller Coaster', 'Loop Coaster', 'Twisted Tracks', 'Carousel', 'Swings', 'Mixer', 'Blast Off', 'Green Machine', 'Bumper Cars', 'ATVs and Rafts', 'Ski Lift', 'Giant Slides', 'Petting Zoo', 'Entrance', 'Arcade', 'Hot Dog']) {
+    for (const n of ['Ferris Wheel', 'Timber Wolf', 'Roller Coaster', 'Carousel', 'Swings', 'Mixer', 'Blast Off', 'Green Machine', 'Bumper Cars', 'ATVs and Rafts', 'Ski Lift', 'Giant Slides', 'Entrance', 'Arcade', 'Hot Dog']) {
       expect(names).toContain(n);
     }
     expect(rides.find((r) => r.name === 'Ferris Wheel')!.powerVolts).toBe(9);
     expect(rides.find((r) => r.name === 'Green Machine')!.powerVolts).toBe(6);
     expect(rides.find((r) => r.name === 'Carousel')!.powerVolts).toBe(9);
-    expect(rides).toHaveLength(19);
+    expect(rides).toHaveLength(16);
+    for (const gone of ['Loop Coaster', 'Twisted Tracks', 'Petting Zoo', 'Carousel 2']) expect(names).not.toContain(gone);
   });
 
-  it('the Small Carousel (Carousel 2) is in storage, so it is left out with a note', () => {
-    expect(park!.project.objects.some((o) => o.name === 'Carousel 2')).toBe(false);
-    expect(park!.notes.find((n) => n.label === 'Carousel 2')!.message).toMatch(/in storage/);
+  it('the parked spare 32x32 off the v7 drawing page is left out with a note', () => {
+    expect(park!.notes.some((n) => n.label === '32x32' && /off the drawing page/.test(n.message))).toBe(true);
+    expect(park!.notes.filter((n) => /convention; kept as drawn/.test(n.message)).map((n) => n.label)).toEqual(['AA', 'BB', 'CC', 'DD', 'EE']);
   });
 
   it('Visio Y-up is flipped to app Y-down', () => {
@@ -84,6 +87,16 @@ describe('starter projects from Visio CSV', () => {
         expect(Number.isInteger(m.x) && Number.isInteger(m.y)).toBe(true);
       }
     }
+  });
+
+  it('the 12 ft Adventure Park layout starts at the left end, leaving about 4 ft of table unused', () => {
+    const t = park!.project.tables[0]!;
+    const right = Math.max(...park!.project.modules.map((m) => m.x + m.width), ...park!.project.objects.map((o) => o.x + o.width));
+    const left = Math.min(...park!.project.modules.map((m) => m.x));
+    expect(left).toBeLessThanOrEqual(3);
+    const unusedFt = studsToInches(t.width - right) / 12;
+    expect(unusedFt).toBeGreaterThan(3.5);
+    expect(unusedFt).toBeLessThan(4.1);
   });
 
   it('tables match the physical surfaces', () => {

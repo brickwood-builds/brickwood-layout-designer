@@ -20,7 +20,7 @@
   - importing a project that already exists creates a copy rather than overwriting;
   - invalid, foreign or newer-format files are rejected with a readable message.
 - **Both Visio displays as starter projects**, added automatically on first run:
-  - **Brickwood Adventure Park**: 104 modules (17 × 32×32, 56 × 16×16, 31 × 16×8), 19 ride/attraction footprints with power in volts, one 2×10 item, on a 42 × 186 in table.
+  - **Brickwood Adventure Park**: the current **12 ft layout (Visio v7, "Redessign" page)**: 92 modules (13 × 32×32, 52 × 16×16, 27 × 16×8), 16 ride/attraction footprints with power in volts, one 2×10 item. It sits at the left end of the 42 × 186 in table, leaving about 3.9 ft unused at the right, as at the 2026 show.
   - **Brickwood Kingdom (Village)**: 20 × 16×16 and 5 × 32×32 village modules plus 14 buildings built directly on their plates (one unit each, no plate ID), on a 42 × 96 in table.
   - Both import with **zero overlaps and zero overhang warnings**. Starter IDs are deterministic, so the same physical plate has the same UUID on every device.
 - **Basic dashboard**:
@@ -37,7 +37,7 @@ Screenshots: `docs/screenshots/` (dashboard, Adventure Park, Kingdom, iPad viewp
 | `npm ci` | OK, 0 vulnerabilities |
 | `npm run lint` | OK, 0 problems |
 | `npm run typecheck` | OK |
-| `npm test` | **37 / 37 passed** (3 files) |
+| `npm test` | **38 / 38 passed** (3 files) |
 | `npm run build` | OK (479 kB JS, 140 kB gzipped) |
 | `npm run test:e2e` | **12 / 12 passed** (6 scenarios × desktop Chrome + iPad touch viewport) |
 
@@ -83,17 +83,19 @@ Browser smoke tests cover:
   - two zero-size connector lines in the Adventure Park drawing were skipped;
   - one unfilled `2x10` shape was imported as a generic item;
   - the 14 Kingdom buildings (Tavern, Mountain Castle and so on) are built directly on their plate and move as one unit, so **they have no plate ID**; the building name is shown instead;
-  - *Carousel 2* (the Small Carousel) is **left out**: it is in storage and not part of the current display. No modules were under it, so the table has an empty 48 × 32-stud space there.
+  - Adventure Park comes from `docs/source/Amusement_Layout_v7 - 12 foot.vsdx`, converted with `scripts/vsdx_to_csv.py` into the CSV as `AdventurePark_12ft_v7` (v5 rows kept for reference). Compared with v5: Loop Coaster, Twisted Tracks, Petting Zoo, Carousel 2 and 17 right-end modules are gone; Blast Off, an Entrance, B-57/B-58 and A-29–A-31 moved left; new 16×16 plates **AA–EE** were added (labels kept as drawn);
+  - one unlabelled 32×32 parked off the v7 drawing page is left out.
 - `AdventurePark_BaseplatesWithComponents_v5` (the older layout) was **not** imported as a project. Its marker vocabulary is captured in `src/domain/markers.ts` for the object editor in 1C.
 
 ## Owner answers (30 Oct 2026)
 
-- **Carousel:** confirmed — *Carousel* is the Big Carousel (9 V); the Small Carousel is in storage and not in the display, so it was removed from the starter.
+- **Carousel:** confirmed — *Carousel* is the Big Carousel (9 V); the Small Carousel is in storage and not in the display.
+- **Adventure Park layout:** `Amusement_Layout_v7 - 12 foot.vsdx` is the latest true version. For the 2026 show the display was cut to about 12 ft on the same table, leaving 3.5–4 ft unused, so the starter uses v7, aligned to the left end of the 15.5 ft table.
 - **Kingdom buildings:** built directly on their MILS plate as one unit; plates don't need labels. MILS IDs are now optional; unlabelled plates are shown by name and skipped by the duplicate-ID check.
 
 ## Still open
 
-1. **Table length:** you mentioned the "12 ft display", but the decisions file gives the Adventure Park surface as 3.5 × 15.5 ft (42 × 186 in), which is what the starter uses. Which is right?
+1. **New plates AA–EE:** are these temporary names? Real B-xx IDs can be entered later; retired IDs B-24 to B-27 must not be reused.
 2. **Duplicate keeps module IDs:** a duplicated project refers to the *same physical plates*, so module UUIDs are kept and only the project ID is new. Say if you would rather duplicates get new module identities.
 3. **The CSV's "16×8" (A-xx) modules** are supported as a standard size alongside the spec's 32×16.
 

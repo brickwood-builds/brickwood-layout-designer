@@ -47,8 +47,10 @@ export interface StarterSpec {
   table: { name: string; widthIn: number; depthIn: number; notes: string };
   /** Retired MILS labels that must never be reused. */
   retiredLabels: string[];
-  /** Shapes left out of the starter, by cleaned name, with the reason. */
-  exclude: Record<string, string>;
+  /** Where the layout sits along the table: centred, or at the left end (built left to right). */
+  align?: 'center' | 'left';
+  /** Visio page size; shapes entirely off the page (parked spares) are left out. */
+  pageIn?: { width: number; height: number };
   /** Ride power in volts by footprint name. */
   power: Record<string, number>;
   notes: Record<string, string>;
@@ -97,12 +99,13 @@ function classify(row: VisioRow, notes: ImportNote[]): Classified | null {
       const fixed = `${undashed[1]}-${undashed[2]}`;
       notes.push({ label: fixed, message: `Drawing label "${label}" normalised to "${fixed}" (A-xx/B-xx/C-xx convention).` });
       label = fixed;
+    } else if (!/^[ABC]-\d{2}$/.test(label)) {
+      notes.push({ label, message: `Label "${label}" does not follow the A-xx/B-xx/C-xx convention; kept as drawn.` });
     }
     return { kind: 'module', label, name, row };
   }
   if (KINGDOM_MODULE.test(row.label)) return { kind: 'module', label: row.label, name: '', row };
   if (row.fill === '#ffd965') {
-    // Kingdom custom bases: named plates with no ID on the drawing.
     // Kingdom buildings are built directly on their plate: one unit, no plate ID needed.
     return { kind: 'module', label: '', name: cleanName(row.label), row };
   }
@@ -115,14 +118,18 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
   const notes: ImportNote[] = [];
   const rows = allRows.filter((r) => r.display === spec.display);
   if (rows.length === 0) throw new Error(`No rows for display ${spec.display}`);
+  const page = spec.pageIn;
+  const onPage = (r: VisioRow) => {
+    if (!page) return true;
+    const inside =
+      r.xIn + r.wIn / 2 > 0 && r.xIn - r.wIn / 2 < page.width && r.yIn + r.hIn / 2 > 0 && r.yIn - r.hIn / 2 < page.height;
+    if (!inside) notes.push({ label: r.label || '(unlabelled shape)', message: 'Shape is off the drawing page (a parked spare); left out.' });
+    return inside;
+  };
   const shapes = rows
+    .filter(onPage)
     .map((r) => classify(r, notes))
-    .filter((c): c is Classified => c !== null)
-    .filter((c) => {
-      const reason = spec.exclude[c.name];
-      if (reason) notes.push({ label: c.name, message: `Left out: ${reason}` });
-      return !reason;
-    });
+    .filter((c): c is Classified => c !== null);
 
   // Visual (rotated) box of each shape in Visio inches.
   const box = (r: VisioRow) => {
@@ -138,11 +145,12 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
   const layoutWidth = Math.max(...boxes.map((b) => toStuds(b.left - minLeft + b.w)));
   const layoutDepth = Math.max(...boxes.map((b) => toStuds(maxTop - b.top + b.h)));
 
-  // Table uses exact physical scale; centre the layout on it, on whole studs.
+  // Table uses exact physical scale; place the layout on it, on whole studs.
   const tableWidth = inchesToStuds(spec.table.widthIn);
   const tableDepth = inchesToStuds(spec.table.depthIn);
-  const offsetX = Math.round((tableWidth - layoutWidth) / 2);
+  // Left-aligned layouts keep the same edge margin at the left as front/back.
   const offsetY = Math.round((tableDepth - layoutDepth) / 2);
+  const offsetX = spec.align === 'left' ? offsetY : Math.round((tableWidth - layoutWidth) / 2);
 
   const sid = (part: string) => stableId(`starter:${spec.key}:${part}`);
   const levelId = sid('level:main');

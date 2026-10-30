@@ -18,10 +18,10 @@ test.beforeEach(async ({ page }) => {
 
 test('first run shows both starter displays with overhead previews', async ({ page }) => {
   await expect(card(page, KINGDOM)).toBeVisible();
-  await expect(card(page, PARK)).toContainText('104 modules');
+  await expect(card(page, PARK)).toContainText('92 modules');
   await expect(card(page, PARK)).toContainText('15 ft 6 in × 3 ft 6 in table');
   await expect(card(page, KINGDOM)).toContainText('8 ft × 3 ft 6 in table');
-  await expect(card(page, PARK).locator('svg rect.pv-module')).toHaveCount(104);
+  await expect(card(page, PARK).locator('svg rect.pv-module')).toHaveCount(92);
 });
 
 test('open a project, see labelled modules, and survive a browser reload', async ({ page }) => {
@@ -92,7 +92,7 @@ test('checkpoint preview and restore', async ({ page }) => {
   await cardAction(page, 'Oops wrong name', 'Checkpoints…');
   const dialog = page.getByRole('dialog');
   await dialog.getByText('Automatic checkpoint').locator('..').getByRole('button').click();
-  await expect(dialog.locator('svg rect.pv-module')).toHaveCount(104);
+  await expect(dialog.locator('svg rect.pv-module')).toHaveCount(92);
   await dialog.getByRole('button', { name: 'Restore this version' }).click();
   await expect(card(page, PARK)).toBeVisible();
   await expect(card(page, 'Oops wrong name')).toHaveCount(0);

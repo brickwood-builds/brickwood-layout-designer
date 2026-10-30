@@ -7,19 +7,18 @@ const STARTER_DATE = '2026-10-30T00:00:00.000Z';
 export const STARTER_SPECS: StarterSpec[] = [
   {
     key: 'adventure-park',
-    display: 'AdventurePark_BaseplatesLayout_v5',
+    display: 'AdventurePark_12ft_v7',
     name: 'Brickwood Adventure Park',
-    description: 'Current Adventure Park layout (Visio v5). Build left to right.',
+    description: 'Current 12 ft Adventure Park layout (Visio "Amusement Layout v7 - 12 foot", Redessign page). Build left to right.',
     table: {
       name: 'Two 6 ft tables + 3.5 × 15.5 ft top',
       widthIn: 186,
       depthIn: 42,
-      notes: 'Two 6 ft folding tables topped with a 3.5 × 15.5 ft surface (42 × 186 in).',
+      notes: 'Two 6 ft folding tables topped with a 3.5 × 15.5 ft surface (42 × 186 in). The 12 ft layout leaves about 4 ft unused at the right end.',
     },
+    align: 'left',
+    pageIn: { width: 138, height: 42 },
     retiredLabels: ['B-24', 'B-25', 'B-26', 'B-27'],
-    exclude: {
-      'Carousel 2': 'the Small Carousel (7.5 V) is in storage and not part of the current display.',
-    },
     power: {
       'Loop Coaster': 4.5,
       'Blast Off': 4.5,
@@ -52,7 +51,6 @@ export const STARTER_SPECS: StarterSpec[] = [
       notes: '6 ft folding table topped with 3.5 × 8 ft plywood (42 × 96 in).',
     },
     retiredLabels: [],
-    exclude: {},
     power: {},
     notes: {},
   },

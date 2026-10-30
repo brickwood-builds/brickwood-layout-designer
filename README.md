@@ -40,6 +40,7 @@ CI runs all of these on every push (`.github/workflows/ci.yml`).
 src/domain/    Renderer-independent model: Zod schema, units, geometry, migrations, export format
 src/storage/   Dexie (IndexedDB) database and the ProjectRepository (all writes are transactions)
 src/starters/  Visio CSV -> starter projects (Adventure Park, Kingdom Village)
+scripts/       vsdx_to_csv.py: export a Visio page to rows for docs/brickwood-visio-layouts.csv
 src/ui/        React screens: dashboard, overhead view, dialogs
 tests/unit/    Vitest
 e2e/           Playwright
