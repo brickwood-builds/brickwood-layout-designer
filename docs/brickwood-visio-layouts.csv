@@ -1,0 +1,538 @@
+display,label_text,x_in,y_in,w_in,h_in,angle_rad,fill  # x/y = shape center, Visio inches (origin bottom-left, Y up); 10in=32 studs
+AdventurePark_BaseplatesLayout_v5,Blast Off,160.250,30.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,Petting Zoo,132.750,7.750,20.000,10.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x8 | A-01,2.750,6.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,32x32 | C-11,107.750,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x8 | A-21,125.250,14.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-22,130.250,14.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,32x32 | C-13,127.750,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x8 | A-04,36.500,2.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,Entrance,147.750,5.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x16 | B-57,157.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-37,102.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,32x32 | C10,95.275,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x8 | A-17,101.500,12.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x16 | B-33,90.250,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,Swings,112.750,5.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x16 | B-30,77.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-50,145.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x8 | A-25,125.250,1.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-13,82.750,24.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,Mixer,97.750,5.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,Twisted Tracks,140.250,32.750,30.000,15.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x16 | B-39,105.250,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-59,180.250,7.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-52,155.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,Bumper Cars,85.263,17.750,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,32x32 | C-06,50.250,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,Entrance,55.250,5.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x8 | A-07,49.000,7.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-06,49.000,2.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-05,36.500,7.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,32x32 | Food Court | C-04,30.250,15.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,32x32 | Food Court | C-02,30.250,5.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,32x32 | Food Court | C-01,20.250,5.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,32x32 | Food Court | C-03,20.250,15.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x8 | A-03,12.750,6.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-02,7.750,6.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,Ski | Lift,42.750,5.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,Ferris Wheel,112.750,32.750,15.000,15.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x8 | A-20,102.750,29.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,Hot Dog,102.750,26.500,5.000,2.500,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x16 | B-07,17.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-06,17.750,27.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,2x10,62.300,28.325,0.600,3.150,0,
+AdventurePark_BaseplatesLayout_v5,Timber Wolf,87.763,32.750,25.025,15.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,Roller | Coaster,7.750,24.000,15.000,32.500,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x16 | B-01,2.750,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-02,7.750,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-03,12.750,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-05,17.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-04,17.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-14,37.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,Giant  | Slides,25.250,32.750,10.000,15.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x16 | B-08,22.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-09,27.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-13,32.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-12,32.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-11,32.750,27.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-10,32.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-15,42.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-16,47.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,Green | Machine,40.250,30.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,32x32 | C-05,40.250,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x16 | B-17,37.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-18,42.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-19,47.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-20,47.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-21,47.750,27.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,32x32 | C-07,60.250,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x16 | B-22,52.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-23,57.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x8 | A-08,61.500,2.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-09,61.500,7.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-10,61.500,12.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,32x32 | C-09,82.750,5.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,ATVs and Rafts,60.250,32.750,20.000,15.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x16 | B-28,72.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-29,72.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,Arcade,72.750,27.750,5.000,5.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,32x32 | C-08,70.250,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x8 | A-11,76.500,2.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-12,76.500,7.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x16 | B-31,77.750,17.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,Carousel,69.000,7.750,12.500,15.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,16x16 | B-32,77.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x8 | A-14,87.763,24.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-15,82.763,11.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-16,87.763,11.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x16 | B-34,90.250,7.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-35,92.763,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-36,97.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x8 | A-18,101.500,17.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-19,101.500,22.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x16 | B-38,102.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-40,105.250,7.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-47,122.750,27.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-41,105.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-42,110.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-43,115.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-44,120.250,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-45,120.250,7.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,32x32 | C-12,117.750,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x16 | B-46,120.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-48,122.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-49,122.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,32x32 | C-14,137.750,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x8 | A-23,135.250,14.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-24,140.250,14.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-26,130.250,1.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-27,135.250,1.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-28,140.250,1.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x16 | B-51,150.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,Carousel 2,160.250,5.250,10.000,15.000,1.571,#c05046
+AdventurePark_BaseplatesLayout_v5,32x32 | C-15,147.750,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x16 | B-53,155.250,17.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-54,155.250,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-55,160.250,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-56,165.250,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,32x32 | C-16,162.750,15.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x8 | A-29,166.500,27.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-30,166.500,32.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,16x8 | A-31,166.500,37.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesLayout_v5,32x32 | C-17,172.750,5.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesLayout_v5,16x16 | B-58,162.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,16x16 | B-60,180.250,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesLayout_v5,Loop  | Coaster,175.250,25.250,15.000,30.000,0,#c05046
+AdventurePark_BaseplatesLayout_v5,,93.500,20.875,41.250,0.000,-1.571,
+AdventurePark_BaseplatesLayout_v5,,137.500,19.375,42.750,0.000,-1.571,
+AdventurePark_BaseplatesWithComponents_v5,Blast Off,130.292,30.272,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-01,2.750,6.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,32x32 | C-11,107.750,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-21,125.250,14.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-22,130.250,14.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,32x32 | C-13,127.750,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-04,36.500,2.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,Entrance,127.750,7.750,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-57,127.792,37.772,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-37,102.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,32x32 | C10,95.275,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-17,101.500,12.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-33,90.250,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,Swings,112.750,5.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-30,77.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-25,125.250,1.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-13,82.750,24.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,Mixer,97.750,5.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-39,105.250,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,Bumper Cars,85.263,17.750,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,32x32 | C-06,50.250,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,Entrance,55.250,5.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-07,49.000,7.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-06,49.000,2.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-05,36.500,7.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,32x32 | Food Court | C-04,30.250,15.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,32x32 | Food Court | C-02,30.250,5.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,32x32 | Food Court | C-01,20.250,5.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,32x32 | Food Court | C-03,20.250,15.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-03,12.750,6.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-02,7.750,6.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,Ski | Lift,42.750,5.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,Ferris Wheel,112.750,32.750,15.000,15.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-20,102.750,29.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,Hot Dog,102.750,26.500,5.000,2.500,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-07,17.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-06,17.750,27.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,2x10,62.300,28.325,0.600,3.150,0,
+AdventurePark_BaseplatesWithComponents_v5,Timber Wolf,87.763,32.750,25.025,15.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,Roller | Coaster,7.750,24.000,15.000,32.500,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-01,2.750,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-02,7.750,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-03,12.750,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-05,17.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-04,17.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-14,37.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,Giant  | Slides,25.250,32.750,10.000,15.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-08,22.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-09,27.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-13,32.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-12,32.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-11,32.750,27.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-10,32.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-15,42.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-16,47.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,Green | Machine,40.250,30.250,10.000,10.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,32x32 | C-05,40.250,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-17,37.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-18,42.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-19,47.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-20,47.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-21,47.750,27.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,32x32 | C-07,60.250,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-22,52.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-23,57.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-08,61.500,2.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-09,61.500,7.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-10,61.500,12.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,32x32 | C-09,82.750,5.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,ATVs and Rafts,60.250,32.750,20.000,15.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-28,72.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-29,72.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,Arcade,72.750,27.750,5.000,5.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,32x32 | C-08,70.250,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-11,76.500,2.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-12,76.500,7.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-31,77.750,17.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,Carousel,69.000,7.750,12.500,15.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-32,77.750,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-14,87.763,24.000,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-15,82.763,11.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-16,87.763,11.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-34,90.250,7.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-35,92.763,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-36,97.750,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-18,101.500,17.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-19,101.500,22.750,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-38,102.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-40,105.250,7.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-47,122.750,27.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-41,105.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-42,110.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-43,115.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-44,120.250,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-45,120.250,7.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,32x32 | C-12,117.750,20.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-46,120.250,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-48,122.750,32.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-49,122.750,37.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-26,130.250,1.500,5.000,2.500,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-30,136.542,32.772,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-31,136.542,37.772,2.500,5.000,0,#ab9ac0
+AdventurePark_BaseplatesWithComponents_v5,16x16 | B-58,132.792,37.772,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,32x32 | Food Court,30.250,5.250,10.000,10.000,0,#92d050
+AdventurePark_BaseplatesWithComponents_v5,Star Bucks,20.250,5.250,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Dunkin Donuts,30.250,5.250,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,McDonalds,20.250,15.250,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,KFC,30.250,15.250,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Woman's | Restroom,32.750,15.250,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Men’s | Restroom,32.750,5.250,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Fountain,25.250,10.000,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,12.000,4.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,7.000,6.125,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,11.000,3.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Picnic | Table,25.250,14.250,2.500,1.875,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Picnic | Table,25.208,16.604,2.500,1.875,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Picnic | Table,25.250,6.521,2.500,1.875,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Picnic | Table,25.250,3.896,2.500,1.875,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,BENCH,11.500,6.500,1.875,1.250,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,8.500,6.938,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,9.725,6.350,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Green,7.750,2.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,19.500,8.500,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,19.500,12.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,33.500,12.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,33.500,8.500,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,T,29.550,8.300,0.600,0.600,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,T,21.050,8.300,0.600,0.600,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,T,21.050,12.200,0.600,0.600,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,T,29.550,12.200,0.600,0.600,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,16.250,19.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,17.250,18.500,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,22.750,19.625,1.250,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,27.750,19.625,1.250,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Balloons,17.041,23.126,1.875,1.250,0.785,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,17.750,27.000,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Olive,17.750,32.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Green,32.750,32.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,32.750,27.750,1.500,1.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,BENCH,37.288,24.375,1.875,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,37.288,19.625,1.250,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Face | Paint,39.500,17.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Green,37.750,12.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,36.500,8.625,1.250,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,36.500,1.875,1.250,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Strong Kid,42.750,14.000,1.875,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,48.500,14.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,49.000,12.750,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,47.750,13.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Popcorn,44.126,21.240,1.875,1.250,-0.524,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Balloon | Pop,50.250,22.000,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,48.500,24.500,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,47.750,23.375,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,48.500,22.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,47.000,24.500,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,47.750,27.750,1.500,1.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Green,47.750,32.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,36.500,36.500,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,35.750,38.500,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,36.750,37.750,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,37.750,37.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Olive,72.750,37.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Ducks,57.250,20.250,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Bears,52.300,21.375,1.250,0.600,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Map,55.250,13.500,1.250,0.600,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,59.625,16.500,1.250,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,52.750,15.875,1.875,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,61.000,11.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,61.500,12.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Pop Machines | Mech. Shed,69.000,16.000,3.750,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Strong | Man,61.750,22.250,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Picnic | Table,68.562,21.000,2.500,1.875,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Hot Dog,65.750,23.000,2.500,0.625,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,73.500,16.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,74.738,16.750,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,73.000,17.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,77.250,6.125,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,75.750,7.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,77.250,7.500,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Pink,77.750,17.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Water | Guns,80.750,6.125,2.500,3.750,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Bears,79.050,6.000,1.250,0.600,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Dunk Tank,87.000,5.500,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Cotton Candy,91.895,20.645,1.875,1.250,0.785,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,BENCH,95.000,22.062,1.875,1.250,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,T,94.250,23.450,0.600,0.600,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,92.300,24.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,93.375,23.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,93.375,22.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,92.300,23.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,93.250,24.375,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,99.250,24.625,1.250,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Popcorn,105.177,13.334,1.875,1.250,-1.047,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Picnic | Table,104.312,22.750,2.500,1.875,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Balloons,104.249,18.629,1.875,1.250,-0.262,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,BENCH,119.438,16.200,1.875,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,123.500,16.825,1.250,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,BENCH,123.625,23.062,1.875,1.250,-1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,102.750,34.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,101.750,33.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,103.750,33.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,102.792,32.354,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Olive,102.750,37.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Green,122.750,37.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Corn Shack,122.750,26.938,3.750,1.875,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,124.750,29.750,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,121.875,33.167,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,122.250,31.875,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,123.250,32.750,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,122.688,34.062,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Skee-Ball,128.500,20.333,5.000,5.000,0,#c05046
+AdventurePark_BaseplatesWithComponents_v5,B,131.250,24.333,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,132.250,23.000,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,127.000,23.500,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,125.750,24.333,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Bears,115.550,20.375,1.250,0.600,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Ice Cream,78.135,23.874,1.875,1.250,-1.047,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Green,131.542,39.022,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,126.292,38.272,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,127.292,39.272,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,126.042,39.522,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,127.792,37.772,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,136.917,38.522,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,136.042,39.272,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,136.042,37.772,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,10.550,5.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,17.700,7.138,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,17.800,0.800,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,25.300,0.800,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,34.950,0.800,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,21.950,8.300,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,22.000,12.200,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,28.500,12.200,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,28.500,8.300,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,21.550,20.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,29.000,20.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,34.950,20.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,34.950,23.500,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,35.550,10.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,42.750,16.800,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,41.000,23.375,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,48.050,10.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,48.050,1.500,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,53.300,9.500,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,57.200,9.500,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,55.550,15.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,48.700,18.200,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,63.050,14.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,66.300,20.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,71.700,20.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,75.550,24.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,75.550,14.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,78.700,9.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,83.200,2.000,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,86.000,12.000,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,83.800,23.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,91.200,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,93.828,20.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,98.925,23.450,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,101.000,19.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,111.200,18.654,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,114.300,18.654,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Milk | Bottles,107.750,20.854,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Basket-Ball | Game,117.750,20.854,2.500,5.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,120.700,17.150,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,120.500,24.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,T,123.950,21.700,0.600,0.600,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Olive,124.125,19.650,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Bears,110.233,20.375,1.250,0.600,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,122.450,8.700,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,124.800,3.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,129.500,16.500,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,L,132.450,13.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,88.950,3.300,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,88.950,7.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,88.950,5.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,88.950,4.450,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,88.950,6.800,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,89.550,8.800,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,90.550,9.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,91.550,10.250,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,92.450,11.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,93.550,12.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,94.550,13.300,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,94.950,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,95.700,16.300,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,96.950,16.300,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,98.200,16.300,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,99.450,16.300,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,100.550,15.450,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,101.500,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,102.950,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,104.400,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,107.450,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,108.700,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,109.800,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,110.900,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,115.850,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,114.050,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,116.950,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,118.750,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,118.050,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,121.450,10.925,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,121.450,9.450,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,121.450,7.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,122.075,6.700,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,123.050,5.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,123.050,4.300,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,123.050,3.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,123.050,2.000,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,123.100,0.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,122.450,1.500,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,122.450,2.475,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,122.450,3.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,122.450,4.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,121.850,5.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,121.100,6.700,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,120.950,8.700,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,120.700,9.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,120.700,11.730,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,117.450,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,116.150,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,114.950,14.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,115.250,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,114.530,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,110.250,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,109.250,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,108.050,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,103.750,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,102.050,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,100.550,14.350,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,98.800,15.450,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,99.600,15.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,97.550,15.450,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,96.250,15.450,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,94.550,12.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,95.550,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,93.450,11.050,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,92.550,10.250,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,91.550,9.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,90.550,8.800,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,89.950,7.750,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,89.950,3.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,89.950,4.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,89.950,5.925,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,89.950,6.900,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Green,14.000,4.000,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Olive,42.750,37.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,67.050,21.000,2.500,0.600,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,70.075,21.000,2.500,0.600,1.571,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,76.000,8.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,TREE | Olive,72.750,32.750,2.500,2.500,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,88.625,23.600,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,87.763,24.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,B,86.625,24.250,1.000,1.000,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,111.050,15.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,113.650,15.550,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,120.475,14.825,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,119.175,14.800,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,121.450,12.535,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,P,121.450,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,120.050,13.950,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,120.700,13.100,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,FP,121.450,14.825,0.600,0.600,0.000,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,Flowers,132.250,16.825,1.250,1.250,0,#ffff00
+AdventurePark_BaseplatesWithComponents_v5,16x16 | AA,135.292,22.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | BB,135.292,17.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | CC,135.292,12.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | DD,135.292,7.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x16 | EE,135.292,2.750,5.000,5.000,0,#4bacc6
+AdventurePark_BaseplatesWithComponents_v5,16x8 | A-29,136.542,27.772,2.500,5.000,0,#ab9ac0
+Kingdom_Village,Sentry Tower,27.287,16.000,10.000,10.000,0,#ffd965
+Kingdom_Village,B01-V,24.787,23.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,Mountain Castle,12.287,31.000,20.000,20.000,0,#ffd965
+Kingdom_Village,Jousting,12.287,11.000,20.000,20.000,0,#ffd965
+Kingdom_Village,Tavern,29.787,33.500,15.000,15.000,0,#ffd965
+Kingdom_Village,Horse Head Inn,44.808,33.500,15.000,15.000,0,#ffd965
+Kingdom_Village,B02-V,29.787,23.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B03-V,34.787,23.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B04-V,39.787,23.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B05-V,44.787,23.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B06-V,49.808,23.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B07-V,54.829,28.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B08-V,54.829,33.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B09-V,54.829,38.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,Ship Wreck,64.787,33.500,15.000,15.000,0,#ffd965
+Kingdom_Village,B10-V,74.829,38.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B11-V,74.829,33.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B12-V,74.787,28.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,Castle Ruins,84.787,33.500,15.000,15.000,0,#ffd965
+Kingdom_Village,C01-V,27.287,6.000,10.000,10.000,0,#92d050
+Kingdom_Village,C03-V,47.287,6.000,10.000,10.000,0,#92d050
+Kingdom_Village,C02-V,37.287,16.000,10.000,10.000,0,#92d050
+Kingdom_Village,Armorer,37.287,6.000,10.000,10.000,0,#ffd965
+Kingdom_Village,Central | Well,44.787,18.500,5.000,5.000,0,#ffd965
+Kingdom_Village,B13-V,49.808,18.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B14-V,44.787,13.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B15-V,49.787,13.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,C04-V,77.287,6.000,10.000,10.000,0,#92d050
+Kingdom_Village,Church,57.287,6.000,10.000,10.000,0,#ffd965
+Kingdom_Village,Farmhouse,57.287,18.500,10.000,15.000,0,#ffd965
+Kingdom_Village,Bridge,69.787,18.500,15.000,15.000,0,#ffd965
+Kingdom_Village,River,67.287,6.000,10.000,10.000,0,#ffd965
+Kingdom_Village,Witch’s House,87.287,6.000,10.000,10.000,0,#ffd965
+Kingdom_Village,B16-V,79.787,23.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B17-V,79.787,18.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B18-V,79.787,13.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B19-V,84.787,13.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,B20-V,89.787,13.500,5.000,5.000,0,#4bacc6
+Kingdom_Village,C05-V,87.287,21.000,10.000,10.000,0,#92d050
