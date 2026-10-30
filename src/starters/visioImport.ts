@@ -49,7 +49,7 @@ export interface StarterSpec {
   retiredLabels: string[];
   /** Where the layout sits along the table: centred, or at the left end (built left to right). */
   align?: 'center' | 'left';
-  /** Visio page size; shapes entirely off the page (parked spares) are left out. */
+  /** Visio page size; shapes entirely off the page (leftovers) are left out. */
   pageIn?: { width: number; height: number };
   /** Ride power in volts by footprint name. */
   power: Record<string, number>;
@@ -123,7 +123,7 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     if (!page) return true;
     const inside =
       r.xIn + r.wIn / 2 > 0 && r.xIn - r.wIn / 2 < page.width && r.yIn + r.hIn / 2 > 0 && r.yIn - r.hIn / 2 < page.height;
-    if (!inside) notes.push({ label: r.label || '(unlabelled shape)', message: 'Shape is off the drawing page (a parked spare); left out.' });
+    if (!inside) notes.push({ label: r.label || '(unlabelled shape)', message: 'Shape is off the drawing page (leftover, not part of the layout); left out.' });
     return inside;
   };
   const shapes = rows

@@ -84,20 +84,20 @@ Browser smoke tests cover:
   - one unfilled `2x10` shape was imported as a generic item;
   - the 14 Kingdom buildings (Tavern, Mountain Castle and so on) are built directly on their plate and move as one unit, so **they have no plate ID**; the building name is shown instead;
   - Adventure Park comes from `docs/source/Amusement_Layout_v7 - 12 foot.vsdx`, converted with `scripts/vsdx_to_csv.py` into the CSV as `AdventurePark_12ft_v7` (v5 rows kept for reference). Compared with v5: Loop Coaster, Twisted Tracks, Petting Zoo, Carousel 2 and 17 right-end modules are gone; Blast Off, an Entrance, B-57/B-58 and A-29–A-31 moved left; new 16×16 plates **AA–EE** were added (labels kept as drawn);
-  - one unlabelled 32×32 parked off the v7 drawing page is left out.
+  - one unlabelled 32×32 off the v7 drawing page is a leftover in the drawing and is left out.
 - `AdventurePark_BaseplatesWithComponents_v5` (the older layout) was **not** imported as a project. Its marker vocabulary is captured in `src/domain/markers.ts` for the object editor in 1C.
 
 ## Owner answers (30 Oct 2026)
 
 - **Carousel:** confirmed — *Carousel* is the Big Carousel (9 V); the Small Carousel is in storage and not in the display.
 - **Adventure Park layout:** `Amusement_Layout_v7 - 12 foot.vsdx` is the latest true version. For the 2026 show the display was cut to about 12 ft on the same table, leaving 3.5–4 ft unused, so the starter uses v7, aligned to the left end of the 15.5 ft table.
+- **AA–EE** are placeholder names for new plates; real IDs come later (never B-24 to B-27). The 32×32 off the v7 page is a leftover, not a real plate.
 - **Kingdom buildings:** built directly on their MILS plate as one unit; plates don't need labels. MILS IDs are now optional; unlabelled plates are shown by name and skipped by the duplicate-ID check.
 
 ## Still open
 
-1. **New plates AA–EE:** are these temporary names? Real B-xx IDs can be entered later; retired IDs B-24 to B-27 must not be reused.
-2. **Duplicate keeps module IDs:** a duplicated project refers to the *same physical plates*, so module UUIDs are kept and only the project ID is new. Say if you would rather duplicates get new module identities.
-3. **The CSV's "16×8" (A-xx) modules** are supported as a standard size alongside the spec's 32×16.
+1. **Duplicate keeps module IDs:** a duplicated project refers to the *same physical plates*, so module UUIDs are kept and only the project ID is new. Say if you would rather duplicates get new module identities.
+2. **The CSV's "16×8" (A-xx) modules** are supported as a standard size alongside the spec's 32×16.
 
 ## Known gaps / honest notes
 
