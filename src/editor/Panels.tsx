@@ -1,77 +1,16 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { footprint } from '../domain/geometry';
 import { findItem, isModule, resizeModule, setItemPosition, updateModule, updateObject, type Item } from '../domain/edits';
 import { storedNotPlaced, validateLabel } from '../domain/labels';
-import { MILS_KINDS, MILS_SIZES, MILS_COLORS, milsKindForSize, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
+import { MILS_KINDS, MILS_SIZES, milsKindForSize, moduleDisplayName, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
 import { formatLength } from '../domain/units';
-import { Modal } from '../ui/Modal';
-import { addModuleAtCenter, deleteSelection, duplicateSelection, rotateSelection } from './actions';
+import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, ungroupSelection } from './actions';
+import { groupOf, modulesUnder, renameGroup, resizeObject, saveShape } from '../domain/objects';
+import { markerKind } from '../domain/catalog';
 import type { EditorStore } from './store';
 
-const KIND_LABEL: Record<MilsKind, string> = { '32x32': '32×32', '32x16': '32×16', '16x16': '16×16', '16x8': '16×8', custom: 'Custom' };
-
-/** Left column: add MILS modules. */
-export function Palette({ store }: { store: EditorStore }) {
-  const [custom, setCustom] = useState(false);
-  return (
-    <aside className="palette" aria-label="Add">
-      <h2>Add module</h2>
-      {(['32x32', '16x16', '16x8', '32x16'] as const).map((k) => (
-        <button key={k} type="button" onClick={() => addModuleAtCenter(store, k)} title={`Add a ${KIND_LABEL[k]} MILS module`}>
-          <i className="swatch" style={{ background: MILS_COLORS[k], aspectRatio: `${MILS_SIZES[k].width} / ${MILS_SIZES[k].depth}` }} />
-          {KIND_LABEL[k]}
-        </button>
-      ))}
-      <button type="button" onClick={() => setCustom(true)} title="Add a module of any size">
-        <i className="swatch" style={{ background: MILS_COLORS.custom, aspectRatio: '1' }} />
-        Custom…
-      </button>
-      {custom && (
-        <CustomSizeDialog
-          onClose={() => setCustom(false)}
-          onAdd={(width, depth) => {
-            setCustom(false);
-            const kind = milsKindForSize(width, depth);
-            addModuleAtCenter(store, kind, { width, depth });
-          }}
-        />
-      )}
-    </aside>
-  );
-}
-
-function CustomSizeDialog({ onAdd, onClose }: { onAdd: (w: number, d: number) => void; onClose: () => void }) {
-  const [w, setW] = useState(48);
-  const [d, setD] = useState(48);
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (w > 0 && d > 0) onAdd(w, d);
-  };
-  return (
-    <Modal title="Custom module" onClose={onClose}>
-      <form className="form" onSubmit={submit}>
-        <div className="row">
-          <label>
-            Width (studs)
-            <input type="number" min={1} max={2000} value={w} onChange={(e) => setW(Number(e.target.value))} required autoFocus />
-          </label>
-          <label>
-            Depth (studs)
-            <input type="number" min={1} max={2000} value={d} onChange={(e) => setD(Number(e.target.value))} required />
-          </label>
-        </div>
-        <p className="muted">
-          {formatLength(w, 'in')} × {formatLength(d, 'in')}
-        </p>
-        <footer className="modal-actions">
-          <button type="button" onClick={onClose}>Cancel</button>
-          <button type="submit" className="primary">Add</button>
-        </footer>
-      </form>
-    </Modal>
-  );
-}
+export const KIND_LABEL: Record<MilsKind, string> = { '32x32': '32×32', '32x16': '32×16', '16x16': '16×16', '16x8': '16×8', custom: 'Custom' };
 
 /** Text/number field that applies its value on Enter or when leaving the field. */
 function Field({
@@ -139,14 +78,16 @@ export function Properties({ store }: { store: EditorStore }) {
   if (selection.length === 0) {
     return (
       <aside className="props empty" aria-label="Properties">
-        <p className="muted">Select a module to see its details. Drag to move; Shift-click or drag a box to select several.</p>
+        <p className="muted">Select something to see its details. Drag to move; Shift-click or drag a box to select several.</p>
       </aside>
     );
   }
   if (selection.length > 1) {
+    const sel = new Set(selection);
+    const group = project.groups.find((g) => g.memberIds.length === sel.size && g.memberIds.every((id) => sel.has(id)));
     return (
-      <aside className="props" aria-label="Properties">
-        <h2>{selection.length} selected</h2>
+      <aside className="props" aria-label="Properties" key={group?.id ?? 'multi'}>
+        {group ? <GroupFields store={store} groupId={group.id} /> : <h2>{selection.length} selected</h2>}
         <SelectionActions store={store} />
       </aside>
     );
@@ -231,9 +172,30 @@ function ObjectFields({ store, o, unit }: { store: EditorStore; o: CanvasObject;
     <>
       <h2>{o.type === 'footprint' ? 'Ride / building' : o.type === 'setupMarker' ? 'Setup marker' : 'Item'}</h2>
       <Field label="Name" value={o.name} onCommit={(v) => commit((p) => updateObject(p, o.id, { name: v.trim() }))} />
-      <p className="muted small">
-        Size {formatLength(f.width, unit)} × {formatLength(f.depth, unit)}
-      </p>
+      {o.type === 'setupMarker' && markerKind(o.markerKind) && <p className="muted small">Placeholder: {markerKind(o.markerKind)!.brick}</p>}
+      <div className="row">
+        <Field
+          label="Width (studs)"
+          type="number"
+          value={o.width}
+          validate={positiveOrError}
+          onCommit={(v) => commit((p) => resizeObject(p, o.id, Number(v), o.depth, p.settings.snap))}
+          hint={formatLength(f.width, unit === 'studs' ? 'in' : unit)}
+        />
+        <Field
+          label="Depth (studs)"
+          type="number"
+          value={o.depth}
+          validate={positiveOrError}
+          onCommit={(v) => commit((p) => resizeObject(p, o.id, o.width, Number(v), p.settings.snap))}
+          hint={formatLength(f.depth, unit === 'studs' ? 'in' : unit)}
+        />
+      </div>
+      <label className="field">
+        <span>Colour</span>
+        <input type="color" value={o.color} onChange={(e) => commit((p) => updateObject(p, o.id, { color: e.target.value }))} />
+      </label>
+      {o.type !== 'footprint' && <OnModules store={store} o={o} />}
       {o.type === 'footprint' && (
         <Field
           label="Power (volts)"
@@ -244,6 +206,52 @@ function ObjectFields({ store, o, unit }: { store: EditorStore; o: CanvasObject;
           onCommit={(v) => commit((p) => updateObject(p, o.id, { powerVolts: v.trim() === '' ? undefined : Number(v) }))}
         />
       )}
+      <SaveShape store={store} o={o} />
+    </>
+  );
+}
+
+function OnModules({ store, o }: { store: EditorStore; o: CanvasObject }) {
+  const project = useStore(store, (s) => s.project);
+  const under = modulesUnder(project, o);
+  return <p className="muted small">{under.length ? `On ${under.length > 1 ? 'modules' : 'module'} ${under.join(', ')}` : 'Not on a module'}</p>;
+}
+
+function SaveShape({ store, o }: { store: EditorStore; o: CanvasObject }) {
+  const [done, setDone] = useState(false);
+  if (done) return <p className="muted small">Saved to My shapes.</p>;
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        store.getState().commit((p) => saveShape(p, o, o.name).project);
+        setDone(true);
+      }}
+      title="Keep this size and colour in the palette under My shapes"
+    >
+      Save to My shapes
+    </button>
+  );
+}
+
+function GroupFields({ store, groupId }: { store: EditorStore; groupId: string }) {
+  const project = useStore(store, (s) => s.project);
+  const group = project.groups.find((g) => g.id === groupId);
+  if (!group) return null;
+  const members = group.memberIds.map((id) => findItem(project, id)).filter((i): i is Item => !!i);
+  const commit = store.getState().commit;
+  return (
+    <>
+      <h2>Group</h2>
+      <Field label="Group name" value={group.name} onCommit={(v) => commit((p) => renameGroup(p, group.id, v))} />
+      <span className="muted small">{members.length} items — pick one to edit it on its own:</span>
+      <div className="chips">
+        {members.map((m) => (
+          <button key={m.id} type="button" onClick={() => store.getState().select([m.id])}>
+            {isModule(m) ? moduleDisplayName(m) : m.name || 'Item'}
+          </button>
+        ))}
+      </div>
     </>
   );
 }
@@ -292,8 +300,15 @@ function Notes({ value, onCommit }: { value: string; onCommit: (v: string) => vo
 }
 
 function SelectionActions({ store }: { store: EditorStore }) {
+  const project = useStore(store, (s) => s.project);
+  const selection = useStore(store, (s) => s.selection);
+  const grouped = selection.some((id) => groupOf(project, id));
   return (
     <div className="actions">
+      {selection.length > 1 && !grouped && (
+        <button type="button" onClick={() => groupSelection(store)} title="Group (Ctrl+G): click any member to pick up the whole group">Group</button>
+      )}
+      {grouped && <button type="button" onClick={() => ungroupSelection(store)} title="Ungroup (Ctrl+Shift+G)">Ungroup</button>}
       <button type="button" onClick={() => rotateSelection(store, -1)} title="Rotate left (Shift+R)">⟲ Rotate</button>
       <button type="button" onClick={() => rotateSelection(store, 1)} title="Rotate right (R)">⟳ Rotate</button>
       <button type="button" onClick={() => duplicateSelection(store)} title="Duplicate (Ctrl+D)">Duplicate</button>

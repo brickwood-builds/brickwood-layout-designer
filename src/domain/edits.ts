@@ -83,7 +83,8 @@ export function deleteItems(p: Project, ids: Iterable<string>): Project {
     storedLabels: freed.length ? [...p.storedLabels, ...freed] : p.storedLabels,
     modules: p.modules.filter((m) => !set.has(m.id)),
     objects: p.objects.filter((o) => !set.has(o.id)),
-    groups: p.groups.map((g) => ({ ...g, memberIds: g.memberIds.filter((id) => !set.has(id)) })).filter((g) => g.memberIds.length > 0),
+    // A group left with fewer than two members is no longer a group.
+    groups: p.groups.map((g) => ({ ...g, memberIds: g.memberIds.filter((id) => !set.has(id)) })).filter((g) => g.memberIds.length > 1),
   };
 }
 
@@ -150,11 +151,15 @@ export interface NewModule {
   width?: number;
   depth?: number;
   center: { x: number; y: number };
+  /** Place exactly at `center` (dropped by the user) instead of searching for free space. */
+  exact?: boolean;
 }
 
 export function addModule(p: Project, spec: NewModule, mode: SnapMode): { project: Project; id: string } {
   const size = spec.kind === 'custom' ? { width: spec.width ?? 32, depth: spec.depth ?? 32 } : MILS_SIZES[spec.kind];
-  const at = findFreeSpot(p, spec.levelId, size.width, size.depth, spec.center, mode);
+  const at = spec.exact
+    ? { x: snap(spec.center.x - size.width / 2, mode), y: snap(spec.center.y - size.depth / 2, mode) }
+    : findFreeSpot(p, spec.levelId, size.width, size.depth, spec.center, mode);
   const module: MilsModule = {
     id: newId(),
     levelId: spec.levelId,
@@ -180,10 +185,12 @@ export function insertCopies(p: Project, sources: Item[], levelId: string, dx: n
   const taken = new Set<string>();
   const modules: MilsModule[] = [];
   const objects: CanvasObject[] = [];
+  const newIds = new Map<string, string>();
   const level = p.levels.find((l) => l.id === levelId);
   for (const s of sources) {
     const layerId = p.layers.some((l) => l.id === s.layerId) ? s.layerId : p.layers[0]!.id;
     const base = { ...structuredClone(s), id: newId(), levelId: level ? levelId : s.levelId, layerId, x: s.x + dx, y: s.y + dy };
+    newIds.set(s.id, base.id);
     if (isModule(s)) {
       const label = s.label.trim() ? nextLabel(p, s.kind, taken) || '' : '';
       if (label) taken.add(label);
@@ -192,8 +199,12 @@ export function insertCopies(p: Project, sources: Item[], levelId: string, dx: n
       objects.push(base as CanvasObject);
     }
   }
+  // Groups copied whole come along as new groups.
+  const groups = p.groups
+    .filter((g) => g.memberIds.every((id) => newIds.has(id)))
+    .map((g) => ({ id: newId(), name: `${g.name} (copy)`, memberIds: g.memberIds.map((id) => newIds.get(id)!) }));
   return {
-    project: { ...p, modules: [...p.modules, ...modules], objects: [...p.objects, ...objects] },
+    project: { ...p, modules: [...p.modules, ...modules], objects: [...p.objects, ...objects], groups: [...p.groups, ...groups] },
     ids: [...modules, ...objects].map((i) => i.id),
   };
 }

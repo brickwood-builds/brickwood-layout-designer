@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Group, Layer, Rect, Shape, Stage, Text } from 'react-konva';
+import { Ellipse, Group, Layer, Rect, Shape, Stage, Text } from 'react-konva';
 import type Konva from 'konva';
 import { useStore } from 'zustand';
-import { footprint, snap, type Rect as R } from '../domain/geometry';
+import { footprint, snap, unionRect, type Rect as R } from '../domain/geometry';
 import { allItems, isModule, moveItems, type Item } from '../domain/edits';
 import { SpatialIndex } from '../domain/spatial';
 import { MILS_COLORS, moduleDisplayName, type Project } from '../domain/schema';
 import { checkLayout } from '../domain/validation';
+import { expandToGroups, splitWarnings } from '../domain/objects';
 import { fitToLevel, isEditable } from './actions';
 import type { EditorStore } from './store';
 import { gridStep, toScreen, toWorld, zoomAt, type View } from './view';
@@ -83,7 +84,11 @@ export function Canvas({ store }: { store: EditorStore }) {
   const editable = useMemo(() => new Set(project.layers.filter((l) => l.visible && !l.locked).map((l) => l.id)), [project.layers]);
   const visibleLayers = useMemo(() => new Set(project.layers.filter((l) => l.visible).map((l) => l.id)), [project.layers]);
   const levelItems = useMemo(() => {
-    const items = allItems(project).filter((i) => i.levelId === level.id && visibleLayers.has(i.layerId));
+    // Modules at the bottom, then rides/buildings, then small items on top.
+    const rank = (i: Item) => (isModule(i) ? 0 : i.type === 'footprint' ? 1 : 2);
+    const items = allItems(project)
+      .filter((i) => i.levelId === level.id && visibleLayers.has(i.layerId))
+      .sort((a, b) => rank(a) - rank(b));
     // Draw whatever is being dragged on top.
     if (!drag) return items;
     const dragged = new Set(drag.ids);
@@ -97,7 +102,7 @@ export function Canvas({ store }: { store: EditorStore }) {
     const moved = moveItems(project, drag.ids, drag.dx, drag.dy);
     const ids = new Set(drag.ids);
     const problems = new Set<string>();
-    for (const w of checkLayout(moved)) {
+    for (const w of splitWarnings(moved, checkLayout(moved)).open) {
       if (w.levelId !== level.id || (w.kind !== 'overlap' && w.kind !== 'overhang')) continue;
       for (const id of w.ids) if (ids.has(id)) problems.add(id);
     }
@@ -152,9 +157,11 @@ export function Canvas({ store }: { store: EditorStore }) {
       const hit = hitTest(p);
       if (hit) {
         const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+        // A grouped item brings its whole group, unless Alt picks the single piece.
+        const unit = e.altKey ? [hit.id] : expandToGroups(s.project, [hit.id]);
         let sel = s.selection;
-        if (additive) sel = sel.includes(hit.id) ? sel.filter((id) => id !== hit.id) : [...sel, hit.id];
-        else if (!sel.includes(hit.id)) sel = [hit.id];
+        if (additive) sel = sel.includes(hit.id) ? sel.filter((id) => !unit.includes(id)) : [...sel, ...unit];
+        else if (e.altKey || !sel.includes(hit.id)) sel = unit;
         s.select(sel);
         if (sel.includes(hit.id)) {
           gesture.current = { type: 'move', ids: sel, sx: p.x, sy: p.y, anchor: { x: hit.x, y: hit.y }, moved: false, touch };
@@ -232,7 +239,7 @@ export function Canvas({ store }: { store: EditorStore }) {
         const a = toWorld(s.view, Math.min(g.sx, g.x), Math.min(g.sy, g.y));
         const b = toWorld(s.view, Math.max(g.sx, g.x), Math.max(g.sy, g.y));
         const candidates = allItems(s.project).filter((i) => i.levelId === s.levelId && isEditable(store, i.layerId));
-        const hits = new SpatialIndex(candidates).intersecting({ x: a.x, y: a.y, width: b.x - a.x, depth: b.y - a.y });
+        const hits = expandToGroups(s.project, new SpatialIndex(candidates).intersecting({ x: a.x, y: a.y, width: b.x - a.x, depth: b.y - a.y }));
         s.select(g.additive ? [...s.selection, ...hits] : hits);
       }
     };
@@ -321,6 +328,17 @@ export function Canvas({ store }: { store: EditorStore }) {
                 );
               })}
             </Group>
+            <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale} listening={false}>
+              {project.groups
+                .filter((g) => g.memberIds.length > 0 && g.memberIds.every((id) => selectedSet.has(id)))
+                .map((g) => {
+                  const members = levelItems.filter((i) => g.memberIds.includes(i.id));
+                  const b = unionRect(members.map((i) => footprint(drag && drag.ids.includes(i.id) ? { ...i, x: i.x + drag.dx, y: i.y + drag.dy } : i)));
+                  if (!b) return null;
+                  const pad = 6 / view.scale;
+                  return <Rect key={g.id} x={b.x - pad} y={b.y - pad} width={b.width + pad * 2} height={b.depth + pad * 2} stroke={ACCENT} strokeWidth={1.5 / view.scale} dash={[6 / view.scale, 4 / view.scale]} />;
+                })}
+            </Group>
             {marquee && <Rect x={marquee.x} y={marquee.y} width={marquee.w} height={marquee.h} fill="rgba(31,111,235,0.1)" stroke={ACCENT} strokeWidth={1} dash={[4, 3]} listening={false} />}
           </Layer>
         </Stage>
@@ -335,23 +353,38 @@ function ItemShape({ item, x, y, selected, problem, locked, scale }: { item: Ite
   const text = module ? moduleDisplayName(item) : item.name;
   const fill = module ? (item.color ?? MILS_COLORS[item.kind]) : item.color;
   const fontSize = fitText(text, r.width, r.depth, module ? 5 : 6);
-  const showText = fontSize * scale >= 7; // adaptive detail: hide unreadable labels
+  const showText = fontSize * scale >= 7 && (module || item.type === 'footprint'); // adaptive detail; small items unlabelled
   const stroke = problem ? WARN : selected ? ACCENT : 'rgba(0,0,0,0.45)';
   const strokePx = problem || selected ? 3 : 1;
+  const round = !module && item.round;
   return (
     <Group>
-      <Rect
-        id={item.id}
-        x={r.x}
-        y={r.y}
-        width={r.width}
-        height={r.depth}
-        fill={fill}
-        opacity={module ? 1 : item.type === 'footprint' ? 0.85 : 1}
-        stroke={stroke}
-        strokeWidth={strokePx / scale}
-        listening={!locked}
-      />
+      {round ? (
+        <Ellipse
+          id={item.id}
+          x={r.x + r.width / 2}
+          y={r.y + r.depth / 2}
+          radiusX={r.width / 2}
+          radiusY={r.depth / 2}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokePx / scale}
+          listening={!locked}
+        />
+      ) : (
+        <Rect
+          id={item.id}
+          x={r.x}
+          y={r.y}
+          width={r.width}
+          height={r.depth}
+          fill={fill}
+          opacity={module ? 1 : item.type === 'footprint' ? 0.85 : 1}
+          stroke={stroke}
+          strokeWidth={strokePx / scale}
+          listening={!locked}
+        />
+      )}
       {showText && text && (
         <Text
           x={r.x}

@@ -3,9 +3,9 @@
 Browser-based overhead layout designer for Brickwood Builds LEGO exhibition displays.
 It replaces the Visio drawings first, then grows into planning, packing and setup.
 
-**Status: Milestone 1B (MILS editor).** Projects, local storage, export/import,
-recovery checkpoints, both starter displays and the drag-and-drop MILS editor work.
-See [docs/milestone-1a-report.md](docs/milestone-1a-report.md) and [docs/milestone-1b-report.md](docs/milestone-1b-report.md).
+**Status: Milestone 1C (object editor).** Projects, local storage, export/import,
+recovery checkpoints, both starter displays, the MILS editor, setup markers, items and groups work.
+Milestone reports: [1A](docs/milestone-1a-report.md), [1B](docs/milestone-1b-report.md), [1C](docs/milestone-1c-report.md).
 
 ## Run it
 

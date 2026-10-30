@@ -5,6 +5,7 @@ import { duplicateProject } from '../domain/project';
 import type { Project } from '../domain/schema';
 import { studsToInches, inchesToStuds, formatLength } from '../domain/units';
 import { checkLayout } from '../domain/validation';
+import { acknowledge, canAcknowledge, splitWarnings, unacknowledge, warningKey } from '../domain/objects';
 import type { ProjectRepository } from '../storage/repository';
 import { Modal } from '../ui/Modal';
 import {
@@ -12,6 +13,8 @@ import {
   deleteSelection,
   duplicateSelection,
   fitToLevel,
+  groupSelection,
+  ungroupSelection,
   nudgeSelection,
   paste,
   rotateSelection,
@@ -20,7 +23,8 @@ import {
 } from './actions';
 import { startAutosave, type Autosave } from './autosave';
 import { Canvas } from './Canvas';
-import { Palette, Properties } from './Panels';
+import { Properties } from './Panels';
+import { Palette } from './Palette';
 import { createEditorStore, type EditorStore } from './store';
 import { toScreen } from './view';
 
@@ -313,7 +317,8 @@ function StatusBar({ store }: { store: EditorStore }) {
   const pointer = useStore(store, (s) => s.pointer);
   const view = useStore(store, (s) => s.view);
   const [open, setOpen] = useState(false);
-  const warnings = useMemo(() => checkLayout(project).filter((w) => w.levelId === levelId), [project, levelId]);
+  const { open: warnings, acknowledged } = useMemo(() => splitWarnings(project, checkLayout(project).filter((w) => w.levelId === levelId)), [project, levelId]);
+  const [showAck, setShowAck] = useState(false);
   const unit = project.settings.displayUnit;
   const counts = useMemo(() => {
     const mods = project.modules.filter((m) => m.levelId === levelId).length;
@@ -353,18 +358,54 @@ function StatusBar({ store }: { store: EditorStore }) {
       </label>
       <span className="spacer" />
       <div className="warnings">
-        <button type="button" className={warnings.length ? 'warn-btn has' : 'warn-btn'} onClick={() => setOpen(!open)} disabled={!warnings.length}>
+        <button
+          type="button"
+          className={warnings.length ? 'warn-btn has' : 'warn-btn'}
+          onClick={() => setOpen(!open)}
+          disabled={!warnings.length && !acknowledged.length}
+        >
           {warnings.length ? `⚠ ${warnings.length} warning${warnings.length === 1 ? '' : 's'}` : 'No warnings'}
+          {acknowledged.length > 0 && ` (${acknowledged.length} intended)`}
         </button>
-        {open && warnings.length > 0 && (
-          <ul className="warn-list" role="list">
-            {warnings.map((w, i) => (
-              <li key={i}>
+        {open && (warnings.length > 0 || acknowledged.length > 0) && (
+          <ul className="warn-list" role="list" aria-label="Warnings">
+            {warnings.map((w) => (
+              <li key={warningKey(w)}>
                 <button type="button" className="link" onClick={() => show(w.ids)}>
                   {w.message}
                 </button>
+                {canAcknowledge(w) && (
+                  <button
+                    type="button"
+                    title="Mark as intended: it stays recorded but stops counting as a warning"
+                    onClick={() => store.getState().commit((p) => acknowledge(p, w))}
+                  >
+                    Intended
+                  </button>
+                )}
               </li>
             ))}
+            {acknowledged.length > 0 && (
+              <li className="ack-list">
+                <button type="button" className="link" onClick={() => setShowAck(!showAck)}>
+                  {showAck ? 'Hide' : 'Show'} {acknowledged.length} marked as intended
+                </button>
+              </li>
+            )}
+            {showAck &&
+              acknowledged.map((w) => {
+                const ack = project.acknowledgements.find((a) => a.key === warningKey(w));
+                return (
+                  <li key={warningKey(w)}>
+                    <button type="button" className="link muted" onClick={() => show(w.ids)} title={ack ? `Marked ${new Date(ack.at).toLocaleString()}` : undefined}>
+                      {w.message}
+                    </button>
+                    <button type="button" onClick={() => store.getState().commit((p) => unacknowledge(p, warningKey(w)))}>
+                      Undo
+                    </button>
+                  </li>
+                );
+              })}
           </ul>
         )}
       </div>
@@ -389,6 +430,7 @@ function useKeyboard(store: EditorStore) {
       if (mod && key === 'd') return handled(), duplicateSelection(store);
       if (mod && key === 'c') return handled(), copySelection(store);
       if (mod && key === 'v') return handled(), paste(store);
+      if (mod && key === 'g') return handled(), e.shiftKey ? ungroupSelection(store) : groupSelection(store);
       if (mod) return;
       switch (e.key) {
         case 'ArrowLeft': return handled(), nudgeSelection(store, -big, 0);

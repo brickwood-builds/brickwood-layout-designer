@@ -63,6 +63,8 @@ export function createProject(opts: NewProjectOptions): Project {
     groups: [],
     retiredLabels: [],
     storedLabels: [],
+    shapes: [],
+    acknowledgements: [],
   };
 }
 

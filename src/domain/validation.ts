@@ -62,6 +62,11 @@ export function checkLayout(project: Project): LayoutWarning[] {
     for (const [a, b] of new SpatialIndex(solid.values()).overlapPairs()) {
       warnings.push({ kind: 'overlap', levelId: level.id, ids: [a, b], message: `${solid.get(a)!.name} overlaps ${solid.get(b)!.name}` });
     }
+    // Small items and markers sit on modules, but two of them in the same spot is a mistake.
+    const small = new Map(project.objects.filter((o) => o.levelId === level.id && o.type !== 'footprint').map((o) => [o.id, o]));
+    for (const [a, b] of new SpatialIndex(small.values()).overlapPairs()) {
+      warnings.push({ kind: 'overlap', levelId: level.id, ids: [a, b], message: `${small.get(a)!.name || 'Item'} overlaps ${small.get(b)!.name || 'item'}` });
+    }
   }
   return warnings;
 }

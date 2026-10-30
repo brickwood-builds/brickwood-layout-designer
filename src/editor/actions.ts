@@ -11,6 +11,7 @@ import {
   rotateItems,
 } from '../domain/edits';
 import type { MilsKind } from '../domain/schema';
+import { addObject, groupItems, ungroup, type NewObject } from '../domain/objects';
 import type { EditorStore } from './store';
 import { fitView, toWorld, zoomAt } from './view';
 
@@ -31,15 +32,47 @@ function viewCenter(store: EditorStore) {
   return toWorld(view, viewport.width / 2, viewport.height / 2);
 }
 
-export function addModuleAtCenter(store: EditorStore, kind: MilsKind, size?: { width: number; depth: number }) {
+/** Add a module at `at` (dropped there) or, without it, in free space near the middle of the view. */
+export function addModuleAt(store: EditorStore, kind: MilsKind, size?: { width: number; depth: number }, at?: { x: number; y: number }) {
   const s = store.getState();
   let id = '';
   s.commit((p) => {
-    const r = addModule(p, { levelId: s.levelId, kind, ...size, center: viewCenter(store) }, p.settings.snap);
+    const r = addModule(p, { levelId: s.levelId, kind, ...size, center: at ?? viewCenter(store), exact: !!at }, p.settings.snap);
     id = r.id;
     return r.project;
   });
   s.select([id]);
+}
+
+export type ObjectTemplate = Omit<NewObject, 'levelId' | 'center' | 'findSpace'>;
+
+/** Add an item, marker or ride at `at` (dropped there) or near the middle of the view. */
+export function addObjectAt(store: EditorStore, template: ObjectTemplate, at?: { x: number; y: number }) {
+  const s = store.getState();
+  let id = '';
+  s.commit((p) => {
+    const r = addObject(
+      p,
+      { ...template, levelId: s.levelId, center: at ?? viewCenter(store), findSpace: !at && template.type === 'footprint' },
+      p.settings.snap,
+    );
+    id = r.id;
+    return r.project;
+  });
+  s.select([id]);
+}
+
+export function groupSelection(store: EditorStore) {
+  const s = store.getState();
+  if (s.selection.length < 2) return;
+  s.commit((p) => groupItems(p, s.selection, '').project);
+}
+
+export function ungroupSelection(store: EditorStore) {
+  const s = store.getState();
+  const sel = new Set(s.selection);
+  const groups = s.project.groups.filter((g) => g.memberIds.some((id) => sel.has(id)));
+  if (groups.length) s.commit((p) => groups.reduce((acc, g) => ungroup(acc, g.id), p));
 }
 
 export function deleteSelection(store: EditorStore) {

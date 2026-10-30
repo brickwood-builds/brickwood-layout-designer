@@ -78,6 +78,10 @@ export const CanvasObjectSchema = z.object({
   color,
   /** Setup marker vocabulary key, e.g. "lamp", "tree". */
   markerKind: z.string().optional(),
+  /** Starter-catalog part or user shape this was placed from (reference only; size is stored here). */
+  catalogKey: z.string().optional(),
+  /** Drawn as a circle (round bricks and markers). */
+  round: z.boolean().optional(),
   /** Ride power, kept for later power/packing planning. */
   powerVolts: z.number().positive().optional(),
 });
@@ -94,6 +98,26 @@ export const GroupSchema = z.object({
   id,
   name: z.string().min(1),
   memberIds: z.array(id),
+});
+
+/** A reusable rectangle the user saved from the canvas ("My shapes"). */
+export const ShapeSchema = z.object({
+  id,
+  name: z.string().min(1),
+  type: z.enum(OBJECT_TYPES),
+  width: positive,
+  depth: positive,
+  color,
+  round: z.boolean().optional(),
+});
+
+/** A warning the user marked as intended (e.g. a deliberate overhang). Kept for audit. */
+export const AcknowledgementSchema = z.object({
+  /** Warning kind + sorted item IDs, e.g. "overhang:<id>". */
+  key: z.string().min(1),
+  message: z.string(),
+  note: z.string().default(''),
+  at: timestamp,
 });
 
 export const SettingsSchema = z.object({
@@ -142,6 +166,8 @@ export const ProjectSchema = z.object({
    * New modules never get these automatically; typing one in puts that plate back.
    */
   storedLabels: z.array(z.string()).default([]),
+  shapes: z.array(ShapeSchema).default([]),
+  acknowledgements: z.array(AcknowledgementSchema).default([]),
 });
 
 export type Level = z.infer<typeof LevelSchema>;
@@ -151,6 +177,8 @@ export type MilsModule = z.infer<typeof MilsModuleSchema>;
 export type CanvasObject = z.infer<typeof CanvasObjectSchema>;
 export type Layer = z.infer<typeof LayerSchema>;
 export type Group = z.infer<typeof GroupSchema>;
+export type Shape = z.infer<typeof ShapeSchema>;
+export type Acknowledgement = z.infer<typeof AcknowledgementSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Features = z.infer<typeof FeaturesSchema>;
 export type Project = z.infer<typeof ProjectSchema>;

@@ -169,10 +169,12 @@ describe('edits', () => {
     const p = project();
     const a = mod(p, 'C-01', 0, 0);
     const b = mod(p, 'C-02', 32, 0);
-    p.groups = [{ id: newId(), name: 'g', memberIds: [a.id, b.id] }, { id: newId(), name: 'solo', memberIds: [a.id] }];
+    const c = mod(p, 'C-03', 64, 0);
+    p.groups = [{ id: newId(), name: 'g', memberIds: [a.id, b.id, c.id] }, { id: newId(), name: 'pair', memberIds: [a.id, b.id] }];
     const q = deleteItems(p, [a.id]);
-    expect(q.modules.map((m) => m.id)).toEqual([b.id]);
-    expect(q.groups).toEqual([{ ...p.groups[0]!, memberIds: [b.id] }]);
+    expect(q.modules.map((m) => m.id)).toEqual([b.id, c.id]);
+    // 'pair' is left with one member, so it dissolves.
+    expect(q.groups).toEqual([{ ...p.groups[0]!, memberIds: [b.id, c.id] }]);
   });
 
   it('resize keeps the centre', () => {

@@ -26,6 +26,14 @@ const mod = (page: Page, label: string): Promise<ModuleInfo | undefined> =>
     return m && { id: m.id, label: m.label, x: m.x, y: m.y, width: m.width, depth: m.depth, rotation: m.rotation };
   }, label);
 
+type ObjectInfo = { id: string; name: string; type: string; x: number; y: number; width: number; depth: number };
+const objects = (page: Page): Promise<ObjectInfo[]> =>
+  page.evaluate(() =>
+    (window as unknown as { __brickwoodEditor: { state(): { project: { objects: ObjectInfo[] } } } }).__brickwoodEditor
+      .state()
+      .project.objects.map((o) => ({ id: o.id, name: o.name, type: o.type, x: o.x, y: o.y, width: o.width, depth: o.depth })),
+  );
+
 const editorState = (page: Page) =>
   page.evaluate(() => {
     const s = (window as unknown as { __brickwoodEditor: Hook }).__brickwoodEditor.state();
@@ -187,6 +195,95 @@ test.describe('mouse (desktop Chrome)', () => {
   });
 });
 
+test.describe('objects and groups (desktop Chrome)', () => {
+  test.beforeEach(async ({ page }, info) => {
+    test.skip(info.project.name !== 'chrome-desktop', 'mouse tests run on desktop');
+    await openPark(page);
+  });
+
+  test('drag a setup marker from the palette onto a module', async ({ page }) => {
+    await page.getByText('Setup markers', { exact: true }).click();
+    const lamp = page.getByRole('button', { name: 'Lamp', exact: true });
+    const box = (await lamp.boundingBox())!;
+    const c05 = (await mod(page, 'C-05'))!;
+    await mouseDrag(page, { x: box.x + box.width / 2, y: box.y + box.height / 2 }, await toPage(page, c05.x + 10, c05.y + 10));
+    const lampObj = (await objects(page)).find((o) => o.name === 'Lamp')!;
+    expect(lampObj).toMatchObject({ x: c05.x + 9, y: c05.y + 9, width: 2, depth: 2, type: 'setupMarker' });
+    await expect(page.getByText('On module C-05')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
+    await saved(page);
+  });
+
+  test('tap-add a plate, resize it in properties, undo', async ({ page }) => {
+    await page.getByText('Bricks & plates', { exact: true }).click();
+    await page.getByRole('button', { name: 'Plate 2×2', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Item' })).toBeVisible();
+    const width = page.getByLabel('Width (studs)');
+    await width.fill('4');
+    await width.press('Enter');
+    await expect.poll(async () => (await objects(page)).find((o) => o.name === 'Plate 2×2')?.width).toBe(4);
+    await page.keyboard.press('Control+z');
+    await expect.poll(async () => (await objects(page)).find((o) => o.name === 'Plate 2×2')?.width).toBe(2);
+  });
+
+  test('group two modules: clicking one picks up both, Alt-click picks one, ungroup', async ({ page }) => {
+    const c05 = (await mod(page, 'C-05'))!.id;
+    const c06 = (await mod(page, 'C-06'))!.id;
+    await page.mouse.click(...xy(await centerOf(page, 'C-05')));
+    await page.keyboard.down('Shift');
+    await page.mouse.click(...xy(await centerOf(page, 'C-06')));
+    await page.keyboard.up('Shift');
+    await page.getByRole('button', { name: 'Group', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Group', exact: true })).toBeVisible();
+    await page.getByLabel('Group name').fill('Food court');
+    await page.getByLabel('Group name').press('Enter');
+    await page.mouse.click(...xy(await toPage(page, -3, -3)));
+    await page.mouse.click(...xy(await centerOf(page, 'C-06')));
+    expect((await editorState(page)).selection.sort()).toEqual([c05, c06].sort());
+    await expect(page.getByLabel('Group name')).toHaveValue('Food court');
+    // Moving the group moves both.
+    const before = (await mod(page, 'C-05'))!;
+    await page.keyboard.press('ArrowRight');
+    expect((await mod(page, 'C-05'))!.x).toBe(before.x + 1);
+    await page.keyboard.press('Control+z');
+    await page.keyboard.down('Alt');
+    await page.mouse.click(...xy(await centerOf(page, 'C-06')));
+    await page.keyboard.up('Alt');
+    expect((await editorState(page)).selection).toEqual([c06]);
+    await page.getByRole('button', { name: 'Ungroup' }).click();
+    await page.mouse.click(...xy(await centerOf(page, 'C-05')));
+    expect((await editorState(page)).selection).toEqual([c05]);
+  });
+
+  test('mark an overhang as intended, then undo the mark', async ({ page }) => {
+    const b01 = (await mod(page, 'B-01'))!;
+    await page.mouse.click(...xy(await centerOf(page, 'B-01')));
+    for (let i = 0; i < 2; i++) await page.keyboard.press('Shift+ArrowDown'); // 20 studs off the front edge
+    await page.getByRole('button', { name: /1 warning/ }).click();
+    const list = page.getByRole('list', { name: 'Warnings' });
+    await expect(list).toContainText('B-01 overhangs');
+    await list.getByRole('button', { name: 'Intended' }).click();
+    await expect(page.getByRole('button', { name: 'No warnings (1 intended)' })).toBeVisible();
+    await list.getByRole('button', { name: /Show 1 marked as intended/ }).click();
+    await list.getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByRole('button', { name: /1 warning/ })).toBeVisible();
+    expect((await mod(page, 'B-01'))!.y).toBe(b01.y + 20);
+  });
+
+  test('new ride from the dialog, saved to My shapes and reused', async ({ page }) => {
+    await page.getByText('Rides & buildings', { exact: true }).click();
+    await page.getByRole('button', { name: 'New…' }).click();
+    await page.getByLabel('Name').fill('Bumper Boats');
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Ride / building' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
+    await page.getByRole('button', { name: 'Save to My shapes' }).click();
+    await page.getByRole('button', { name: 'Bumper Boats', exact: true }).click();
+    expect((await objects(page)).filter((o) => o.name === 'Bumper Boats')).toHaveLength(2);
+    await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
+  });
+});
+
 test.describe('touch (iPad viewport)', () => {
   test.beforeEach(async ({ page }, info) => {
     test.skip(info.project.name !== 'ipad-touch', 'touch tests run on the iPad project');
@@ -239,6 +336,16 @@ test.describe('touch (iPad viewport)', () => {
     await t.pinch(await toPage(page, 300, 60), 40, 120);
     const zoomed = await editorState(page);
     expect(zoomed.view.scale).toBeGreaterThan(start.view.scale * 2.5);
+  });
+  test('finger-drag a marker from the palette onto the table', async ({ page }) => {
+    const t = await touch(page);
+    await page.getByText('Setup markers', { exact: true }).click();
+    const tree = page.getByRole('button', { name: 'Tree', exact: true });
+    const box = (await tree.boundingBox())!;
+    const target = await toPage(page, 300, 60);
+    await t.drag({ x: box.x + box.width / 2, y: box.y + box.height / 2 }, target);
+    const placed = (await objects(page)).find((o) => o.name === 'Tree')!;
+    expect(placed).toMatchObject({ x: 298, y: 60, width: 4, depth: 1 });
   });
 });
 
