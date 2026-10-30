@@ -1,5 +1,5 @@
 // Renderer-independent geometry. Nothing here may depend on canvas/DOM state.
-import type { Project, Rotation } from './schema';
+import { moduleDisplayName, type Project, type Rotation } from './schema';
 
 export interface Rect {
   x: number;
@@ -86,6 +86,7 @@ export function checkLayout(project: Project): LayoutWarning[] {
   const labelCounts = new Map<string, string[]>();
   for (const m of project.modules) {
     const key = m.label.trim().toUpperCase();
+    if (!key) continue;
     labelCounts.set(key, [...(labelCounts.get(key) ?? []), m.id]);
   }
   for (const [label, ids] of labelCounts) {
@@ -96,7 +97,7 @@ export function checkLayout(project: Project): LayoutWarning[] {
   }
   const retired = new Set(project.retiredLabels.map((l) => l.trim().toUpperCase()));
   for (const m of project.modules) {
-    if (retired.has(m.label.trim().toUpperCase())) {
+    if (m.label.trim() && retired.has(m.label.trim().toUpperCase())) {
       warnings.push({ kind: 'retiredLabel', levelId: m.levelId, ids: [m.id], message: `MILS ID ${m.label} was retired and should not be reused` });
     }
   }
@@ -112,7 +113,7 @@ export function checkLayout(project: Project): LayoutWarning[] {
         const r = footprint(item);
         // Allowed if fully inside any single table (multi-table joins are modelled as one surface).
         if (!tableRects.some((t) => rectContains(t, r))) {
-          const label = 'label' in item ? item.label : item.name || 'Object';
+          const label = 'label' in item ? moduleDisplayName(item) : item.name || 'Object';
           warnings.push({ kind: 'overhang', levelId: level.id, ids: [item.id], message: `${label} overhangs ${surfaceName}` });
         }
       }
@@ -123,7 +124,7 @@ export function checkLayout(project: Project): LayoutWarning[] {
       for (let j = i + 1; j < mods.length; j++) {
         const a = mods[i]!, b = mods[j]!;
         if (rectsOverlap(footprint(a), footprint(b))) {
-          warnings.push({ kind: 'moduleOverlap', levelId: level.id, ids: [a.id, b.id], message: `${a.label} overlaps ${b.label}` });
+          warnings.push({ kind: 'moduleOverlap', levelId: level.id, ids: [a.id, b.id], message: `${moduleDisplayName(a)} overlaps ${moduleDisplayName(b)}` });
         }
       }
     }

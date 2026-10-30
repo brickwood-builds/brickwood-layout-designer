@@ -20,8 +20,8 @@
   - importing a project that already exists creates a copy rather than overwriting;
   - invalid, foreign or newer-format files are rejected with a readable message.
 - **Both Visio displays as starter projects**, added automatically on first run:
-  - **Brickwood Adventure Park**: 104 modules (17 × 32×32, 56 × 16×16, 31 × 16×8), 20 ride/attraction footprints with power in volts, one 2×10 item, on a 42 × 186 in table.
-  - **Brickwood Kingdom (Village)**: 20 × 16×16 and 5 × 32×32 village modules plus 14 named custom bases, on a 42 × 96 in table.
+  - **Brickwood Adventure Park**: 104 modules (17 × 32×32, 56 × 16×16, 31 × 16×8), 19 ride/attraction footprints with power in volts, one 2×10 item, on a 42 × 186 in table.
+  - **Brickwood Kingdom (Village)**: 20 × 16×16 and 5 × 32×32 village modules plus 14 buildings built directly on their plates (one unit each, no plate ID), on a 42 × 96 in table.
   - Both import with **zero overlaps and zero overhang warnings**. Starter IDs are deterministic, so the same physical plate has the same UUID on every device.
 - **Basic dashboard**:
   - project cards with an overhead preview, plus New project (empty table or from either starter), Import, and a More menu (Rename, Duplicate, Export file, Checkpoints, Archive). Archived projects are hidden unless "Show archived" is ticked;
@@ -37,7 +37,7 @@ Screenshots: `docs/screenshots/` (dashboard, Adventure Park, Kingdom, iPad viewp
 | `npm ci` | OK, 0 vulnerabilities |
 | `npm run lint` | OK, 0 problems |
 | `npm run typecheck` | OK |
-| `npm test` | **34 / 34 passed** (3 files) |
+| `npm test` | **37 / 37 passed** (3 files) |
 | `npm run build` | OK (479 kB JS, 140 kB gzipped) |
 | `npm run test:e2e` | **12 / 12 passed** (6 scenarios × desktop Chrome + iPad touch viewport) |
 
@@ -82,15 +82,20 @@ Browser smoke tests cover:
   - `C10` → **`C-10`**, to match the A-xx/B-xx/C-xx convention;
   - two zero-size connector lines in the Adventure Park drawing were skipped;
   - one unfilled `2x10` shape was imported as a generic item;
-  - the 14 Kingdom custom bases have no MILS ID on the drawing, so **their name is used as the label** until real IDs are entered.
+  - the 14 Kingdom buildings (Tavern, Mountain Castle and so on) are built directly on their plate and move as one unit, so **they have no plate ID**; the building name is shown instead;
+  - *Carousel 2* (the Small Carousel) is **left out**: it is in storage and not part of the current display. No modules were under it, so the table has an empty 48 × 32-stud space there.
 - `AdventurePark_BaseplatesWithComponents_v5` (the older layout) was **not** imported as a project. Its marker vocabulary is captured in `src/domain/markers.ts` for the object editor in 1C.
 
-## Decisions for the owner to confirm
+## Owner answers (30 Oct 2026)
 
-1. **Carousel power:** I assumed the larger *Carousel* footprint is the **Big Carousel (9 V)** and *Carousel 2* is the **Small Carousel (7.5 V)**. This is noted on each footprint.
-2. **Kingdom custom-base IDs:** what are the real IDs written on the backs of Mountain Castle, Tavern, Sentry Tower and the other bases?
-3. **Duplicate keeps module IDs:** a duplicated project refers to the *same physical plates*, so module UUIDs are kept and only the project ID is new. Say if you would rather duplicates get new module identities.
-4. **The CSV's "16×8" (A-xx) modules** are supported as a standard size alongside the spec's 32×16.
+- **Carousel:** confirmed — *Carousel* is the Big Carousel (9 V); the Small Carousel is in storage and not in the display, so it was removed from the starter.
+- **Kingdom buildings:** built directly on their MILS plate as one unit; plates don't need labels. MILS IDs are now optional; unlabelled plates are shown by name and skipped by the duplicate-ID check.
+
+## Still open
+
+1. **Table length:** you mentioned the "12 ft display", but the decisions file gives the Adventure Park surface as 3.5 × 15.5 ft (42 × 186 in), which is what the starter uses. Which is right?
+2. **Duplicate keeps module IDs:** a duplicated project refers to the *same physical plates*, so module UUIDs are kept and only the project ID is new. Say if you would rather duplicates get new module identities.
+3. **The CSV's "16×8" (A-xx) modules** are supported as a standard size alongside the spec's 32×16.
 
 ## Known gaps / honest notes
 

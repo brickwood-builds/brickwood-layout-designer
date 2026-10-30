@@ -17,10 +17,12 @@ export const STARTER_SPECS: StarterSpec[] = [
       notes: 'Two 6 ft folding tables topped with a 3.5 × 15.5 ft surface (42 × 186 in).',
     },
     retiredLabels: ['B-24', 'B-25', 'B-26', 'B-27'],
+    exclude: {
+      'Carousel 2': 'the Small Carousel (7.5 V) is in storage and not part of the current display.',
+    },
     power: {
       'Loop Coaster': 4.5,
       'Blast Off': 4.5,
-      'Carousel 2': 7.5,
       'Twisted Tracks': 7.5,
       Swings: 9,
       'Ferris Wheel': 9,
@@ -35,8 +37,7 @@ export const STARTER_SPECS: StarterSpec[] = [
     notes: {
       'ATVs and Rafts': 'ATVs 4.5 V and Rafts 4.5 V (separate rides).',
       'Twisted Tracks': 'Left and right tracks, 7.5 V each.',
-      Carousel: 'Assumed to be the Big Carousel (9 V).',
-      'Carousel 2': 'Assumed to be the Small Carousel (7.5 V).',
+      Carousel: 'Big Carousel (9 V).',
     },
   },
   {
@@ -51,6 +52,7 @@ export const STARTER_SPECS: StarterSpec[] = [
       notes: '6 ft folding table topped with 3.5 × 8 ft plywood (42 × 96 in).',
     },
     retiredLabels: [],
+    exclude: {},
     power: {},
     notes: {},
   },

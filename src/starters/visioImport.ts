@@ -47,6 +47,8 @@ export interface StarterSpec {
   table: { name: string; widthIn: number; depthIn: number; notes: string };
   /** Retired MILS labels that must never be reused. */
   retiredLabels: string[];
+  /** Shapes left out of the starter, by cleaned name, with the reason. */
+  exclude: Record<string, string>;
   /** Ride power in volts by footprint name. */
   power: Record<string, number>;
   notes: Record<string, string>;
@@ -101,9 +103,8 @@ function classify(row: VisioRow, notes: ImportNote[]): Classified | null {
   if (KINGDOM_MODULE.test(row.label)) return { kind: 'module', label: row.label, name: '', row };
   if (row.fill === '#ffd965') {
     // Kingdom custom bases: named plates with no ID on the drawing.
-    const name = cleanName(row.label);
-    notes.push({ label: name, message: 'Custom base has no MILS ID on the drawing; its name is used as the label. Set the real ID when known.' });
-    return { kind: 'module', label: name, name, row };
+    // Kingdom buildings are built directly on their plate: one unit, no plate ID needed.
+    return { kind: 'module', label: '', name: cleanName(row.label), row };
   }
   if (row.fill === ATTRACTION_FILL) return { kind: 'footprint', name: cleanName(row.label), row };
   notes.push({ label: row.label, message: 'Unfilled shape imported as a generic item.' });
@@ -114,7 +115,14 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
   const notes: ImportNote[] = [];
   const rows = allRows.filter((r) => r.display === spec.display);
   if (rows.length === 0) throw new Error(`No rows for display ${spec.display}`);
-  const shapes = rows.map((r) => classify(r, notes)).filter((c): c is Classified => c !== null);
+  const shapes = rows
+    .map((r) => classify(r, notes))
+    .filter((c): c is Classified => c !== null)
+    .filter((c) => {
+      const reason = spec.exclude[c.name];
+      if (reason) notes.push({ label: c.name, message: `Left out: ${reason}` });
+      return !reason;
+    });
 
   // Visual (rotated) box of each shape in Visio inches.
   const box = (r: VisioRow) => {
@@ -165,7 +173,7 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     const y = toStuds(maxTop - b.top) + offsetY;
     if (s.kind === 'module') {
       modules.push({
-        id: sid(`module:${s.label}`),
+        id: sid(`module:${s.label || s.name}`),
         levelId,
         layerId: moduleLayer,
         kind: milsKindForSize(width, depth),
@@ -176,7 +184,7 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
         width,
         depth,
         rotation: b.rot,
-        notes: '',
+        notes: s.label ? '' : 'Built directly on its plate; moves as one unit.',
         color: s.row.fill || undefined,
       });
     } else {

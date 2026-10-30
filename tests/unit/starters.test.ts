@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { starterProjects } from '../../src/starters';
-import { checkLayout, footprint } from '../../src/domain/geometry';
+import { checkLayout } from '../../src/domain/geometry';
 import { ProjectSchema } from '../../src/domain/schema';
 import { projectStats } from '../../src/domain/project';
 import { studsToInches } from '../../src/domain/units';
@@ -29,15 +29,18 @@ describe('starter projects from Visio CSV', () => {
   it('Adventure Park ride footprints carry names and power', () => {
     const rides = park!.project.objects.filter((o) => o.type === 'footprint');
     const names = rides.map((r) => r.name);
-    for (const n of ['Ferris Wheel', 'Timber Wolf', 'Roller Coaster', 'Loop Coaster', 'Twisted Tracks', 'Carousel', 'Carousel 2', 'Swings', 'Mixer', 'Blast Off', 'Green Machine', 'Bumper Cars', 'ATVs and Rafts', 'Ski Lift', 'Giant Slides', 'Petting Zoo', 'Entrance', 'Arcade', 'Hot Dog']) {
+    for (const n of ['Ferris Wheel', 'Timber Wolf', 'Roller Coaster', 'Loop Coaster', 'Twisted Tracks', 'Carousel', 'Swings', 'Mixer', 'Blast Off', 'Green Machine', 'Bumper Cars', 'ATVs and Rafts', 'Ski Lift', 'Giant Slides', 'Petting Zoo', 'Entrance', 'Arcade', 'Hot Dog']) {
       expect(names).toContain(n);
     }
     expect(rides.find((r) => r.name === 'Ferris Wheel')!.powerVolts).toBe(9);
     expect(rides.find((r) => r.name === 'Green Machine')!.powerVolts).toBe(6);
-    // Carousel 2 is rotated 90° in the drawing: 15 in wide on screen.
-    const c2 = rides.find((r) => r.name === 'Carousel 2')!;
-    expect(footprint(c2).width).toBe(48);
-    expect(footprint(c2).depth).toBe(32);
+    expect(rides.find((r) => r.name === 'Carousel')!.powerVolts).toBe(9);
+    expect(rides).toHaveLength(19);
+  });
+
+  it('the Small Carousel (Carousel 2) is in storage, so it is left out with a note', () => {
+    expect(park!.project.objects.some((o) => o.name === 'Carousel 2')).toBe(false);
+    expect(park!.notes.find((n) => n.label === 'Carousel 2')!.message).toMatch(/in storage/);
   });
 
   it('Visio Y-up is flipped to app Y-down', () => {
@@ -61,6 +64,16 @@ describe('starter projects from Visio CSV', () => {
     expect(size('Farmhouse')).toEqual([32, 48, 'custom']);
     expect(size('Sentry Tower')).toEqual([32, 32, '32x32']);
     expect(size("Witch’s House")).toEqual([32, 32, '32x32']);
+  });
+
+  it('Kingdom buildings built directly on their plate are one unit with no plate ID', () => {
+    const bases = kingdom!.project.modules.filter((m) => m.name);
+    expect(bases).toHaveLength(14);
+    for (const b of bases) {
+      expect(b.label).toBe('');
+      expect(b.notes).toMatch(/one unit/);
+    }
+    expect(new Set(kingdom!.project.modules.map((m) => m.id)).size).toBe(39);
   });
 
   it('every module sits on the table with no module overlaps and whole-stud positions', () => {

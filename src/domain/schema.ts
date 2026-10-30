@@ -58,8 +58,11 @@ export const MilsKindSchema = z.enum(MILS_KINDS);
 export const MilsModuleSchema = z.object({
   ...placed,
   kind: MilsKindSchema,
-  /** User-visible ID written on the back of the plate, e.g. B-07 or C01-V. Unique per project. */
-  label: z.string().min(1),
+  /**
+   * User-visible ID written on the back of the plate, e.g. B-07 or C01-V. Unique per project when set.
+   * Empty when the plate is not labelled, e.g. a building built directly on its plate (one unit).
+   */
+  label: z.string(),
   /** Optional descriptive name, e.g. "Food Court" or "Mountain Castle". */
   name: z.string().default(''),
   color: color.optional(),
@@ -162,6 +165,11 @@ export const MILS_COLORS: Record<MilsKind, string> = {
   '32x32': '#92d050',
   custom: '#ffd965',
 };
+
+/** Text that identifies a module on screen: its ID, else its name. */
+export function moduleDisplayName(m: Pick<MilsModule, 'label' | 'name'>): string {
+  return m.label.trim() || m.name.trim() || 'Unnamed module';
+}
 
 /** Infer the module kind from its size (either orientation). */
 export function milsKindForSize(width: number, depth: number): MilsKind {

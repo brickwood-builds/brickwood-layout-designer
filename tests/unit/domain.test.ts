@@ -108,6 +108,13 @@ describe('geometry', () => {
     expect(checkLayout(p)).toEqual([]);
   });
 
+  it('unlabelled plates (buildings built on their plate) are not duplicate IDs', () => {
+    const p = createProject({ name: 'k', table: { widthIn: 24, depthIn: 24 } });
+    addModule(p, '', 0, 0).name = 'Tavern';
+    addModule(p, '', 32, 0).name = 'Church';
+    expect(checkLayout(p)).toEqual([]);
+  });
+
   it('warns about overhang, overlap, duplicate and retired labels without changing anything', () => {
     const p = createProject({ name: 'w', table: { widthIn: 12, depthIn: 12 } });
     addModule(p, 'C-01', 0, 0);

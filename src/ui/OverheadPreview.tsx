@@ -1,5 +1,5 @@
 import { footprint, levelBounds } from '../domain/geometry';
-import { MILS_COLORS, type Project } from '../domain/schema';
+import { MILS_COLORS, moduleDisplayName, type Project } from '../domain/schema';
 
 interface Props {
   project: Project;
@@ -37,12 +37,13 @@ export function OverheadPreview({ project, labels = false, className }: Props) {
       })}
       {onLevel(project.modules).map((m) => {
         const r = footprint(m);
+        const text = moduleDisplayName(m);
         return (
           <g key={m.id} data-label={m.label}>
             <rect className="pv-module" x={r.x} y={r.y} width={r.width} height={r.depth} fill={m.color ?? MILS_COLORS[m.kind]} />
             {labels && (
-              <text className="pv-label" x={r.x + r.width / 2} y={r.y + r.depth / 2} fontSize={fitText(m.label, r.width, r.depth, 5)}>
-                {m.label}
+              <text className="pv-label" x={r.x + r.width / 2} y={r.y + r.depth / 2} fontSize={fitText(text, r.width, r.depth, 5)}>
+                {text}
               </text>
             )}
           </g>
