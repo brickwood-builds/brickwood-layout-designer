@@ -39,3 +39,11 @@ Columns: display, label_text, x_in, y_in, w_in, h_in, angle_rad, fill. x/y are s
 
 ## Milestone 1A (next)
 Scaffold Vite+React+TS, Vitest, Playwright, CI; Zod domain model (project, table surface, level, MILS module, footprint object, setup marker, layer, group) with schema versioning; Dexie persistence, project CRUD, export/import, recovery checkpoints, tests; both Visio layouts as starter projects; simple dashboard with overhead preview. Push with test evidence.
+
+## Owner answers (30 Oct 2026, after Phase 1)
+- Rides are built on their own bases (like the Kingdom buildings): modelled as named base modules with no plate ID, with ride power.
+- Moving a game/module moves the setup markers sitting on it. Taking something off for packing (Phase 5) is not a move: its markers stay.
+- Merge to `main` and host on GitHub Pages: approved.
+- Cloud sync (1E): OneDrive first.
+- AA–EE are placeholder IDs for new 16×16 plates. The 32×32 off the v7 page is a leftover in the drawing.
+

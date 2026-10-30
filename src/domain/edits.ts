@@ -153,6 +153,9 @@ export interface NewModule {
   center: { x: number; y: number };
   /** Place exactly at `center` (dropped by the user) instead of searching for free space. */
   exact?: boolean;
+  /** A named base (ride or building built on its own plate): no MILS ID. */
+  name?: string;
+  color?: string;
 }
 
 export function addModule(p: Project, spec: NewModule, mode: SnapMode): { project: Project; id: string } {
@@ -165,14 +168,15 @@ export function addModule(p: Project, spec: NewModule, mode: SnapMode): { projec
     levelId: spec.levelId,
     layerId: moduleLayerId(p, spec.levelId),
     kind: spec.kind,
-    label: nextLabel(p, spec.kind),
-    name: '',
+    label: spec.name ? '' : nextLabel(p, spec.kind),
+    name: spec.name ?? '',
     x: at.x,
     y: at.y,
     width: size.width,
     depth: size.depth,
     rotation: 0,
     notes: '',
+    ...(spec.color ? { color: spec.color } : {}),
   };
   return { project: { ...p, modules: [...p.modules, module] }, id: module.id };
 }

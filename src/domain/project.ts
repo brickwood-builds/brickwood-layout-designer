@@ -1,6 +1,6 @@
 import { newId, nowIso } from './ids';
 import { inchesToStuds } from './units';
-import { SCHEMA_VERSION, type Features, type Project, type Settings } from './schema';
+import { SCHEMA_VERSION, isBase, type Features, type Project, type Settings } from './schema';
 
 export const DEFAULT_SETTINGS: Settings = { displayUnit: 'in', snap: 'full', showGrid: true, showLabels: true };
 
@@ -88,13 +88,15 @@ export function duplicateProject(source: Project, name?: string): Project {
 
 export function projectStats(p: Project) {
   const byKind: Record<string, number> = {};
-  for (const m of p.modules) byKind[m.kind] = (byKind[m.kind] ?? 0) + 1;
+  for (const m of p.modules) if (!isBase(m)) byKind[m.kind] = (byKind[m.kind] ?? 0) + 1;
   return {
     levels: p.levels.length,
     tables: p.tables.length,
-    modules: p.modules.length,
+    /** MILS plates (bases are counted separately). */
+    modules: p.modules.filter((m) => !isBase(m)).length,
     modulesByKind: byKind,
-    footprints: p.objects.filter((o) => o.type === 'footprint').length,
+    /** Rides and buildings: named bases plus any older footprint objects. */
+    footprints: p.modules.filter(isBase).length + p.objects.filter((o) => o.type === 'footprint').length,
     markers: p.objects.filter((o) => o.type === 'setupMarker').length,
     items: p.objects.filter((o) => o.type === 'item').length,
   };

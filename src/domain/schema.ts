@@ -66,6 +66,8 @@ export const MilsModuleSchema = z.object({
   /** Optional descriptive name, e.g. "Food Court" or "Mountain Castle". */
   name: z.string().default(''),
   color: color.optional(),
+  /** Ride power in volts, for rides built on their own base. */
+  powerVolts: z.number().positive().optional(),
 });
 
 export const OBJECT_TYPES = ['footprint', 'setupMarker', 'item'] as const;
@@ -211,6 +213,12 @@ export const MILS_COLORS: Record<MilsKind, string> = {
   '32x32': '#92d050',
   custom: '#ffd965',
 };
+
+/**
+ * A ride or building built on its own base plate (no MILS ID, just a name), e.g. the
+ * Ferris Wheel or the Tavern. It moves and packs as one unit.
+ */
+export const isBase = (m: Pick<MilsModule, 'label' | 'name'>) => !m.label.trim() && !!m.name.trim();
 
 /** Text that identifies a module on screen: its ID, else its name. */
 export function moduleDisplayName(m: Pick<MilsModule, 'label' | 'name'>): string {

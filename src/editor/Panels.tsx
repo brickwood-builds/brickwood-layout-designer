@@ -3,7 +3,7 @@ import { useStore } from 'zustand';
 import { footprint } from '../domain/geometry';
 import { addDimension, deleteDimension, dimensionLength, findItem, isModule, resizeModule, setItemPosition, updateModule, updateObject, type Item } from '../domain/edits';
 import { storedNotPlaced, validateLabel } from '../domain/labels';
-import { MILS_KINDS, MILS_SIZES, milsKindForSize, moduleDisplayName, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
+import { MILS_KINDS, MILS_SIZES, isBase, milsKindForSize, moduleDisplayName, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
 import { formatLength } from '../domain/units';
 import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, ungroupSelection } from './actions';
 import { groupOf, modulesUnder, renameGroup, resizeObject, saveShape } from '../domain/objects';
@@ -115,7 +115,7 @@ function ModuleFields({ store, m, unit }: { store: EditorStore; m: MilsModule; u
   const project = store.getState().project;
   return (
     <>
-      <h2>MILS module</h2>
+      <h2>{isBase(m) ? 'Ride / building (on its own base)' : 'MILS module'}</h2>
       <Field
         label="ID (on back of plate)"
         value={m.label}
@@ -124,6 +124,16 @@ function ModuleFields({ store, m, unit }: { store: EditorStore; m: MilsModule; u
         hint={m.label ? undefined : 'No ID (e.g. a building built on its plate)'}
       />
       <Field label="Name" value={m.name} onCommit={(v) => commit((p) => updateModule(p, m.id, { name: v.trim() }))} />
+      {(isBase(m) || m.powerVolts !== undefined) && (
+        <Field
+          label="Power (volts)"
+          type="number"
+          step={0.5}
+          value={m.powerVolts ?? ''}
+          validate={(v) => (v.trim() === '' ? null : positiveOrError(v))}
+          onCommit={(v) => commit((p) => updateModule(p, m.id, { powerVolts: v.trim() === '' ? undefined : Number(v) }))}
+        />
+      )}
       <label className="field">
         <span>Size</span>
         <select

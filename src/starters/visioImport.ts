@@ -111,7 +111,8 @@ function classify(row: VisioRow, notes: ImportNote[]): Classified | null {
     // Kingdom buildings are built directly on their plate: one unit, no plate ID needed.
     return { kind: 'module', label: '', name: cleanName(row.label), row };
   }
-  if (row.fill === ATTRACTION_FILL) return { kind: 'footprint', name: cleanName(row.label), row };
+  // Rides are built on their own bases too: one unit, named, no plate ID.
+  if (row.fill === ATTRACTION_FILL) return { kind: 'module', label: '', name: cleanName(row.label), row };
   notes.push({ label: row.label, message: 'Unfilled shape imported as a generic item.' });
   return { kind: 'item', name: cleanName(row.label), row };
 }
@@ -194,8 +195,11 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     const x = toStuds(b.left - minLeft) + offsetX;
     const y = toStuds(maxTop - b.top) + offsetY;
     if (s.kind === 'module') {
+      const n = (seen.get(s.label || s.name) ?? 0) + 1;
+      seen.set(s.label || s.name, n);
+      const power = spec.power[s.name];
       modules.push({
-        id: sid(`module:${s.label || s.name}`),
+        id: sid(`module:${s.label || s.name}${n > 1 ? `:${n}` : ''}`),
         levelId,
         layerId: moduleLayer,
         kind: milsKindForSize(width, depth),
@@ -206,13 +210,13 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
         width,
         depth,
         rotation: b.rot,
-        notes: s.label ? '' : 'Built directly on its plate; moves as one unit.',
+        notes: s.label ? '' : [spec.notes[s.name], 'Built on its own base; moves as one unit.'].filter(Boolean).join(' '),
         color: s.row.fill || undefined,
+        ...(power !== undefined ? { powerVolts: power } : {}),
       });
     } else {
       const n = (seen.get(s.name) ?? 0) + 1;
       seen.set(s.name, n);
-      const power = spec.power[s.name];
       objects.push({
         id: sid(`object:${s.name}:${n}`),
         levelId,
@@ -226,7 +230,6 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
         rotation: b.rot,
         color: s.kind === 'footprint' ? ATTRACTION_FILL : ITEM_COLOR,
         notes: spec.notes[s.name] ?? '',
-        ...(power !== undefined ? { powerVolts: power } : {}),
       });
     }
   });
@@ -246,8 +249,8 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     features: { ...DEFAULT_FEATURES },
     levels: [{ id: levelId, name: 'Main table', elevationIn: DEFAULT_TABLE_HEIGHT_IN, offsetX: 0, offsetY: 0, visible: true, order: 0 }],
     layers: [
-      { id: moduleLayer, name: 'Table & modules', visible: true, locked: false, order: 0 },
-      { id: attractionLayer, name: spec.key === 'kingdom' ? 'Buildings' : 'Rides & attractions', visible: true, locked: false, order: 1 },
+      { id: moduleLayer, name: 'Table, modules & bases', visible: true, locked: false, order: 0 },
+      { id: attractionLayer, name: 'Markers & small items', visible: true, locked: false, order: 1 },
     ],
     tables: [table],
     modules,

@@ -37,7 +37,9 @@ const objects = (page: Page): Promise<ObjectInfo[]> =>
 const editorState = (page: Page) =>
   page.evaluate(() => {
     const s = (window as unknown as { __brickwoodEditor: Hook }).__brickwoodEditor.state();
-    return { selection: s.selection, view: s.view, modules: s.project.modules.length };
+    // MILS plates only; named bases (rides/buildings) are counted separately in the UI.
+    const plates = (s.project.modules as (ModuleInfo & { name?: string })[]).filter((m) => m.label || !m.name).length;
+    return { selection: s.selection, view: s.view, modules: plates };
   });
 
 async function centerOf(page: Page, label: string): Promise<Pt> {
@@ -271,17 +273,41 @@ test.describe('objects and groups (desktop Chrome)', () => {
     expect((await mod(page, 'B-01'))!.y).toBe(b01.y + 20);
   });
 
-  test('new ride from the dialog, saved to My shapes and reused', async ({ page }) => {
+  test('new ride from the dialog is a named base with no plate ID, placed in free space', async ({ page }) => {
     await page.getByText('Rides & buildings', { exact: true }).click();
     await page.getByRole('button', { name: 'New…' }).click();
     await page.getByLabel('Name').fill('Bumper Boats');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Ride / building' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Ride / building (on its own base)' })).toBeVisible();
+    await expect(page.getByLabel('ID (on back of plate)')).toHaveValue('');
+    await expect(page.getByLabel('Power (volts)')).toBeVisible();
+    await expect(page.getByText('92 modules · 17 rides & buildings')).toBeVisible();
     await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
+  });
+
+  test('a small item saved to My shapes can be reused', async ({ page }) => {
+    await page.getByText('Bricks & plates', { exact: true }).click();
+    await page.getByRole('button', { name: 'Brick 2×4', exact: true }).click();
+    await page.getByLabel('Name').fill('Ticket booth');
+    await page.getByLabel('Name').press('Enter');
     await page.getByRole('button', { name: 'Save to My shapes' }).click();
-    await page.getByRole('button', { name: 'Bumper Boats', exact: true }).click();
-    expect((await objects(page)).filter((o) => o.name === 'Bumper Boats')).toHaveLength(2);
-    await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
+    await page.getByRole('button', { name: 'Ticket booth', exact: true }).click();
+    expect((await objects(page)).filter((o) => o.name === 'Ticket booth')).toHaveLength(2);
+  });
+
+  test('markers sitting on a module travel with it when it is dragged', async ({ page }) => {
+    await page.getByText('Setup markers', { exact: true }).click();
+    const lamp = (await page.getByRole('button', { name: 'Lamp', exact: true }).boundingBox())!;
+    const c05 = (await mod(page, 'C-05'))!;
+    await mouseDrag(page, { x: lamp.x + lamp.width / 2, y: lamp.y + lamp.height / 2 }, await toPage(page, c05.x + 10, c05.y + 10));
+    const before = (await objects(page)).find((o) => o.name === 'Lamp')!;
+    await page.mouse.click(...xy(await toPage(page, -3, -3)));
+    await mouseDrag(page, await toPage(page, c05.x + 24, c05.y + 24), await toPage(page, 496 + 8, 56 + 8));
+    const after = (await mod(page, 'C-05'))!;
+    expect(after).toMatchObject({ x: 480, y: 40 });
+    expect((await objects(page)).find((o) => o.name === 'Lamp')).toMatchObject({ x: before.x + 480 - c05.x, y: before.y + 40 - c05.y });
+    await page.keyboard.press('Control+z');
+    expect((await objects(page)).find((o) => o.name === 'Lamp')).toMatchObject({ x: before.x, y: before.y });
   });
 });
 

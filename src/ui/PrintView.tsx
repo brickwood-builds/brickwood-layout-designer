@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { dimensionLength } from '../domain/edits';
 import { modulesUnder } from '../domain/objects';
-import { MILS_COLORS, moduleDisplayName, type Project } from '../domain/schema';
+import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
 import { formatLength } from '../domain/units';
 import type { ProjectRepository } from '../storage/repository';
 import { exportFileName } from '../domain/exchange';
@@ -33,9 +33,10 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
   const unit = project.settings.displayUnit === 'studs' ? 'in' : project.settings.displayUnit;
   const pos = (studs: number) => formatLength(studs, unit);
   const modules = project.modules
-    .filter((m) => m.levelId === levelId)
+    .filter((m) => m.levelId === levelId && !isBase(m))
     .sort((a, b) => moduleDisplayName(a).localeCompare(moduleDisplayName(b), undefined, { numeric: true }));
-  const rides = project.objects.filter((o) => o.levelId === levelId && o.type === 'footprint').sort((a, b) => a.x - b.x);
+  // Rides and buildings: named bases, plus any older footprint shapes.
+  const rides = [...project.modules.filter((m) => m.levelId === levelId && isBase(m)), ...project.objects.filter((o) => o.levelId === levelId && o.type === 'footprint')].sort((a, b) => a.x - b.x);
   const small = project.objects.filter((o) => o.levelId === levelId && o.type !== 'footprint');
   const dims = project.dimensions.filter((d) => d.levelId === levelId);
   const base = exportFileName(project).replace('.brickwood.json', '');

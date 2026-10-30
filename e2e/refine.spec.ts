@@ -31,13 +31,13 @@ test.describe('refinement (desktop)', () => {
   test('locking the module layer stops modules being selected; unlocking restores it', async ({ page }) => {
     const h = hook(page);
     await page.getByRole('button', { name: 'Layers' }).click();
-    await page.getByLabel('Lock Table & modules').check();
+    await page.getByLabel('Lock Table, modules & bases').check();
     await page.getByRole('button', { name: 'Layers' }).click();
     const c = await h.center('C-05');
     await page.mouse.click(c.x, c.y);
     expect(await h.selection()).toEqual([]);
     await page.getByRole('button', { name: 'Layers' }).click();
-    await page.getByLabel('Lock Table & modules').uncheck();
+    await page.getByLabel('Lock Table, modules & bases').uncheck();
     await page.getByRole('button', { name: 'Layers' }).click();
     await page.mouse.click(c.x, c.y);
     expect(await h.selection()).toHaveLength(1);

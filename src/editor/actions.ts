@@ -11,7 +11,7 @@ import {
   rotateItems,
 } from '../domain/edits';
 import type { MilsKind } from '../domain/schema';
-import { addObject, groupItems, ungroup, type NewObject } from '../domain/objects';
+import { addObject, groupItems, ungroup, withCarriedItems, type NewObject } from '../domain/objects';
 import type { EditorStore } from './store';
 import { fitView, toWorld, zoomAt } from './view';
 
@@ -33,11 +33,17 @@ function viewCenter(store: EditorStore) {
 }
 
 /** Add a module at `at` (dropped there) or, without it, in free space near the middle of the view. */
-export function addModuleAt(store: EditorStore, kind: MilsKind, size?: { width: number; depth: number }, at?: { x: number; y: number }) {
+export function addModuleAt(
+  store: EditorStore,
+  kind: MilsKind,
+  size?: { width: number; depth: number },
+  at?: { x: number; y: number },
+  base?: { name: string; color: string },
+) {
   const s = store.getState();
   let id = '';
   s.commit((p) => {
-    const r = addModule(p, { levelId: s.levelId, kind, ...size, center: at ?? viewCenter(store), exact: !!at }, p.settings.snap);
+    const r = addModule(p, { levelId: s.levelId, kind, ...size, ...base, center: at ?? viewCenter(store), exact: !!at }, p.settings.snap);
     id = r.id;
     return r.project;
   });
@@ -82,14 +88,14 @@ export function deleteSelection(store: EditorStore) {
 
 export function rotateSelection(store: EditorStore, direction: 1 | -1) {
   const s = store.getState();
-  if (s.selection.length) s.commit((p) => rotateItems(p, s.selection, direction, p.settings.snap));
+  if (s.selection.length) s.commit((p) => rotateItems(p, withCarriedItems(p, s.selection), direction, p.settings.snap));
 }
 
 export function nudgeSelection(store: EditorStore, dx: number, dy: number) {
   const s = store.getState();
   if (!s.selection.length) return;
   const step = s.project.settings.snap === 'half' ? 0.5 : 1;
-  s.commit((p) => moveItems(p, s.selection, dx * step, dy * step));
+  s.commit((p) => moveItems(p, withCarriedItems(p, s.selection), dx * step, dy * step));
 }
 
 export function duplicateSelection(store: EditorStore) {
@@ -97,7 +103,7 @@ export function duplicateSelection(store: EditorStore) {
   if (!s.selection.length) return;
   let ids: string[] = [];
   s.commit((p) => {
-    const r = duplicateItems(p, s.selection);
+    const r = duplicateItems(p, withCarriedItems(p, s.selection));
     ids = r.ids;
     return r.project;
   });
@@ -107,7 +113,8 @@ export function duplicateSelection(store: EditorStore) {
 export function copySelection(store: EditorStore) {
   const s = store.getState();
   const set = new Set(s.selection);
-  const items = allItems(s.project).filter((i) => set.has(i.id));
+  const carried = new Set(withCarriedItems(s.project, set));
+  const items = allItems(s.project).filter((i) => carried.has(i.id));
   if (items.length) s.set({ clipboard: structuredClone(items) });
 }
 

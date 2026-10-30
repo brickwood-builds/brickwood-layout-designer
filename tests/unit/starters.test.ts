@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { starterProjects } from '../../src/starters';
 import { checkLayout } from '../../src/domain/validation';
-import { ProjectSchema } from '../../src/domain/schema';
+import { ProjectSchema, isBase } from '../../src/domain/schema';
 import { projectStats } from '../../src/domain/project';
 import { studsToInches } from '../../src/domain/units';
 
@@ -17,7 +17,7 @@ describe('starter projects from Visio CSV', () => {
     const s = projectStats(park!.project);
     expect(s.modules).toBe(92);
     expect(s.modulesByKind).toEqual({ '32x32': 13, '16x16': 52, '16x8': 27 });
-    const labels = park!.project.modules.map((m) => m.label);
+    const labels = park!.project.modules.filter((m) => !isBase(m)).map((m) => m.label);
     expect(new Set(labels).size).toBe(92);
     for (const l of ['AA', 'BB', 'CC', 'DD', 'EE']) expect(labels).toContain(l);
     for (const l of ['C-14', 'C-17', 'B-50', 'B-60', 'A-28']) expect(labels).not.toContain(l);
@@ -28,8 +28,13 @@ describe('starter projects from Visio CSV', () => {
     expect(park!.project.modules.find((m) => m.label === 'C-01')!.name).toBe('Food Court');
   });
 
-  it('Adventure Park ride footprints carry names and power', () => {
-    const rides = park!.project.objects.filter((o) => o.type === 'footprint');
+  it('Adventure Park rides are built on their own bases, with names and power', () => {
+    const rides = park!.project.modules.filter(isBase);
+    expect(park!.project.objects.filter((o) => o.type === 'footprint')).toEqual([]);
+    for (const r of rides) {
+      expect(r.label).toBe('');
+      expect(r.notes).toMatch(/own base/);
+    }
     const names = rides.map((r) => r.name);
     for (const n of ['Ferris Wheel', 'Timber Wolf', 'Roller Coaster', 'Carousel', 'Swings', 'Mixer', 'Blast Off', 'Green Machine', 'Bumper Cars', 'ATVs and Rafts', 'Ski Lift', 'Giant Slides', 'Entrance', 'Arcade', 'Hot Dog']) {
       expect(names).toContain(n);
@@ -47,7 +52,7 @@ describe('starter projects from Visio CSV', () => {
   });
 
   it('Visio Y-up is flipped to app Y-down', () => {
-    const o = (n: string) => park!.project.objects.find((x) => x.name === n)!;
+    const o = (n: string) => park!.project.modules.find((x) => x.name === n)!;
     expect(o('Ferris Wheel').y).toBeLessThan(o('Swings').y);
     const m = (l: string) => park!.project.modules.find((x) => x.label === l)!;
     expect(m('A-01').x).toBeLessThan(m('C-11').x);

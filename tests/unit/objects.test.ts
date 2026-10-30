@@ -15,6 +15,7 @@ import {
   resizeObject,
   saveShape,
   splitWarnings,
+  withCarriedItems,
   unacknowledge,
   ungroup,
   warningKey,
@@ -76,12 +77,26 @@ describe('placing objects', () => {
     expect(after.x + after.width / 2).toBe(before.x + before.width / 2);
   });
 
-  it('moving a module does not drag items that sit on it (geometry is not ownership)', () => {
-    const { p, a } = twoModules();
-    const { project: q, id } = addObject(p, { levelId: level(p), type: 'setupMarker', name: 'Lamp', width: 2, depth: 2, color: '#fff000', center: { x: 10, y: 10 } }, 'full');
-    const moved = moveItems(q, [a.id], 0, 40);
-    expect(moved.objects.find((o) => o.id === id)).toEqual(q.objects.find((o) => o.id === id));
-    expect(modulesUnder(moved, moved.objects[0]!)).toEqual([]);
+  it('markers on a module travel with it when it moves (owner: moving the balloon-pop moves its markers)', () => {
+    const { p, a, b } = twoModules();
+    const add = (proj: Project, name: string, x: number, y: number) =>
+      addObject(proj, { levelId: level(p), type: 'setupMarker', name, width: 2, depth: 2, color: '#fff000', center: { x, y } }, 'full');
+    const lamp = add(p, 'Lamp', 10, 10); // on C-01
+    const bush = add(lamp.project, 'Bush', 40, 10); // on C-02
+    const edge = add(bush.project, 'Edge', 31, 20); // straddles; centre on C-01
+    const q = edge.project;
+    const carried = withCarriedItems(q, [a.id]);
+    expect(carried.sort()).toEqual([a.id, lamp.id, edge.id].sort());
+    const moved = moveItems(q, carried, 0, 40);
+    expect(modulesUnder(moved, moved.objects.find((o) => o.id === lamp.id)!)).toEqual(['C-01']);
+    expect(moved.objects.find((o) => o.id === bush.id)).toEqual(q.objects.find((o) => o.id === bush.id));
+    expect(withCarriedItems(q, [b.id]).sort()).toEqual([b.id, bush.id].sort());
+    // Locked markers stay put.
+    const markerLayer = q.objects[0]!.layerId;
+    const locked = { ...q, layers: q.layers.map((l) => (l.id === markerLayer ? { ...l, locked: true } : l)) };
+    expect(withCarriedItems(locked, [a.id])).toEqual([a.id]);
+    // Items alone don't pull anything.
+    expect(withCarriedItems(q, [lamp.id])).toEqual([lamp.id]);
   });
 
   it('two small items in the same spot is a warning', () => {

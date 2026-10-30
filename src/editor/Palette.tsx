@@ -175,7 +175,7 @@ export function Palette({ store }: { store: EditorStore }) {
           onClose={() => setDialog(null)}
           onAdd={({ name, width, depth }) => {
             setDialog(null);
-            addObjectAt(store, { type: 'footprint', name: name || 'Ride', width, depth, color: '#c05046' });
+            addModuleAt(store, milsKindForSize(width, depth), { width, depth }, undefined, { name: name || 'Ride', color: '#c05046' });
           }}
         />
       )}

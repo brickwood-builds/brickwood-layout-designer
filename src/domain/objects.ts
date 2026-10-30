@@ -155,3 +155,27 @@ export function splitWarnings(p: Project, warnings: LayoutWarning[]) {
     acknowledged: warnings.filter((w) => keys.has(warningKey(w))),
   };
 }
+
+// ---------- Items riding along with modules ----------
+
+/**
+ * Markers and small items sitting on a module that is being moved go with it: if the
+ * balloon-pop game moves, its markers move too. An item belongs to the module under its
+ * centre. Items on locked or hidden layers, or already in `ids`, are left alone.
+ */
+export function withCarriedItems(p: Project, ids: Iterable<string>): string[] {
+  const set = new Set(ids);
+  const moving = p.modules.filter((m) => set.has(m.id));
+  if (moving.length === 0) return [...set];
+  const editable = new Set(p.layers.filter((l) => l.visible && !l.locked).map((l) => l.id));
+  const rects = moving.map((m) => ({ levelId: m.levelId, r: footprint(m) }));
+  for (const o of p.objects) {
+    if (set.has(o.id) || o.type === 'footprint' || !editable.has(o.layerId)) continue;
+    const f = footprint(o);
+    const cx = f.x + f.width / 2;
+    const cy = f.y + f.depth / 2;
+    if (rects.some(({ levelId, r }) => levelId === o.levelId && cx > r.x && cx < r.x + r.width && cy > r.y && cy < r.y + r.depth)) set.add(o.id);
+  }
+  return [...set];
+}
+

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useStore } from 'zustand';
 import { addLevel, canDeleteLevel, deleteLevel, setLevelTable, updateLevel } from '../domain/edits';
 import { duplicateProject } from '../domain/project';
-import type { Project } from '../domain/schema';
+import { isBase, type Project } from '../domain/schema';
 import { studsToInches, inchesToStuds, formatLength } from '../domain/units';
 import { checkLayout } from '../domain/validation';
 import { acknowledge, canAcknowledge, splitWarnings, unacknowledge, warningKey } from '../domain/objects';
@@ -352,9 +352,12 @@ function StatusBar({ store }: { store: EditorStore }) {
   const [showAck, setShowAck] = useState(false);
   const unit = project.settings.displayUnit;
   const counts = useMemo(() => {
-    const mods = project.modules.filter((m) => m.levelId === levelId).length;
-    const objs = project.objects.filter((o) => o.levelId === levelId).length;
-    return `${mods} module${mods === 1 ? '' : 's'}${objs ? ` · ${objs} ride${objs === 1 ? '' : 's'} & items` : ''}`;
+    const onLevel = project.modules.filter((m) => m.levelId === levelId);
+    const mods = onLevel.filter((m) => !isBase(m)).length;
+    const bases = onLevel.filter(isBase).length + project.objects.filter((o) => o.levelId === levelId && o.type === 'footprint').length;
+    const items = project.objects.filter((o) => o.levelId === levelId && o.type !== 'footprint').length;
+    const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
+    return [plural(mods, 'module'), bases ? `${bases} rides & buildings` : '', items ? plural(items, 'item') : ''].filter(Boolean).join(' · ');
   }, [project, levelId]);
 
   const show = (ids: string[]) => {

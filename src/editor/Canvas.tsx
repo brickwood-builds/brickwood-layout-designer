@@ -9,7 +9,7 @@ import { SpatialIndex } from '../domain/spatial';
 import { MILS_COLORS, moduleDisplayName, type Project } from '../domain/schema';
 import { STUDS_PER_INCH, formatLength, type DisplayUnit } from '../domain/units';
 import { dimensionLength } from '../domain/edits';
-import { expandToGroups } from '../domain/objects';
+import { expandToGroups, withCarriedItems } from '../domain/objects';
 import { fitToLevel, isEditable } from './actions';
 import type { EditorStore } from './store';
 import { gridStep, toScreen, toWorld, zoomAt, type View } from './view';
@@ -176,7 +176,8 @@ export function Canvas({ store }: { store: EditorStore }) {
         else if (e.altKey || !sel.includes(hit.id)) sel = unit;
         s.select(sel);
         if (sel.includes(hit.id)) {
-          gesture.current = { type: 'move', ids: sel, sx: p.x, sy: p.y, anchor: { x: hit.x, y: hit.y }, moved: false, touch };
+          // Markers sitting on a moved module come along.
+          gesture.current = { type: 'move', ids: withCarriedItems(s.project, sel), sx: p.x, sy: p.y, anchor: { x: hit.x, y: hit.y }, moved: false, touch };
         }
         return;
       }

@@ -21,7 +21,7 @@ test('first run shows both starter displays with overhead previews', async ({ pa
   await expect(card(page, PARK)).toContainText('92 modules');
   await expect(card(page, PARK)).toContainText('15 ft 6 in × 3 ft 6 in table');
   await expect(card(page, KINGDOM)).toContainText('8 ft × 3 ft 6 in table');
-  await expect(card(page, PARK).locator('svg rect.pv-module')).toHaveCount(92);
+  await expect(card(page, PARK).locator('svg rect.pv-module')).toHaveCount(92 + 16);
 });
 
 test('open a project in the editor and survive a browser reload', async ({ page }) => {
@@ -63,7 +63,7 @@ test('new project from a starter copies the Kingdom layout', async ({ page }) =>
   await page.getByRole('textbox', { name: 'Name' }).fill('Kingdom 2027');
   await page.getByRole('radio', { name: KINGDOM }).check();
   await page.getByRole('button', { name: 'Create' }).click();
-  await expect(card(page, 'Kingdom 2027')).toContainText('39 modules');
+  await expect(card(page, 'Kingdom 2027')).toContainText('25 modules · 14 rides & buildings');
 });
 
 test('export, re-import as copy, and reject an invalid file', async ({ page }, testInfo) => {
@@ -76,7 +76,7 @@ test('export, re-import as copy, and reject an invalid file', async ({ page }, t
 
   await page.getByTestId('import-input').setInputFiles(exported);
   await expect(page.getByRole('status')).toContainText('imported as a copy');
-  await expect(card(page, `${KINGDOM} (imported)`)).toContainText('39 modules');
+  await expect(card(page, `${KINGDOM} (imported)`)).toContainText('25 modules · 14 rides & buildings');
 
   const bad = testInfo.outputPath('bad.json');
   writeFileSync(bad, '{"format":"brickwood-layout-project","formatVersion":1,"project":{"schemaVersion":1}}');
@@ -92,7 +92,7 @@ test('checkpoint preview and restore', async ({ page }) => {
   await cardAction(page, 'Oops wrong name', 'Checkpoints…');
   const dialog = page.getByRole('dialog');
   await dialog.getByText('Automatic checkpoint').locator('..').getByRole('button').click();
-  await expect(dialog.locator('svg rect.pv-module')).toHaveCount(92);
+  await expect(dialog.locator('svg rect.pv-module')).toHaveCount(92 + 16);
   await dialog.getByRole('button', { name: 'Restore this version' }).click();
   await expect(card(page, PARK)).toBeVisible();
   await expect(card(page, 'Oops wrong name')).toHaveCount(0);

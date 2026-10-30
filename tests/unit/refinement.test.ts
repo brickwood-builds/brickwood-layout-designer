@@ -88,10 +88,10 @@ describe('drag check matches the full layout check', () => {
 describe('overhead SVG', () => {
   it('draws every module and ride, escapes text, and includes dimensions when labelled', () => {
     const p = park();
-    p.objects[0]!.name = 'Rides & <Slides>';
+    p.modules.find((m) => m.name === 'Giant Slides')!.name = 'Rides & <Slides>';
     const { project: q } = addDimension(p, { levelId: p.levels[0]!.id, x1: 0, y1: 0, x2: 32, y2: 0, label: 'Gap' });
     const thumb = overheadSvg(q);
-    expect(thumb.match(/class="pv-module"/g)).toHaveLength(92);
+    expect(thumb.match(/class="pv-module"/g)).toHaveLength(92 + 16); // plates + ride bases
     expect(thumb).not.toContain('<text');
     const full = overheadSvg(q, { labels: true, standalone: true, pixelsPerStud: 6 });
     expect(full).toContain('Rides &amp; &lt;Slides&gt;');
@@ -104,9 +104,10 @@ describe('overhead SVG', () => {
 
   it('hidden layers are left out', () => {
     const p = park();
-    const rides = p.layers.find((l) => l.name.startsWith('Rides'))!;
-    const hidden = updateLayer(p, rides.id, { visible: false });
-    expect(overheadSvg(hidden).match(/pv-footprint/g)).toBeNull();
+    const items = p.layers.find((l) => l.name.startsWith('Markers'))!;
+    expect(overheadSvg(p).match(/pv-item/g)).toHaveLength(1); // the 2x10
+    const hidden = updateLayer(p, items.id, { visible: false });
+    expect(overheadSvg(hidden).match(/pv-item/g)).toBeNull();
     expect(allItems(hidden).length).toBe(allItems(p).length);
   });
 });
