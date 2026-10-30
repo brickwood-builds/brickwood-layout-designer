@@ -24,12 +24,12 @@ test('first run shows both starter displays with overhead previews', async ({ pa
   await expect(card(page, PARK).locator('svg rect.pv-module')).toHaveCount(92);
 });
 
-test('open a project, see labelled modules, and survive a browser reload', async ({ page }) => {
+test('open a project in the editor and survive a browser reload', async ({ page }) => {
   await card(page, PARK).getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page.getByRole('heading', { name: PARK })).toBeVisible();
-  await expect(page.locator('svg text', { hasText: 'C-10' })).toHaveCount(1);
-  await expect(page.locator('svg text', { hasText: 'Ferris Wheel' })).toHaveCount(1);
-  await expect(page.getByText('No layout warnings')).toBeVisible();
+  await expect(page.getByTestId('canvas').locator('canvas').first()).toBeVisible();
+  await expect(page.getByText('92 modules')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('heading', { name: PARK })).toBeVisible();
   await page.getByRole('button', { name: '← Projects' }).click();

@@ -47,6 +47,8 @@ export interface StarterSpec {
   table: { name: string; widthIn: number; depthIn: number; notes: string };
   /** Retired MILS labels that must never be reused. */
   retiredLabels: string[];
+  /** An earlier drawing of the same display: its plates not in this layout are recorded as stored. */
+  previousDisplay?: string;
   /** Where the layout sits along the table: centred, or at the left end (built left to right). */
   align?: 'center' | 'left';
   /** Visio page size; shapes entirely off the page (leftovers) are left out. */
@@ -112,6 +114,18 @@ function classify(row: VisioRow, notes: ImportNote[]): Classified | null {
   if (row.fill === ATTRACTION_FILL) return { kind: 'footprint', name: cleanName(row.label), row };
   notes.push({ label: row.label, message: 'Unfilled shape imported as a generic item.' });
   return { kind: 'item', name: cleanName(row.label), row };
+}
+
+/** Plate IDs in the previous drawing that the current layout no longer uses. */
+function storedFrom(spec: StarterSpec, allRows: VisioRow[], placed: MilsModule[]): string[] {
+  if (!spec.previousDisplay) return [];
+  const inLayout = new Set(placed.map((m) => m.label));
+  const scratch: ImportNote[] = [];
+  const labels = allRows
+    .filter((r) => r.display === spec.previousDisplay)
+    .map((r) => classify(r, scratch))
+    .flatMap((c) => (c?.kind === 'module' && c.label ? [c.label] : []));
+  return [...new Set(labels)].filter((l) => !inLayout.has(l)).sort();
 }
 
 export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], createdAt: string): StarterResult {
@@ -240,6 +254,7 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     objects,
     groups: [],
     retiredLabels: spec.retiredLabels,
+    storedLabels: storedFrom(spec, allRows, modules),
   };
   return { project, notes };
 }

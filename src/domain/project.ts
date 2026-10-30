@@ -62,6 +62,7 @@ export function createProject(opts: NewProjectOptions): Project {
     objects: [],
     groups: [],
     retiredLabels: [],
+    storedLabels: [],
   };
 }
 

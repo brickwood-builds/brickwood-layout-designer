@@ -18,6 +18,7 @@ export const STARTER_SPECS: StarterSpec[] = [
     },
     align: 'left',
     pageIn: { width: 138, height: 42 },
+    previousDisplay: 'AdventurePark_BaseplatesLayout_v5',
     retiredLabels: ['B-24', 'B-25', 'B-26', 'B-27'],
     power: {
       'Loop Coaster': 4.5,

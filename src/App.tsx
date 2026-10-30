@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Dashboard } from './ui/Dashboard';
-import { ProjectView } from './ui/ProjectView';
+import { Editor } from './editor/Editor';
 import { openDb } from './storage/db';
 import { ProjectRepository } from './storage/repository';
 import { starterProjects } from './starters';
@@ -33,7 +33,7 @@ export function App() {
   if (error) return <p className="banner error" role="alert">{error}</p>;
   if (!ready) return null;
   return openId ? (
-    <ProjectView repo={repo} id={openId} onBack={() => (window.location.hash = '')} />
+    <Editor key={openId} repo={repo} id={openId} onBack={() => (window.location.hash = '')} />
   ) : (
     <Dashboard repo={repo} onOpen={(id) => (window.location.hash = `#/project/${id}`)} />
   );

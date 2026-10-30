@@ -137,6 +137,11 @@ export const ProjectSchema = z.object({
   groups: z.array(GroupSchema),
   /** MILS labels that have been retired and must never be reused (e.g. B-24..B-27). */
   retiredLabels: z.array(z.string()),
+  /**
+   * IDs of plates that exist but are not in this layout (in storage, or removed from it).
+   * New modules never get these automatically; typing one in puts that plate back.
+   */
+  storedLabels: z.array(z.string()).default([]),
 });
 
 export type Level = z.infer<typeof LevelSchema>;

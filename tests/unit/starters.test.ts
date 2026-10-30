@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { starterProjects } from '../../src/starters';
-import { checkLayout } from '../../src/domain/geometry';
+import { checkLayout } from '../../src/domain/validation';
 import { ProjectSchema } from '../../src/domain/schema';
 import { projectStats } from '../../src/domain/project';
 import { studsToInches } from '../../src/domain/units';

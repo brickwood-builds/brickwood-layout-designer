@@ -3,9 +3,9 @@
 Browser-based overhead layout designer for Brickwood Builds LEGO exhibition displays.
 It replaces the Visio drawings first, then grows into planning, packing and setup.
 
-**Status: Milestone 1A (foundation).** Projects, local storage, export/import,
-recovery checkpoints and both starter displays work. The drag-and-drop MILS editor is
-Milestone 1B. See [docs/milestone-1a-report.md](docs/milestone-1a-report.md).
+**Status: Milestone 1B (MILS editor).** Projects, local storage, export/import,
+recovery checkpoints, both starter displays and the drag-and-drop MILS editor work.
+See [docs/milestone-1a-report.md](docs/milestone-1a-report.md) and [docs/milestone-1b-report.md](docs/milestone-1b-report.md).
 
 ## Run it
 
@@ -38,6 +38,7 @@ CI runs all of these on every push (`.github/workflows/ci.yml`).
 
 ```
 src/domain/    Renderer-independent model: Zod schema, units, geometry, migrations, export format
+src/editor/    Editor: Konva canvas, pointer/touch input, Zustand store, autosave, panels
 src/storage/   Dexie (IndexedDB) database and the ProjectRepository (all writes are transactions)
 src/starters/  Visio CSV -> starter projects (Adventure Park, Kingdom Village)
 scripts/       vsdx_to_csv.py: export a Visio page to rows for docs/brickwood-visio-layouts.csv

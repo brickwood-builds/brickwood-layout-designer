@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createProject, duplicateProject } from '../../src/domain/project';
 import { migrateProject, ProjectFormatError } from '../../src/domain/migrations';
-import { checkLayout, footprint, rectsOverlap, snap } from '../../src/domain/geometry';
+import { footprint, rectsOverlap, snap } from '../../src/domain/geometry';
+import { checkLayout } from '../../src/domain/validation';
 import { formatFeetInches, inchesToStuds, studsToInches } from '../../src/domain/units';
 import { stableId } from '../../src/domain/stableId';
 import { newId } from '../../src/domain/ids';
@@ -123,7 +124,7 @@ describe('geometry', () => {
     p.retiredLabels = ['B-24'];
     const before = structuredClone(p);
     const kinds = checkLayout(p).map((w) => w.kind).sort();
-    expect(kinds).toEqual(['duplicateLabel', 'moduleOverlap', 'overhang', 'overhang', 'retiredLabel']);
+    expect(kinds).toEqual(['duplicateLabel', 'overhang', 'overhang', 'overlap', 'retiredLabel']);
     expect(checkLayout(p).find((w) => w.kind === 'overhang')!.message).toMatch(/Table/);
     expect(p).toEqual(before);
   });
