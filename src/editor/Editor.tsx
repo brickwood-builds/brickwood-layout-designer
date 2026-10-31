@@ -28,7 +28,7 @@ import { Canvas } from './Canvas';
 import { Properties } from './Panels';
 import { Palette } from './Palette';
 import { LayersMenu } from './LayersMenu';
-import { HeightFilter, OptionsMenu } from './OptionsMenu';
+import { HeightFilter, HeightShadingToggle, OptionsMenu } from './OptionsMenu';
 import { computeStack } from '../domain/heights';
 import { HelpButton } from '../help/HelpDialog';
 import { createEditorStore, type EditorStore } from './store';
@@ -492,6 +492,7 @@ function StatusBar({ store, file }: { store: EditorStore; file: ReactNode }) {
       </label>
       {file}
       {project.features.heights && <HeightFilter store={store} maxTop={maxTop} />}
+      {project.features.heights && <HeightShadingToggle store={store} maxTop={maxTop} />}
       <span className="spacer" />
       <div className="warnings">
         <button

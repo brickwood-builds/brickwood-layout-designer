@@ -1,7 +1,7 @@
 // What the Draw tool paints with: a single piece from the catalog, or this project's own
 // pieces, small items and markers.
 import { STARTER_PARTS } from '../domain/catalog';
-import type { PaintTemplate } from '../domain/brush';
+import type { PaintTemplate, WhenTaken } from '../domain/brush';
 import type { Project } from '../domain/schema';
 
 export interface DrawSettings {
@@ -12,9 +12,11 @@ export interface DrawSettings {
   width: number;
   shape: 'free' | 'line' | 'box';
   erase: boolean;
+  /** Over existing pieces: skip (walkways) or stack on top (slopes, hills). */
+  whenTaken: WhenTaken;
 }
 
-export const DEFAULT_DRAW: DrawSettings = { source: 'part:round-1x1', color: STARTER_PARTS.find((p) => p.key === 'round-1x1')!.color, width: 2, shape: 'free', erase: false };
+export const DEFAULT_DRAW: DrawSettings = { source: 'part:round-1x1', color: STARTER_PARTS.find((p) => p.key === 'round-1x1')!.color, width: 2, shape: 'free', erase: false, whenTaken: 'skip' };
 
 export interface DrawSource {
   key: string;

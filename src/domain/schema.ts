@@ -174,6 +174,8 @@ export const SettingsSchema = z.object({
   showLabels: z.boolean(),
   /** 'size' colours modules by plate size (planning); 'plate' uses each plate's real colour. */
   moduleColors: z.enum(['size', 'plate']).default('size'),
+  /** Heights: colour things by how high they are, to read slopes from above. */
+  heightShading: z.boolean().default(false),
 });
 
 /** Advanced areas stay hidden until the user switches them on. */

@@ -6,7 +6,7 @@ import { footprint, snap, unionRect, type Rect as R } from '../domain/geometry';
 import { allItems, isModule, moveItems, type Item } from '../domain/edits';
 import { makeDragChecker } from './dragCheck';
 import { drawOrder, itemAt } from '../domain/hit';
-import { computeStack } from '../domain/heights';
+import { computeStack, heightColor, type StackInfo } from '../domain/heights';
 import { SpatialIndex } from '../domain/spatial';
 import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
 import { DEFAULT_PLATE_COLOR } from '../domain/legoColors';
@@ -118,6 +118,12 @@ export function Canvas({ store }: { store: EditorStore }) {
   // Labels only re-render when zoom crosses one of these steps (not on every wheel tick).
   const labelZoom = Math.pow(2, Math.round(Math.log2(view.scale) * 4) / 4);
   const showLabels = project.settings.showLabels;
+  const shading = useMemo(() => {
+    if (!project.features.heights || !project.settings.heightShading) return null;
+    const stack = computeStack(project, level.id);
+    const max = Math.max(0, ...[...stack.values()].map((i) => i.top));
+    return { stack, max };
+  }, [project, level.id]);
   const plateColors = project.settings.moduleColors === 'plate';
   // Studs appear once they are big enough to aim at.
   const studsVisible = view.scale >= STUD_MIN_PX;
@@ -363,6 +369,7 @@ export function Canvas({ store }: { store: EditorStore }) {
               <Grid view={view} viewport={viewport} />
               <Items items={baseItems} dx={0} dy={0} selected={selectedSet} problems={EMPTY} editable={editable} plateColors={plateColors} />
               {studsVisible && <Studs items={baseItems} view={view} viewport={viewport} />}
+              {shading && <HeightShading items={baseItems} stack={shading.stack} max={shading.max} />}
               {showLabels && <Labels items={baseItems} dx={0} dy={0} zoom={labelZoom} />}
             </Group>
           </Layer>
@@ -749,4 +756,30 @@ function StrokePreview({ cells, store }: { cells: Cell[]; store: EditorStore }) 
     />
   );
 }
+
+/** Heights: tint everything by how high its top is (a relief map, read from above). */
+const HeightShading = memo(function HeightShading({ items, stack, max }: { items: Item[]; stack: Map<string, StackInfo>; max: number }) {
+  return (
+    <Shape
+      listening={false}
+      perfectDrawEnabled={false}
+      sceneFunc={(ctx) => {
+        const c = ctx._context;
+        c.globalAlpha = 0.6;
+        for (const i of items) {
+          const info = stack.get(i.id);
+          if (!info || info.top <= 0) continue;
+          c.fillStyle = heightColor(info.top, max);
+          const r = footprint(i);
+          if (!isModule(i) && i.round) {
+            c.beginPath();
+            c.ellipse(r.x + r.width / 2, r.y + r.depth / 2, r.width / 2, r.depth / 2, 0, 0, Math.PI * 2);
+            c.fill();
+          } else c.fillRect(r.x, r.y, r.width, r.depth);
+        }
+        c.globalAlpha = 1;
+      }}
+    />
+  );
+});
 

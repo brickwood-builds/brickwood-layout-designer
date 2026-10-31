@@ -2,7 +2,7 @@ import { newId, nowIso } from './ids';
 import { inchesToStuds } from './units';
 import { SCHEMA_VERSION, isBase, type Features, type Project, type Settings } from './schema';
 
-export const DEFAULT_SETTINGS: Settings = { displayUnit: 'in', snap: 'full', showGrid: true, showLabels: true, moduleColors: 'size' };
+export const DEFAULT_SETTINGS: Settings = { displayUnit: 'in', snap: 'full', showGrid: true, showLabels: true, moduleColors: 'size', heightShading: false };
 
 export const DEFAULT_FEATURES: Features = {
   heights: false,

@@ -69,3 +69,26 @@ describe('painting', () => {
     ]);
   });
 });
+
+describe('building a slope by stacking plates', () => {
+  it('“stack on top” builds layers; heights rise one plate per layer', async () => {
+    const { computeStack, heightColor } = await import('../../src/domain/heights');
+    const p0 = createProject({ name: 'Hill', table: { widthIn: 30, depthIn: 20 } });
+    const level = p0.levels[0]!.id;
+    const layer = p0.layers.find((l) => l.name === 'Surface details')!.id;
+    const plate2x2: PaintTemplate = { type: 'piece', name: 'Plate 2×2', width: 2, depth: 2, color: lego('Green'), catalogKey: 'plate-2x2' };
+    const b2 = { cellW: 2, cellD: 2, width: 2 };
+    let p = paintCells(p0, level, layer, plate2x2, cellsForBox({ x: 0, y: 0 }, { x: 12, y: 12 }, b2), 'stack').project; // 6×6 = 36
+    p = paintCells(p, level, layer, plate2x2, cellsForBox({ x: 4, y: 4 }, { x: 8, y: 8 }, b2), 'stack').project; // 2×2 = 4
+    p = paintCells(p, level, layer, plate2x2, cellsForBox({ x: 4, y: 4 }, { x: 6, y: 6 }, b2), 'stack').project; // 1
+    expect(p.objects).toHaveLength(41);
+    const tops = [...computeStack(p, level).values()].map((i) => i.top);
+    expect(Math.max(...tops)).toBe(3);
+    expect(tops.filter((t) => t === 2)).toHaveLength(4);
+    // "Leave it" over the same area adds nothing.
+    expect(paintCells(p, level, layer, plate2x2, cellsForBox({ x: 0, y: 0 }, { x: 12, y: 12 }, b2), 'skip').ids).toEqual([]);
+    // Shading goes from green (low) to grey-white (top).
+    expect(heightColor(0, 3)).toBe('rgb(58, 125, 68)');
+    expect(heightColor(3, 3)).toBe('rgb(232, 232, 232)');
+  });
+});

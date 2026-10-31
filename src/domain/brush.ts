@@ -81,12 +81,17 @@ export interface PaintTemplate {
   markerKind?: string;
 }
 
+/** What to do where something is already on the layer: skip it, or stack on top (terrain). */
+export type WhenTaken = 'skip' | 'stack';
+
 /**
- * Place one piece in each cell. Cells already taken by something on the same layer are
- * skipped, so painting over a walkway never doubles it up.
+ * Place one piece in each cell. By default cells already taken on the same layer are
+ * skipped, so painting over a walkway never doubles it up; with 'stack' the new pieces go
+ * on top (with Heights on they sit one layer higher), for building up slopes and hills.
+ * Within one stroke a cell is only ever used once.
  */
-export function paintCells(project: Project, levelId: string, layerId: string, template: PaintTemplate, cells: Cell[]): { project: Project; ids: string[] } {
-  const taken = new SpatialIndex(project.objects.filter((o) => o.levelId === levelId && o.layerId === layerId));
+export function paintCells(project: Project, levelId: string, layerId: string, template: PaintTemplate, cells: Cell[], whenTaken: WhenTaken = 'skip'): { project: Project; ids: string[] } {
+  const taken = new SpatialIndex(whenTaken === 'skip' ? project.objects.filter((o) => o.levelId === levelId && o.layerId === layerId) : []);
   const added: CanvasObject[] = [];
   for (const c of cells) {
     const r: Rect = { x: c.x, y: c.y, width: template.width, depth: template.depth };

@@ -82,12 +82,24 @@ export function DrawPanel({ store }: { store: EditorStore }) {
           ))}
         </div>
       </div>
+      <div className="field">
+        <span>Where something is already there</span>
+        <div className="seg" role="group" aria-label="Where something is already there">
+          <button type="button" aria-pressed={draw.whenTaken === 'skip'} onClick={() => set({ whenTaken: 'skip' })} title="Leave it — painting over a walkway never doubles it up">
+            Leave it
+          </button>
+          <button type="button" aria-pressed={draw.whenTaken === 'stack'} onClick={() => set({ whenTaken: 'stack' })} title="Stack on top — build up a slope or hill layer by layer">
+            Stack on top
+          </button>
+        </div>
+      </div>
       <label className="check">
         <input type="checkbox" checked={draw.erase} onChange={(e) => set({ erase: e.target.checked })} />
         Erase instead (removes things on this layer under the brush)
       </label>
       <p className="muted small">
-        Draws on layer <strong>{layer?.name}</strong> — change it in Layers (“New items”). Painting over what’s already there doesn’t double it up.
+        Draws on layer <strong>{layer?.name}</strong> — change it in Layers (“New items”).{' '}
+        {draw.whenTaken === 'stack' ? 'Painting over what’s there adds a layer on top.' : 'Painting over what’s already there doesn’t double it up.'}
       </p>
     </aside>
   );

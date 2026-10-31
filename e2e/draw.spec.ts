@@ -119,3 +119,32 @@ test('single pieces: search the built-in parts; a made-up tile is smooth', async
   expect(objs.find((o) => o.name === 'Tile 1×6')).toMatchObject({ catalogKey: 'tile-1x6' });
   expect(objs.find((o) => o.name === 'Tile 1×10')).toMatchObject({ smooth: true });
 });
+
+test('build a small hill by stacking plates, then shade by height', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop');
+  await page.goto('/');
+  await page.getByRole('article', { name: 'Development', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
+  await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
+  await page.getByRole('button', { name: 'More tools' }).click();
+  await page.getByLabel('Heights').check();
+  await page.getByRole('button', { name: 'More tools' }).click();
+  await page.keyboard.press('b');
+  await page.getByLabel('Draw with').selectOption('part:plate-2x2');
+  await page.getByRole('button', { name: 'Fill box' }).click();
+  await page.getByRole('button', { name: 'Stack on top' }).click();
+  const box = async (x0: number, y0: number, x1: number, y1: number) => {
+    const a = await at(page, x0, y0);
+    const b = await at(page, x1, y1);
+    await page.mouse.move(a.x, a.y);
+    await page.mouse.down();
+    await page.mouse.move(b.x, b.y, { steps: 4 });
+    await page.mouse.up();
+  };
+  await box(40.5, 40.5, 59.5, 59.5); // 10×10 plates
+  await box(44.5, 44.5, 55.5, 55.5); // 6×6 on top
+  await box(48.5, 48.5, 51.5, 51.5); // 2×2 on top
+  const n = (await st(page)).project.objects.filter((o) => o.name === 'Plate 2×2').length;
+  expect(n).toBe(100 + 36 + 4);
+  await page.getByLabel('Shade by height').check();
+  await expect(page.getByLabel(/Key: low \(0\) to high \(3 plates\)/)).toBeVisible();
+});

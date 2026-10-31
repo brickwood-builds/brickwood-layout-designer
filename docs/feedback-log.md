@@ -41,3 +41,9 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 | 1 | I use 1×1 round plates for walkways | Draw tool (2B) built around it; Plate Round 1×1 added | Done |
 | 2 | Clearance zones and reusable designs before terrain | Order changed: 2C clearance zones, 2D reusable designs, then terrain | Planned → in progress |
 | 3 | Put on the roadmap: choose single pieces from actual parts (plate vs tile both showed studs); don't want to recreate each part | Written into `docs/roadmap.md` as Phase 3. Now: about 60 real common pieces built in and searchable; tiles smooth; "New piece…" has "Smooth top (tile)" | Partly done now; full catalog Phase 3 |
+
+## 31 Oct 2026, round 4
+
+| # | Request / answer | What was done | Status |
+|---|---|---|---|
+| 1 | Mountains will be features built on their MILS plate; gradual slopes and elevation changes are stacked plates/parts | No separate terrain system. Draw tool "Stack on top" builds slopes layer by layer; "Shade by height" shows them like a relief map (needs Heights on) | Done |

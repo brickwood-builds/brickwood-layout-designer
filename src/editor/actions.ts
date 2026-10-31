@@ -167,7 +167,7 @@ export function finishStroke(store: EditorStore, cells: Cell[]) {
   }
   let ids: string[] = [];
   s.commit((p) => {
-    const r = paintCells(p, s.levelId, layerId, template, cells);
+    const r = paintCells(p, s.levelId, layerId, template, cells, s.draw.whenTaken);
     ids = r.ids;
     return r.project;
   });

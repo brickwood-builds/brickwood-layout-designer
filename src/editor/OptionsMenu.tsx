@@ -3,6 +3,7 @@ import { useKeepInView } from '../ui/useKeepInView';
 import { useStore } from 'zustand';
 import type { Features } from '../domain/schema';
 import type { EditorStore } from './store';
+import { HEIGHT_RAMP_CSS } from '../domain/heights';
 
 /** Advanced areas stay hidden until switched on here (owner rule: the app must feel basic). */
 const OPTIONS: { key: keyof Features; label: string; hint: string }[] = [
@@ -61,6 +62,28 @@ export function HeightFilter({ store, maxTop }: { store: EditorStore; maxTop: nu
         aria-label="Show things that sit below this height"
       />
       <span className="muted">{limit === null ? 'all' : `${limit} plates`}</span>
+    </label>
+  );
+}
+
+/** Heights: shade by height, with a low-to-high key. */
+export function HeightShadingToggle({ store, maxTop }: { store: EditorStore; maxTop: number }) {
+  const on = useStore(store, (s) => s.project.settings.heightShading);
+  return (
+    <label className="check height-shading" title="Colour things by how high they are, to read slopes and hills from above">
+      <input
+        type="checkbox"
+        checked={on}
+        onChange={(e) => store.getState().commit((p) => ({ ...p, settings: { ...p.settings, heightShading: e.target.checked } }))}
+      />
+      Shade by height
+      {on && (
+        <span className="ramp" aria-label={`Key: low (0) to high (${Math.round(maxTop)} plates)`}>
+          <span className="muted small">0</span>
+          <i style={{ background: HEIGHT_RAMP_CSS }} />
+          <span className="muted small">{Math.round(maxTop)}</span>
+        </span>
+      )}
     </label>
   );
 }

@@ -153,3 +153,26 @@ export function clearanceProblems(project: Project): ClearanceProblem[] {
   }
   return out;
 }
+
+// Low ground green, then tan and brown, to grey-white at the top (like a relief map).
+const RAMP: [number, [number, number, number]][] = [
+  [0, [58, 125, 68]],
+  [0.35, [216, 192, 138]],
+  [0.7, [139, 90, 43]],
+  [1, [232, 232, 232]],
+];
+
+/** Colour for a height, from the bottom (0) to the highest point (max). */
+export function heightColor(top: number, max: number): string {
+  const t = max > 0 ? Math.min(1, Math.max(0, top / max)) : 0;
+  let i = 0;
+  while (i < RAMP.length - 2 && t > RAMP[i + 1]![0]) i++;
+  const [t0, a] = RAMP[i]!;
+  const [t1, b] = RAMP[i + 1]!;
+  const f = (t - t0) / (t1 - t0 || 1);
+  const c = a.map((v, k) => Math.round(v + (b[k]! - v) * f));
+  return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+}
+
+export const HEIGHT_RAMP_CSS = `linear-gradient(to right, ${RAMP.map(([t, c]) => `rgb(${c.join(',')}) ${t * 100}%`).join(', ')})`;
+
