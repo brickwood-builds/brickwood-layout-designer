@@ -15,11 +15,13 @@ import { hasZone, zoneRect } from '../domain/zones';
 import { STUDS_PER_INCH, formatLength, type DisplayUnit } from '../domain/units';
 import { dimensionLength } from '../domain/edits';
 import { expandToGroups, withCarriedItems } from '../domain/objects';
-import { finishCurve, finishStroke, fitToLevel, isEditable, reshapeCurveTo } from './actions';
+import { finishCurve, finishStamp, finishStroke, fitToLevel, isEditable, itemLayerId, reshapePathTo, stairSpec } from './actions';
+import { stairUnits, type StairUnit } from '../domain/stairs';
+import { planStamps, spotsAlongPath, spotsInBox, type StampPlan, type StampSpot } from '../domain/stamps';
 import { currentPoints, splinePoints } from '../domain/curves';
 import type { EditorState } from './store';
 import { cellsForBox, cellsForLine, cellsForPath, type Cell } from '../domain/brush';
-import { paintTemplate } from './drawTool';
+import { isStamping, paintTemplate, stampSource, stampSpacing } from './drawTool';
 import type { EditorStore } from './store';
 import { gridStep, toScreen, toWorld, zoomAt, type View } from './view';
 
@@ -37,18 +39,20 @@ type Gesture =
   /** Draw › Curve: a tap/click adds a point; dragging pans instead. */
   | { type: 'curvePoint'; sx: number; sy: number; startView: View; panning: boolean }
   /** Dragging one of a curve's handles. */
-  | { type: 'handle'; curveId: string; index: number; points: { x: number; y: number }[]; moved: boolean };
+  | { type: 'handle'; pathId: string; index: number; points: { x: number; y: number }[]; moved: boolean };
 
 const HANDLE_PX = 14;
 
-/** The curve whose handles are showing: being edited, still on this level, and selected. */
-function editableCurve(s: EditorState) {
-  if (!s.editingCurve || s.mode !== 'select') return null;
-  const curve = s.project.curves.find((c) => c.id === s.editingCurve);
-  const group = curve && s.project.groups.find((g) => g.id === curve.groupId);
-  if (!curve || !group || curve.levelId !== s.levelId || !group.memberIds.every((id) => s.selection.includes(id))) return null;
-  const points = currentPoints(s.project, curve);
-  return points ? { curve, points } : null;
+/** The curve or stairs whose handles are showing: being edited, still on this level, and selected. */
+function editablePath(s: EditorState) {
+  if (!s.editingPath || s.mode !== 'select') return null;
+  const curve = s.project.curves.find((c) => c.id === s.editingPath);
+  const stairs = curve ? undefined : s.project.stairs.find((c) => c.id === s.editingPath);
+  const rec = curve ?? stairs;
+  const group = rec && s.project.groups.find((g) => g.id === rec.groupId);
+  if (!rec || !group || rec.levelId !== s.levelId || !group.memberIds.every((id) => s.selection.includes(id))) return null;
+  const points = currentPoints(s.project, rec);
+  return points ? { id: rec.id, curve, stairs, points } : null;
 }
 
 /** Font size (studs) that keeps a one-line label inside its rectangle. */
@@ -69,7 +73,7 @@ export function Canvas({ store }: { store: EditorStore }) {
   const heightLimit = useStore(store, (s) => (s.project.features.heights ? s.heightLimit : null));
   const curveDraft = useStore(store, (s) => s.curveDraft);
   const drawShape = useStore(store, (s) => s.draw.shape);
-  const editing = useStore(store, editableCurveKey);
+  const editing = useStore(store, editablePathKey);
   /** Draw › Curve: where the pointer is, to preview the next point. */
   const [curveHover, setCurveHover] = useState<{ x: number; y: number } | null>(null);
   /** A curve handle being dragged: the curve's points as they would be. */
@@ -80,12 +84,14 @@ export function Canvas({ store }: { store: EditorStore }) {
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   /** Cells of the stroke being drawn (preview until the finger/mouse lifts). */
   const [stroke, setStroke] = useState<Cell[] | null>(null);
+  /** Stamps of the stroke being drawn (pattern stamping), red where they won't fit. */
+  const [stamps, setStamps] = useState<StampPlan[] | null>(null);
   const [spaceDown, setSpaceDown] = useState(false);
   const [cursor, setCursor] = useState('default');
   const spaceDownRef = useRef(false);
   // Leaving Draw › Curve drops an unfinished curve.
   useEffect(() => {
-    if (mode !== 'draw' || drawShape !== 'curve') store.getState().set({ curveDraft: null });
+    if (mode !== 'draw' || (drawShape !== 'curve' && drawShape !== 'stairs')) store.getState().set({ curveDraft: null });
   }, [mode, drawShape, store]);
   useEffect(() => {
     spaceDownRef.current = spaceDown;
@@ -201,13 +207,14 @@ export function Canvas({ store }: { store: EditorStore }) {
         endDrag(false);
         setMarquee(null);
         setStroke(null);
+        setStamps(null);
         const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
         gesture.current = { type: 'pinch', startView: s.view, dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
         return;
       }
       if (pointers.current.size > 2) return;
       const touch = e.pointerType === 'touch';
-      const ec = e.button === 0 && !spaceDownRef.current ? editableCurve(s) : null;
+      const ec = e.button === 0 && !spaceDownRef.current ? editablePath(s) : null;
       if (ec) {
         let best = -1;
         let bestD = (touch ? HANDLE_PX * 1.6 : HANDLE_PX);
@@ -220,18 +227,19 @@ export function Canvas({ store }: { store: EditorStore }) {
           }
         });
         if (best >= 0) {
-          gesture.current = { type: 'handle', curveId: ec.curve.id, index: best, points: ec.points.map((q) => ({ ...q })), moved: false };
+          gesture.current = { type: 'handle', pathId: ec.id, index: best, points: ec.points.map((q) => ({ ...q })), moved: false };
           return;
         }
       }
-      if (s.mode === 'draw' && s.draw.shape === 'curve' && e.button === 0 && !spaceDownRef.current) {
+      if (s.mode === 'draw' && (s.draw.shape === 'curve' || s.draw.shape === 'stairs') && e.button === 0 && !spaceDownRef.current) {
         gesture.current = { type: 'curvePoint', sx: p.x, sy: p.y, startView: s.view, panning: false };
         return;
       }
       if (s.mode === 'draw' && e.button === 0 && !spaceDownRef.current) {
         const w = toWorld(s.view, p.x, p.y);
         gesture.current = { type: 'draw', points: [w] };
-        setStroke(strokeCells(store, [w]));
+        if (isStamping(s.draw)) setStamps(strokeStamps(store, [w]));
+        else setStroke(strokeCells(store, [w]));
         return;
       }
       if (s.mode === 'measure' && e.button === 0 && !spaceDownRef.current) {
@@ -278,7 +286,7 @@ export function Canvas({ store }: { store: EditorStore }) {
         s.set({ pointer: w });
       }
       const g = gesture.current;
-      if (!g && s.mode === 'draw' && s.draw.shape === 'curve' && s.curveDraft?.length) setCurveHover(toWorld(s.view, p.x, p.y));
+      if (!g && s.mode === 'draw' && (s.draw.shape === 'curve' || s.draw.shape === 'stairs') && s.curveDraft?.length) setCurveHover(toWorld(s.view, p.x, p.y));
       if (!g) {
         if (e.pointerType === 'mouse') setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' ? 'crosshair' : hitTest(p) ? 'move' : 'default');
         return;
@@ -308,13 +316,15 @@ export function Canvas({ store }: { store: EditorStore }) {
         if (g.panning) s.setView({ ...g.startView, x: g.startView.x + p.x - g.sx, y: g.startView.y + p.y - g.sy });
       } else if (g.type === 'handle') {
         const w = toWorld(s.view, p.x, p.y);
-        const mode = s.project.settings.snap === 'free' ? 'free' : 'half';
+        // Stairs straighten onto whole studs anyway; curves may be finer.
+        const mode = s.project.stairs.some((x) => x.id === g.pathId) ? 'full' : s.project.settings.snap === 'free' ? 'free' : 'half';
         g.points[g.index] = { x: snap(w.x, mode), y: snap(w.y, mode) };
         g.moved = true;
         setHandleDrag([...g.points]);
       } else if (g.type === 'draw') {
         g.points.push(toWorld(s.view, p.x, p.y));
-        setStroke(strokeCells(store, g.points));
+        if (isStamping(s.draw)) setStamps(strokeStamps(store, g.points));
+        else setStroke(strokeCells(store, g.points));
       } else if (g.type === 'measure') {
         const w = toWorld(s.view, p.x, p.y);
         const mode = s.project.settings.snap;
@@ -353,12 +363,15 @@ export function Canvas({ store }: { store: EditorStore }) {
       }
       if (g.type === 'handle') {
         setHandleDrag(null);
-        if (!cancelled && g.moved) reshapeCurveTo(store, g.curveId, g.points);
+        if (!cancelled && g.moved) reshapePathTo(store, g.pathId, g.points);
         return;
       }
       if (g.type === 'draw') {
         setStroke(null);
-        if (!cancelled) finishStroke(store, strokeCells(store, g.points));
+        setStamps(null);
+        if (cancelled) return;
+        if (isStamping(s.draw)) finishStamp(store, strokeSpots(store, g.points));
+        else finishStroke(store, strokeCells(store, g.points));
         return;
       }
       if (g.type === 'measure') {
@@ -398,7 +411,7 @@ export function Canvas({ store }: { store: EditorStore }) {
     };
     const onDbl = () => {
       const s = store.getState();
-      if (s.mode === 'draw' && s.draw.shape === 'curve') finishCurve(store);
+      if (s.mode === 'draw' && (s.draw.shape === 'curve' || s.draw.shape === 'stairs')) finishCurve(store);
     };
     const onUpEvt = (e: PointerEvent) => onUp(e);
     const onCancel = (e: PointerEvent) => onUp(e, true);
@@ -497,6 +510,7 @@ export function Canvas({ store }: { store: EditorStore }) {
                 ))}
               {measure && <DimensionLine d={measure} scale={view.scale} unit={project.settings.displayUnit} live />}
               {stroke && <StrokePreview cells={stroke} store={store} />}
+              {stamps && <StampsPreview plan={stamps} store={store} />}
               {curveDraft && curveDraft.length > 0 && <CurveDraftPreview store={store} points={curveHover ? [...curveDraft, curveHover] : curveDraft} ctrl={curveDraft} scale={view.scale} />}
               {editing && <CurveHandles store={store} points={handleDrag ?? editing.points} scale={view.scale} dragging={!!handleDrag} />}
             </Group>
@@ -830,11 +844,28 @@ function strokeCells(store: EditorStore, points: { x: number; y: number }[]): Ce
   return cellsForPath(points, b);
 }
 
-/** Selector for the curve being edited; stable while nothing about it changes. */
-let lastEditing: { key: string; value: ReturnType<typeof editableCurve> } = { key: '', value: null };
-function editableCurveKey(s: EditorState) {
-  const ec = editableCurve(s);
-  const key = ec ? `${ec.curve.id}:${ec.points.map((q) => `${q.x},${q.y}`).join(';')}` : '';
+/** Where stamps go for the current stroke: along it, or in a grid for a box. */
+function strokeSpots(store: EditorStore, points: { x: number; y: number }[]): StampSpot[] {
+  const { project, draw } = store.getState();
+  const sp = stampSpacing(project, draw);
+  const first = points[0]!;
+  const last = points[points.length - 1]!;
+  if (draw.shape === 'box') return spotsInBox(first, last, sp);
+  if (draw.shape === 'line') return spotsAlongPath([first, last], sp);
+  if (draw.shape === 'curve') return spotsAlongPath(points.length > 1 ? splinePoints(points) : points, sp);
+  return spotsAlongPath(points, sp);
+}
+
+function strokeStamps(store: EditorStore, points: { x: number; y: number }[]): StampPlan[] {
+  const s = store.getState();
+  return planStamps(s.project, s.levelId, itemLayerId(store), stampSource(s.project, s.draw), strokeSpots(store, points), s.draw.turn, s.draw.whenTaken);
+}
+
+/** Selector for the path being edited; stable while nothing about it changes. */
+let lastEditing: { key: string; value: ReturnType<typeof editablePath> } = { key: '', value: null };
+function editablePathKey(s: EditorState) {
+  const ec = editablePath(s);
+  const key = ec ? `${ec.id}:${ec.points.map((q) => `${q.x},${q.y}`).join(';')}` : '';
   if (key !== lastEditing.key) lastEditing = { key, value: ec };
   return lastEditing.value;
 }
@@ -848,11 +879,24 @@ const flat = (pts: { x: number; y: number }[]) => pts.flatMap((q) => [q.x, q.y])
 /** Draw › Curve in progress: the pieces it will lay, the curve line, and the points so far. */
 function CurveDraftPreview({ store, points, ctrl, scale }: { store: EditorStore; points: { x: number; y: number }[]; ctrl: { x: number; y: number }[]; scale: number }) {
   const { project, draw } = store.getState();
+  if (draw.shape === 'stairs') {
+    const units = points.length > 1 ? stairUnits(points, stairSpec(store, points)) : [];
+    return (
+      <>
+        <StairsPreview units={units} color={draw.color} scale={scale} />
+        {ctrl.map((q, i) => (
+          <Circle key={i} x={q.x} y={q.y} radius={4 / scale} fill={ACCENT} listening={false} />
+        ))}
+      </>
+    );
+  }
   const t = paintTemplate(project, draw);
-  const cells = curveCells(points, draw.width, t);
+  const stamping = isStamping(draw);
+  const cells = stamping ? [] : curveCells(points, draw.width, t);
   return (
     <>
       {cells.length > 0 && <StrokePreview cells={cells} store={store} />}
+      {stamping && points.length > 1 && <StampsPreview plan={strokeStamps(store, points)} store={store} />}
       {points.length > 1 && <Line points={flat(splinePoints(points))} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} listening={false} />}
       {ctrl.map((q, i) => (
         <Circle key={i} x={q.x} y={q.y} radius={4 / scale} fill={ACCENT} listening={false} />
@@ -864,12 +908,14 @@ function CurveDraftPreview({ store, points, ctrl, scale }: { store: EditorStore;
 /** Edit curve: the curve line and a round handle on each of its points. */
 function CurveHandles({ store, points, scale, dragging }: { store: EditorStore; points: { x: number; y: number }[]; scale: number; dragging: boolean }) {
   const s = store.getState();
-  const curve = s.project.curves.find((c) => c.id === s.editingCurve);
-  const cells = dragging && curve ? curveCells(points, curve.width, curve.template) : [];
+  const curve = s.project.curves.find((c) => c.id === s.editingPath);
+  const stairs = s.project.stairs.find((c) => c.id === s.editingPath);
+  const cells = dragging && curve && !curve.spacing ? curveCells(points, curve.width, curve.template) : [];
   return (
     <>
       {cells.length > 0 && <CellsPreview cells={cells} color={curve!.template.color} round={!!curve!.template.round} w={curve!.template.width} d={curve!.template.depth} />}
-      <Line points={flat(splinePoints(points))} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} dash={[6 / scale, 4 / scale]} listening={false} />
+      {dragging && stairs && <StairsPreview units={stairUnits(points, stairs)} color={stairs.color} scale={scale} />}
+      <Line points={flat(stairs ? points : splinePoints(points))} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} dash={[6 / scale, 4 / scale]} listening={false} />
       {points.map((q, i) => (
         <Circle key={i} x={q.x} y={q.y} radius={7 / scale} fill="#fff" stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} listening={false} />
       ))}
@@ -896,6 +942,63 @@ function CellsPreview({ cells, color, round, w, d }: { cells: Cell[]; color: str
         c.globalAlpha = 1;
       }}
     />
+  );
+}
+
+/** Stamps about to be placed; red where something is already there (they're skipped). */
+function StampsPreview({ plan, store }: { plan: StampPlan[]; store: EditorStore }) {
+  const { project, draw } = store.getState();
+  const src = stampSource(project, draw);
+  const color = src.kind === 'piece' ? src.template.color : ACCENT;
+  const round = src.kind === 'piece' && !!src.template.round;
+  return (
+    <Shape
+      listening={false}
+      sceneFunc={(ctx) => {
+        const c = ctx._context;
+        for (const ok of [true, false]) {
+          c.globalAlpha = ok ? 0.75 : 0.45;
+          c.fillStyle = ok ? color : WARN;
+          c.beginPath();
+          for (const { rect: r } of plan.filter((x) => x.ok === ok)) {
+            if (round && ok) {
+              c.moveTo(r.x + r.width, r.y + r.depth / 2);
+              c.ellipse(r.x + r.width / 2, r.y + r.depth / 2, r.width / 2, r.depth / 2, 0, 0, Math.PI * 2);
+            } else c.rect(r.x, r.y, r.width, r.depth);
+          }
+          c.fill();
+        }
+        c.globalAlpha = 1;
+      }}
+    />
+  );
+}
+
+/** Stairs about to be laid: each step, with how high its top is (plates). */
+function StairsPreview({ units, color, scale }: { units: StairUnit[]; color: string; scale: number }) {
+  return (
+    <>
+      <Shape
+        listening={false}
+        sceneFunc={(ctx) => {
+          const c = ctx._context;
+          c.globalAlpha = 0.8;
+          c.fillStyle = color;
+          c.strokeStyle = 'rgba(0,0,0,0.6)';
+          c.lineWidth = 1 / scale;
+          for (const u of units) {
+            c.fillRect(u.rect.x, u.rect.y, u.rect.width, u.rect.depth);
+            c.strokeRect(u.rect.x, u.rect.y, u.rect.width, u.rect.depth);
+          }
+          c.globalAlpha = 1;
+        }}
+      />
+      {scale * 2 > 9 &&
+        units.map((u, i) => {
+          const size = Math.min(u.rect.width, u.rect.depth) * 0.5;
+          return <Text key={i} x={u.rect.x} y={u.rect.y + u.rect.depth / 2 - size / 2} width={u.rect.width} align="center" text={String(u.top)} fontSize={size} fill="#111" listening={false} />;
+        })}
+    </>
   );
 }
 

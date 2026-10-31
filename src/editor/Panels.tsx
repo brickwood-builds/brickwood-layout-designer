@@ -6,6 +6,7 @@ import { storedNotPlaced, validateLabel } from '../domain/labels';
 import { computeStack, formatHeight, parseHeight, stackAt } from '../domain/heights';
 import { MILS_KINDS, MILS_SIZES, isBase, milsKindForSize, moduleDisplayName, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
 import { formatLength } from '../domain/units';
+import { updateStairs } from './actions';
 import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, saveSelectionAsDesign, ungroupSelection } from './actions';
 import { designable, isOutdated, unlinkCopy, updateCopyToDesign, updateDesignFromCopy } from '../domain/designs';
 import { Modal } from '../ui/Modal';
@@ -14,6 +15,7 @@ import { markerKind } from '../domain/catalog';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { DrawPanel } from './DrawPanel';
 import { curveOfGroup, currentPoints } from '../domain/curves';
+import { stairOfGroup } from '../domain/stairs';
 import type { EditorStore } from './store';
 
 export const KIND_LABEL: Record<MilsKind, string> = { '32x32': '32×32', '32x16': '32×16', '16x16': '16×16', '16x8': '16×8', custom: 'Custom' };
@@ -301,6 +303,7 @@ function GroupFields({ store, groupId }: { store: EditorStore; groupId: string }
         </div>
       )}
       <CurveBox store={store} groupId={group.id} />
+      <StairBox store={store} groupId={group.id} />
       <Field label="Group name" value={group.name} onCommit={(v) => commit((p) => renameGroup(p, group.id, v))} />
       <span className="muted small">{members.length} items — pick one to edit it on its own:</span>
       <div className="chips">
@@ -317,7 +320,7 @@ function GroupFields({ store, groupId }: { store: EditorStore; groupId: string }
 /** A drawn curve: show its handles so it can be reshaped. */
 function CurveBox({ store, groupId }: { store: EditorStore; groupId: string }) {
   const project = useStore(store, (s) => s.project);
-  const editing = useStore(store, (s) => s.editingCurve);
+  const editing = useStore(store, (s) => s.editingPath);
   const curve = curveOfGroup(project, groupId);
   if (!curve) return null;
   const points = currentPoints(project, curve);
@@ -328,13 +331,55 @@ function CurveBox({ store, groupId }: { store: EditorStore; groupId: string }) {
         <>
           <span className="small">{on ? 'Drag the round handles to reshape the curve; the pieces are laid again along it.' : 'This is a curve you drew.'}</span>
           <div className="actions">
-            <button type="button" className={on ? undefined : 'primary'} aria-pressed={on} onClick={() => store.getState().set({ editingCurve: on ? null : curve.id, mode: 'select' })}>
+            <button type="button" className={on ? undefined : 'primary'} aria-pressed={on} onClick={() => store.getState().set({ editingPath: on ? null : curve.id, mode: 'select' })}>
               {on ? 'Done editing' : 'Edit curve'}
             </button>
           </div>
         </>
       ) : (
         <span className="small muted">This curve was turned, so it can’t be reshaped as a curve any more — it’s an ordinary group of pieces.</span>
+      )}
+    </div>
+  );
+}
+
+/** Stairs: change the path with handles, or any setting; the steps are laid again. */
+function StairBox({ store, groupId }: { store: EditorStore; groupId: string }) {
+  const project = useStore(store, (s) => s.project);
+  const editing = useStore(store, (s) => s.editingPath);
+  const stair = stairOfGroup(project, groupId);
+  if (!stair) return null;
+  const points = currentPoints(project, stair);
+  const on = editing === stair.id;
+  const change = (patch: Parameters<typeof updateStairs>[2]) => updateStairs(store, stair.id, patch);
+  const wholeOrError = (min: number) => (v: string) => (Number.isInteger(Number(v)) && Number(v) >= min && v.trim() !== '' ? null : min > 0 ? 'A whole number, 1 or more.' : 'A whole number, 0 or more.');
+  return (
+    <div className="design-box">
+      {points ? (
+        <>
+          <span className="small">{on ? 'Drag the round handles to move where the stairs start, turn and end.' : 'Stairs you drew — change any setting and the steps are laid again.'}</span>
+          <div className="actions">
+            <button type="button" className={on ? undefined : 'primary'} aria-pressed={on} onClick={() => store.getState().set({ editingPath: on ? null : stair.id, mode: 'select' })}>
+              {on ? 'Done editing' : 'Edit path'}
+            </button>
+          </div>
+          <div className="row">
+            <Field label="Width (studs)" type="number" value={stair.width} validate={wholeOrError(1)} onCommit={(v) => change({ width: Number(v) })} />
+            <Field label="Step depth (studs)" type="number" value={stair.stepDepth} validate={wholeOrError(1)} onCommit={(v) => change({ stepDepth: Number(v) })} />
+          </div>
+          <div className="row">
+            <Field label="Rise per step (plates)" type="number" value={stair.risePlates} validate={wholeOrError(1)} onCommit={(v) => change({ risePlates: Number(v) })} />
+            <Field label="Start height (plates)" type="number" value={stair.startPlates} validate={wholeOrError(0)} onCommit={(v) => change({ startPlates: Number(v) })} />
+          </div>
+          <Field label="Landing every (steps, 0 = only at turns)" type="number" value={stair.landingEvery} validate={wholeOrError(0)} onCommit={(v) => change({ landingEvery: Number(v) })} />
+          <LegoColorPicker label="Colour" value={stair.color} onChange={(hex) => hex && change({ color: hex })} />
+          <label className="check">
+            <input type="checkbox" checked={stair.smooth} onChange={(e) => change({ smooth: e.target.checked })} />
+            Smooth tops (tiles)
+          </label>
+        </>
+      ) : (
+        <span className="small muted">These stairs were turned, so they can’t be re-laid as stairs any more — they’re an ordinary group of steps.</span>
       )}
     </div>
   );

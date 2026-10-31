@@ -158,6 +158,9 @@ export const CurveSchema = z.object({
   points: z.array(z.object({ x: studs, y: studs })).min(2),
   width: positive,
   whenTaken: z.enum(['skip', 'stack']),
+  /** Pattern: one piece every N studs along the curve (absent = solid). */
+  spacing: z.number().finite().positive().optional(),
+  turn: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270), z.literal('follow')]).optional(),
   template: z.object({
     type: z.enum(OBJECT_TYPES),
     name: z.string(),
@@ -170,6 +173,32 @@ export const CurveSchema = z.object({
     markerKind: z.string().optional(),
   }),
   /** Where the pieces were when last laid (to follow the group if it is moved). */
+  bounds: z.object({ x: studs, y: studs, width: z.number().finite(), depth: z.number().finite() }),
+});
+
+/**
+ * Stairs (FR-04.04): steps laid along a path of whole-stud straight runs. Turns get a
+ * landing; each step is one rise higher. Heights are in plates. Its steps form a group;
+ * changing the path or any setting lays them again.
+ */
+export const StairSchema = z.object({
+  id,
+  groupId: id,
+  levelId: id,
+  layerId: id,
+  points: z.array(z.object({ x: studs, y: studs })).min(2),
+  /** Studs across. */
+  width: positive,
+  /** Studs from the front of one step to the next. */
+  stepDepth: positive,
+  /** Plates each step goes up. */
+  risePlates: z.number().finite().positive(),
+  /** Plates the first step starts above what it sits on. */
+  startPlates: z.number().finite().nonnegative(),
+  /** A flat landing after every N steps (0 = only at turns). */
+  landingEvery: z.number().int().nonnegative(),
+  color,
+  smooth: z.boolean(),
   bounds: z.object({ x: studs, y: studs, width: z.number().finite(), depth: z.number().finite() }),
 });
 
@@ -249,6 +278,7 @@ export const ProjectSchema = z.object({
   dimensions: z.array(DimensionSchema).default([]),
   designs: z.array(DesignSchema).default([]),
   curves: z.array(CurveSchema).default([]),
+  stairs: z.array(StairSchema).default([]),
 });
 
 export type Level = z.infer<typeof LevelSchema>;
@@ -263,6 +293,7 @@ export type Acknowledgement = z.infer<typeof AcknowledgementSchema>;
 export type Dimension = z.infer<typeof DimensionSchema>;
 export type Design = z.infer<typeof DesignSchema>;
 export type Curve = z.infer<typeof CurveSchema>;
+export type Stair = z.infer<typeof StairSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Features = z.infer<typeof FeaturesSchema>;
 export type Project = z.infer<typeof ProjectSchema>;

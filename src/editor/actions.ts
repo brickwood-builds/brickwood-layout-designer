@@ -14,7 +14,9 @@ import {
 import type { MilsKind } from '../domain/schema';
 import { cellsForPath, eraseCells, paintCells, type Cell, type Pt } from '../domain/brush';
 import { drawCurve, reshapeCurve, splinePoints } from '../domain/curves';
-import { paintTemplate } from './drawTool';
+import { drawStairs, reshapeStairs, type StairSettings, type StairSpec } from '../domain/stairs';
+import { spotsAlongPath, stamp, type StampSpot } from '../domain/stamps';
+import { isStamping, paintTemplate, stampSource, stampSpacing } from './drawTool';
 import { designSize, placeDesign, saveDesign } from '../domain/designs';
 import { addObject, defaultItemLayerId, groupItems, ungroup, withCarriedItems, type NewObject } from '../domain/objects';
 import type { EditorStore } from './store';
@@ -185,29 +187,67 @@ export function cleanCurvePoints(points: Pt[]): Pt[] {
   return out;
 }
 
-/** Draw › Curve finished: lay the pieces along the curve as one editable group (one undo). */
+/** The stairs about to be drawn with the current Draw settings. */
+export function stairSpec(store: EditorStore, points: Pt[]): StairSpec {
+  const s = store.getState();
+  return { ...s.draw.stair, color: s.draw.color, levelId: s.levelId, layerId: itemLayerId(store), points };
+}
+
+/** Draw › Curve or Stairs finished: lay the pieces as one editable group (one undo). */
 export function finishCurve(store: EditorStore) {
   const s = store.getState();
   const points = cleanCurvePoints(s.curveDraft ?? []);
   s.set({ curveDraft: null });
   if (points.length < 2) return;
+  if (s.draw.shape === 'stairs') {
+    s.commit((p) => drawStairs(p, stairSpec(store, points))?.project ?? p, []);
+    return;
+  }
   if (s.draw.erase) {
     const t = paintTemplate(s.project, s.draw);
     finishStroke(store, cellsForPath(splinePoints(points), { cellW: t.width, cellD: t.depth, width: s.draw.width }));
     return;
   }
-  s.commit((p) => drawCurve(p, { levelId: s.levelId, layerId: itemLayerId(store), points, width: s.draw.width, template: paintTemplate(p, s.draw), whenTaken: s.draw.whenTaken })?.project ?? p, []);
+  const src = stampSource(s.project, s.draw);
+  if (src.kind === 'design') {
+    // Copies of a design along a curve: each copy is its own linked group.
+    finishStamp(store, spotsAlongPath(splinePoints(points), stampSpacing(s.project, s.draw)));
+    return;
+  }
+  const spacing = isStamping(s.draw) ? { spacing: stampSpacing(s.project, s.draw), turn: s.draw.turn } : {};
+  s.commit((p) => drawCurve(p, { levelId: s.levelId, layerId: itemLayerId(store), points, width: s.draw.width, template: paintTemplate(p, s.draw), whenTaken: s.draw.whenTaken, ...spacing })?.project ?? p, []);
 }
 
-/** Move a curve's handle: re-lay its pieces and keep the group selected (one undo). */
-export function reshapeCurveTo(store: EditorStore, curveId: string, points: Pt[]) {
+/** A stamping stroke: one piece or design copy at each spot (one undo). */
+export function finishStamp(store: EditorStore, spots: StampSpot[]) {
   const s = store.getState();
-  const curve = s.project.curves.find((c) => c.id === curveId);
-  if (!curve) return;
+  const src = stampSource(s.project, s.draw);
+  s.commit((p) => stamp(p, s.levelId, itemLayerId(store), src, spots, s.draw.turn, s.draw.whenTaken).project, []);
+}
+
+/** Move a curve's or stairs' handle: lay the pieces again and keep the group selected (one undo). */
+export function reshapePathTo(store: EditorStore, id: string, points: Pt[]) {
+  const s = store.getState();
+  const rec = s.project.curves.find((c) => c.id === id) ?? s.project.stairs.find((x) => x.id === id);
+  if (!rec) return;
   let ids: string[] = [];
   s.commit((p) => {
-    const next = reshapeCurve(p, curveId, points);
-    ids = next.groups.find((g) => g.id === curve.groupId)?.memberIds ?? [];
+    const next = p.curves.some((c) => c.id === id) ? reshapeCurve(p, id, points) : reshapeStairs(p, id, { points });
+    ids = next.groups.find((g) => g.id === rec.groupId)?.memberIds ?? [];
+    return next;
+  });
+  store.getState().select(ids);
+}
+
+/** Change a stairs setting (width, rise, ...): steps are laid again (one undo). */
+export function updateStairs(store: EditorStore, id: string, change: Partial<StairSettings>) {
+  const s = store.getState();
+  const rec = s.project.stairs.find((x) => x.id === id);
+  if (!rec) return;
+  let ids: string[] = [];
+  s.commit((p) => {
+    const next = reshapeStairs(p, id, change);
+    ids = next.groups.find((g) => g.id === rec.groupId)?.memberIds ?? [];
     return next;
   });
   store.getState().select(ids);

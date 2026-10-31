@@ -580,7 +580,7 @@ function useKeyboard(store: EditorStore) {
         case 'Enter': return s.curveDraft ? (handled(), finishCurve(store)) : undefined;
         case 'Escape':
           if (s.curveDraft) return s.set({ curveDraft: null });
-          if (s.editingCurve) return s.set({ editingCurve: null });
+          if (s.editingPath) return s.set({ editingPath: null });
           return s.drag ? s.set({ drag: null }) : s.measure ? s.set({ measure: null }) : s.select([]);
       }
       if (key === 'r') return handled(), rotateSelection(store, e.shiftKey ? -1 : 1);

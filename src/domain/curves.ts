@@ -5,6 +5,7 @@ import { cellsForPath, paintCells, type PaintTemplate, type Pt, type WhenTaken }
 import { deleteItems, findItem, type Item } from './edits';
 import { footprint, unionRect } from './geometry';
 import type { Curve, Project } from './schema';
+import { spotsAlongPath, stamp, type Turn } from './stamps';
 
 /** A smooth curve through every control point (Catmull-Rom), as closely spaced samples. */
 export function splinePoints(ctrl: Pt[], perSegment = 24): Pt[] {
@@ -33,16 +34,20 @@ export interface CurveSpec {
   width: number;
   template: PaintTemplate;
   whenTaken: WhenTaken;
+  /** Pattern: one piece every N studs (absent = solid). */
+  spacing?: number;
+  turn?: Turn;
 }
 
 const brushOf = (s: { width: number; template: PaintTemplate }) => ({ cellW: s.template.width, cellD: s.template.depth, width: s.width });
 
 function lay(p: Project, spec: CurveSpec) {
+  if (spec.spacing) return stamp(p, spec.levelId, spec.layerId, { kind: 'piece', template: spec.template }, spotsAlongPath(splinePoints(spec.points), spec.spacing), spec.turn ?? 0, spec.whenTaken);
   const cells = cellsForPath(splinePoints(spec.points), brushOf(spec));
   return paintCells(p, spec.levelId, spec.layerId, spec.template, cells, spec.whenTaken);
 }
 
-function boundsOf(p: Project, ids: string[]) {
+export function boundsOf(p: Project, ids: string[]) {
   return unionRect(ids.map((id) => findItem(p, id)).filter((i): i is Item => !!i).map(footprint)) ?? { x: 0, y: 0, width: 0, depth: 0 };
 }
 
@@ -67,7 +72,7 @@ export const curveOfGroup = (p: Project, groupId: string) => p.curves.find((c) =
  * The curve's control points where its pieces are now (the group may have been moved).
  * Null when it can't be edited as a curve any more (e.g. it was rotated, or emptied).
  */
-export function currentPoints(p: Project, curve: Curve): Pt[] | null {
+export function currentPoints(p: Project, curve: Pick<Curve, 'groupId' | 'points' | 'bounds'>): Pt[] | null {
   const g = p.groups.find((x) => x.id === curve.groupId);
   if (!g || !g.memberIds.length) return null;
   const b = boundsOf(p, g.memberIds);
@@ -88,7 +93,7 @@ export function reshapeCurve(p: Project, curveId: string, points: Pt[]): Project
   const g = curve && p.groups.find((x) => x.id === curve.groupId);
   if (!curve || !g || points.length < 2) return p;
   const cleared = deleteItems(p, g.memberIds);
-  const spec: CurveSpec = { levelId: curve.levelId, layerId: curve.layerId, points, width: curve.width, template: curve.template, whenTaken: curve.whenTaken };
+  const spec: CurveSpec = { levelId: curve.levelId, layerId: curve.layerId, points, width: curve.width, template: curve.template, whenTaken: curve.whenTaken, spacing: curve.spacing, turn: curve.turn };
   const r = lay(cleared, spec);
   return {
     ...r.project,

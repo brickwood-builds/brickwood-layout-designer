@@ -178,9 +178,22 @@ export const HELP_TOPICS: HelpTopic[] = [
       'Where something is already there: Leave it (the default — a walkway is never doubled up) or Stack on top, to build a slope or hill layer by layer: paint a wide patch of plates, then a smaller patch on top, and so on. With Heights on, each layer sits one plate higher — tick Shade by height to see it.',
       'Curve: click (or tap) the points a curved walkway should pass through — the curve runs smoothly through every point. Finish with a double-click, Enter or Finish curve; Escape cancels. Dragging moves the view. The pieces become one group named “Curve of …”.',
       'To reshape a curve later: Select it, choose Edit curve, and drag its round handles — the pieces are laid again along the new shape (one Undo). Moving the curve keeps it editable; turning it makes it an ordinary group.',
+      'Pattern stamping: set Spacing to place one every few studs instead of a solid line — a lamp every 8 studs along a walkway, or a tree every 6. Fill box makes a grid. Turn sets which way they face; Follow path turns them with the stroke. Red spots in the preview are already taken and are skipped. Each stroke is one Undo.',
+      'To stamp a group of things (a bench with a lamp, a food stand), save it as a design first, then pick it in Draw with under Designs. Each stamp is a linked copy of the design.',
       'Tick Erase to remove things on the drawing layer under the brush instead.',
       'It draws on the layer chosen in Layers → New items (for walkways, Surface details is a good choice). Two fingers still move and zoom on the iPad.',
       'The printout counts identical pieces, e.g. “Plate Round 1×1, Tan × 412”.',
+    ],
+  },
+  {
+    id: 'stairs',
+    title: 'Stairs',
+    body: [
+      'In Draw, choose Stairs. Click (or tap) where the stairs start at the bottom, then where they turn, then where they end at the top. Finish with a double-click, Enter or Finish stairs.',
+      'Set the width, how deep each step is (studs), how much each step goes up (1 plate, 2 plates or 1 brick), the start height, and whether there’s a landing every few steps. Every turn gets a square landing.',
+      'Stairs are laid in straight runs across or down the table, on whole studs. Each step is one rise higher than the last; turn on Heights (⋯ menu) to see and use those heights, and Shade by height to read them from above.',
+      'To change stairs later: Select them. Change any setting in the panel, or choose Edit path and drag the round handles; the steps are laid again (one Undo).',
+      'Stairs are a planning shape: the printout counts steps and landings, not the plates or bricks you’ll build them from.',
     ],
   },
   {

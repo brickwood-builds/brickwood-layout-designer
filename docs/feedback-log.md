@@ -57,3 +57,10 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 | 2 | Found in the file: "Castle Mountain overlaps Castle Base" warning, though the mountain is built on its base | Something sitting entirely on a plate or base is no longer an overlap; partly hanging off still warns | Done |
 | 3 | Found in the file: the two names were drawn on top of each other | A plate with something built on it shows its name along the top edge | Done |
 | 4 | Do curves next | Draw › Curve: click points, pieces are laid along a smooth curve as one group. Select it → Edit curve → drag the round handles to reshape (re-lays the pieces, one Undo) | Done |
+
+## 31 Oct 2026, round 6
+
+| # | Request | What was done | Status |
+|---|---|---|---|
+| 1 | Go ahead with stairs | Draw › Stairs: click start, turns, end; width, step depth, rise (1 plate / 2 plates / 1 brick), start height, landings at turns or every N steps, colour, smooth tops. Select → change any setting or Edit path (handles); steps are laid again, one Undo. Step heights work with Heights | Done |
+| 2 | Go ahead with pattern stamping | Draw › Spacing: one piece every N studs along freehand, straight or curve strokes (grid for Fill box), with Turn (fixed or follow path). Designs can be stamped too (linked copies). Taken spots preview red and are skipped. One Undo per stroke | Done |
