@@ -84,3 +84,4 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 | # | Request | What was done | Status |
 |---|---|---|---|
 | 1 | Go ahead with Phase 4 | 4A Physical builds (⋯ menu): track a real build with a permanent ID; storage, condition, progress steps, photos (kept on the device), setup notes, differences from design, history with notes and repairs; rebuilt (same ID), taken apart, replaced (new ID, old kept) | Done |
+| 2 | (Phase 4, continued) | 4B Versions (⋯ menu): save named versions; compare two (pictures with removed/added/moved/changed marked, lists, part differences, extra-parts CSV); preferred version; open a version as a new project; go back to a version (current kept as a checkpoint) | Done |

@@ -333,6 +333,8 @@ export const ProjectSchema = z.object({
   stairs: z.array(StairSchema).default([]),
   spending: z.array(SpendingSchema).default([]),
   builds: z.array(BuildSchema).default([]),
+  /** The named version chosen as the one to use (FR-06.02); versions are kept on the device. */
+  preferredVersion: z.object({ id, name: z.string() }).optional(),
 });
 
 export type Level = z.infer<typeof LevelSchema>;

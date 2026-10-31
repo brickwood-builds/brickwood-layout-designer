@@ -9,7 +9,7 @@ that are committed to a later phase. See `docs/feedback-log.md` for every reques
 | 1E | Cloud sync | Part done: "Save to a file" in the OneDrive folder. **Later:** in-app OneDrive sign-in, which also works on iPad (needs the Microsoft app registration) |
 | 2 | Advanced design | 2A Heights ✅ · 2B Drawing ✅ · 2C Clearance zones ✅ · 2D Reusable designs ✅ · Terrain by stacking plates ✅ (mountains are features; slopes are stacked plates) · Editable curves ✅ · Stairs ✅ · Pattern stamping ✅ |
 | 3 | Parts catalog, inventory, purchasing | 3A Parts catalog ✅ (about 2,400 real parts from Rebrickable, offline, search, favourites, recent, made-in colours, part numbers on the printout) · 3B Parts list, what you have, shopping list ✅ (Rebrickable CSV out; inventory CSV in/out) · 3C Sourcing and costs ✅ (per layout: Brickwith first with BrickLink fallback, or genuine LEGO only; reusable Brickwith cross-reference; prices, usual-price estimates, money spent) · Later: purchase orders and partial deliveries, budgets, reservations across projects |
-| 4 | Physical assemblies, versions | 4A Physical builds ✅ (permanent IDs, storage, condition, repairs, history, photos on device, progress/steps, rebuild/take apart/replace) · 4B Versions and comparisons |
+| 4 | Physical assemblies, versions | 4A Physical builds ✅ (permanent IDs, storage, condition, repairs, history, photos on device, progress/steps, rebuild/take apart/replace) · 4B Versions ✅ (named versions on the device, preferred version, side-by-side comparison with marked changes, part differences and extra-parts list, open as new project, go back) |
 | 5 | Exhibitions, transport, packing | Planned |
 | 6 | Setup, teardown, helpers | Planned |
 | 7 | Reporting, sharing, backups | Planned |

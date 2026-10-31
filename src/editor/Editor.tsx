@@ -32,6 +32,7 @@ import { LayersMenu } from './LayersMenu';
 import { HeightFilter, HeightShadingToggle, OptionsMenu } from './OptionsMenu';
 import { PartsListButton } from './PartsList';
 import { BuildsButton, BuildsDialog } from './Builds';
+import { VersionsButton } from './Versions';
 import { computeStack } from '../domain/heights';
 import { HelpButton } from '../help/HelpDialog';
 import { createEditorStore, type EditorStore } from './store';
@@ -164,7 +165,7 @@ function EditorScreen({
         <Canvas store={store} />
         <Properties store={store} />
       </div>
-      <StatusBar store={store} file={<FileStatus file={file} />} parts={<PartsListButton store={store} repo={repo} />} builds={<BuildsButton store={store} />} />
+      <StatusBar store={store} file={<FileStatus file={file} />} parts={<PartsListButton store={store} repo={repo} />} builds={<BuildsButton store={store} />} versions={<VersionsButton store={store} repo={repo} autosave={autosave} />} />
       <BuildsDialog store={store} repo={repo} />
     </div>
   );
@@ -442,7 +443,7 @@ function FileStatus({ file }: { file: ReturnType<typeof useFileSync> }) {
   }
 }
 
-function StatusBar({ store, file, parts, builds }: { store: EditorStore; file: ReactNode; parts: ReactNode; builds: ReactNode }) {
+function StatusBar({ store, file, parts, builds, versions }: { store: EditorStore; file: ReactNode; parts: ReactNode; builds: ReactNode; versions: ReactNode }) {
   const project = useStore(store, (s) => s.project);
   const levelId = useStore(store, (s) => s.levelId);
   const pointer = useStore(store, (s) => s.pointer);
@@ -495,6 +496,7 @@ function StatusBar({ store, file, parts, builds }: { store: EditorStore; file: R
         </select>
       </label>
       {file}
+      {project.features.versions && versions}
       {project.features.builds && builds}
       {project.features.inventory && parts}
       {project.features.heights && <HeightFilter store={store} maxTop={maxTop} />}

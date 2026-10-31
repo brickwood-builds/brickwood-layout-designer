@@ -2,7 +2,9 @@ import { newId, nowIso } from '../domain/ids';
 import { migrateProject, ProjectFormatError } from '../domain/migrations';
 import { duplicateProject } from '../domain/project';
 import { ProjectSchema, type Project } from '../domain/schema';
-import type { BrickwoodDb, CheckpointRow, PhotoRow } from './db';
+import type { BrickwoodDb, CheckpointRow, PhotoRow, VersionRow } from './db';
+
+export type VersionInfo = Pick<VersionRow, 'id' | 'projectId' | 'createdAt' | 'name' | 'note'>;
 import { InventorySchema, emptyInventory, type Inventory } from '../domain/inventory';
 
 const INVENTORY = 'inventory';
@@ -228,6 +230,33 @@ export class ProjectRepository {
    * A starter the user archived or changed is never re-added. `legacyIds` are starters that
    * browsers seeded before seeding was tracked per starter.
    */
+  /** Save a named version of a project (a full copy, kept until deleted). */
+  async saveVersion(project: Project, name: string, note = ''): Promise<VersionInfo> {
+    const row: VersionRow = { id: newId(), projectId: project.id, createdAt: nowIso(), name: name.trim() || 'Version', note: note.trim(), doc: ProjectSchema.parse(project) };
+    await this.db.versions.put(row);
+    return { id: row.id, projectId: row.projectId, createdAt: row.createdAt, name: row.name, note: row.note };
+  }
+
+  /** A project's named versions, newest first (without their contents). */
+  async listVersions(projectId: string): Promise<VersionInfo[]> {
+    const rows = await this.db.versions.where('projectId').equals(projectId).toArray();
+    return rows.map(({ id, projectId: pid, createdAt, name, note }) => ({ id, projectId: pid, createdAt, name, note })).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async getVersion(id: string): Promise<Project> {
+    const row = await this.db.versions.get(id);
+    if (!row) throw new NotFoundError(`Version ${id} not found`);
+    return migrateProject(row.doc);
+  }
+
+  async renameVersion(id: string, name: string, note: string): Promise<void> {
+    await this.db.versions.update(id, { name: name.trim() || 'Version', note: note.trim() });
+  }
+
+  async deleteVersion(id: string): Promise<void> {
+    await this.db.versions.delete(id);
+  }
+
   /** Keep a photo of a physical build on this device; returns its ID. */
   async addPhoto(projectId: string, blob: Blob, thumb: string, caption = ''): Promise<string> {
     const id = newId();

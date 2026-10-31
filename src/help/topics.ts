@@ -221,6 +221,16 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'versions',
+    title: 'Versions',
+    body: [
+      'Switch on Versions in the ⋯ menu, then click Versions… at the bottom. Save this as a version keeps a copy of the layout as it is now, with a name — for example “2025 show — 16 ft” before you cut it down to 12 ft. You keep working on the layout as usual.',
+      'Compare with now (or Compare two versions…) shows both side by side — removed things outlined red, added green, moved blue, changed orange — and lists what was added, removed, moved or changed. Parts difference shows how the real parts needed went up or down; Download extra parts needed gives a shopping list of just the increase.',
+      'Make preferred marks the version to use (for the next show); the others are kept. Open as a new project makes a separate project starting from that version. Go back to this… puts the layout back to that version; what you had is kept as a recovery checkpoint.',
+      'Versions are kept on this device; Download saves one as a file.',
+    ],
+  },
+  {
     id: 'stairs',
     title: 'Stairs',
     body: [
