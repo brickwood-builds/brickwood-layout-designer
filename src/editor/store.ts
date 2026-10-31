@@ -42,6 +42,8 @@ export interface EditorState {
   curveDraft: { x: number; y: number }[] | null;
   /** The curve or stairs whose handles are shown for reshaping (null = none). */
   editingPath: string | null;
+  /** Physical builds window: the list, one build's record (its ID), or closed. */
+  buildDialog: 'list' | string | null;
 
   /** Apply one undoable change. */
   commit: (change: (p: Project) => Project, selection?: string[]) => void;
@@ -49,7 +51,7 @@ export interface EditorState {
   redo: () => void;
   select: (ids: string[]) => void;
   setView: (view: View) => void;
-  set: (patch: Partial<Pick<EditorState, 'mode' | 'measure' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer' | 'activeLayerId' | 'heightLimit' | 'draw' | 'curveDraft' | 'editingPath'>>) => void;
+  set: (patch: Partial<Pick<EditorState, 'mode' | 'measure' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer' | 'activeLayerId' | 'heightLimit' | 'draw' | 'curveDraft' | 'editingPath' | 'buildDialog'>>) => void;
   /** Called by autosave once a revision is stored. Not an undoable change. */
   markSaved: (saved: Pick<Project, 'revision' | 'revisionId' | 'updatedAt'>) => void;
   setSaveState: (state: SaveState, error?: string) => void;
@@ -96,6 +98,7 @@ export function createEditorStore(project: Project): EditorStore {
     heightLimit: null,
     curveDraft: null,
     editingPath: null,
+    buildDialog: null,
 
     commit: (change, selection) => {
       const { project: before, past, saveState } = get();

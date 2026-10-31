@@ -11,6 +11,7 @@ export const DEFAULT_FEATURES: Features = {
   exhibitions: false,
   transport: false,
   helpers: false,
+  builds: false,
 };
 
 /** Standard table elevation used when nothing else is known. */
@@ -75,6 +76,7 @@ export function createProject(opts: NewProjectOptions): Project {
     curves: [],
     stairs: [],
     spending: [],
+    builds: [],
   };
 }
 

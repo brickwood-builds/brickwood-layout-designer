@@ -31,7 +31,31 @@ export interface FileLinkRow {
   lastRevisionId: string;
 }
 
+/** A photo of a physical build, kept on this device (too big for the project file). */
+export interface PhotoRow {
+  id: string;
+  projectId: string;
+  createdAt: string;
+  /** Downscaled JPEG. */
+  blob: Blob;
+  /** Small preview, as a data URL. */
+  thumb: string;
+  caption: string;
+}
+
+/** A named version of a project (Phase 4): a full copy, kept until deleted. */
+export interface VersionRow {
+  id: string;
+  projectId: string;
+  createdAt: string;
+  name: string;
+  note: string;
+  doc: unknown;
+}
+
 export type BrickwoodDb = Dexie & {
+  photos: EntityTable<PhotoRow, 'id'>;
+  versions: EntityTable<VersionRow, 'id'>;
   projects: EntityTable<ProjectRow, 'id'>;
   checkpoints: EntityTable<CheckpointRow, 'id'>;
   meta: EntityTable<MetaRow, 'key'>;
@@ -52,6 +76,14 @@ export function openDb(name = DEFAULT_DB_NAME): BrickwoodDb {
     checkpoints: 'id, projectId, [projectId+createdAt]',
     meta: 'key',
     fileLinks: 'projectId',
+  });
+  db.version(3).stores({
+    projects: 'id, updatedAt',
+    checkpoints: 'id, projectId, [projectId+createdAt]',
+    meta: 'key',
+    fileLinks: 'projectId',
+    photos: 'id, projectId',
+    versions: 'id, projectId, [projectId+createdAt]',
   });
   return db;
 }

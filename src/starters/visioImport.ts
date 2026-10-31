@@ -277,6 +277,7 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     curves: [],
     stairs: [],
     spending: [],
+    builds: [],
   };
   return { project, notes };
 }

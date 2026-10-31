@@ -2,7 +2,7 @@ import { newId, nowIso } from '../domain/ids';
 import { migrateProject, ProjectFormatError } from '../domain/migrations';
 import { duplicateProject } from '../domain/project';
 import { ProjectSchema, type Project } from '../domain/schema';
-import type { BrickwoodDb, CheckpointRow } from './db';
+import type { BrickwoodDb, CheckpointRow, PhotoRow } from './db';
 import { InventorySchema, emptyInventory, type Inventory } from '../domain/inventory';
 
 const INVENTORY = 'inventory';
@@ -228,6 +228,23 @@ export class ProjectRepository {
    * A starter the user archived or changed is never re-added. `legacyIds` are starters that
    * browsers seeded before seeding was tracked per starter.
    */
+  /** Keep a photo of a physical build on this device; returns its ID. */
+  async addPhoto(projectId: string, blob: Blob, thumb: string, caption = ''): Promise<string> {
+    const id = newId();
+    await this.db.photos.put({ id, projectId, createdAt: nowIso(), blob, thumb, caption });
+    return id;
+  }
+
+  /** Photos by ID (missing ones, e.g. taken on another device, are left out). */
+  async getPhotos(ids: string[]): Promise<PhotoRow[]> {
+    const rows = await this.db.photos.bulkGet(ids);
+    return rows.filter((r): r is PhotoRow => !!r);
+  }
+
+  async deletePhoto(id: string): Promise<void> {
+    await this.db.photos.delete(id);
+  }
+
   /** Your parts (one list for all projects), or an empty one. */
   async getInventory(): Promise<Inventory> {
     const row = await this.db.meta.get(INVENTORY);

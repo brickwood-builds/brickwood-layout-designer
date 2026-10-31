@@ -202,6 +202,43 @@ export const StairSchema = z.object({
   bounds: z.object({ x: studs, y: studs, width: z.number().finite(), depth: z.number().finite() }),
 });
 
+export const BUILD_STATUSES = ['planned', 'building', 'built', 'partly-dismantled', 'dismantled', 'replaced'] as const;
+export const BUILD_CONDITIONS = ['good', 'needs-repair', 'damaged'] as const;
+export const HISTORY_KINDS = ['created', 'note', 'repair', 'condition', 'status', 'rebuilt', 'dismantled', 'replaced', 'photo', 'storage'] as const;
+
+/**
+ * A physical build (FR-05.02): one real thing you built — the castle, a ride on its base —
+ * with a permanent ID that stays through repairs and rebuilds. It is not the design (a
+ * reusable arrangement) and not the drawing: `itemIds` are the things on the plan that are it.
+ */
+export const BuildSchema = z.object({
+  id,
+  /** Permanent ID, e.g. PB-007. Never reused, also after it is replaced. */
+  code: z.string().min(1),
+  name: z.string().min(1),
+  itemIds: z.array(id),
+  /** The reusable design (and its version) it was built from, if any. */
+  designId: id.optional(),
+  designVersion: z.number().int().positive().optional(),
+  status: z.enum(BUILD_STATUSES),
+  condition: z.enum(BUILD_CONDITIONS),
+  /** Where it is kept, e.g. "Garage shelf 3, tote 12". */
+  storage: z.string().default(''),
+  /** Build progress 0–100 while it is being built. */
+  progress: z.number().min(0).max(100).default(0),
+  milestones: z.array(z.object({ id, text: z.string().min(1), done: z.boolean(), doneAt: timestamp.optional() })).default([]),
+  /** Setup instructions for this copy (shared ones belong to the design). */
+  setupNotes: z.string().default(''),
+  /** How this copy differs from its design (FR-05.04). */
+  notes: z.string().default(''),
+  /** Photo IDs (the pictures are kept on this device). */
+  photos: z.array(id).default([]),
+  replaces: id.optional(),
+  replacedBy: id.optional(),
+  history: z.array(z.object({ id, at: timestamp, kind: z.enum(HISTORY_KINDS), text: z.string() })).default([]),
+  createdAt: timestamp,
+});
+
 /** Money spent on this layout (FR-08: cost tracking). */
 export const SpendingSchema = z.object({
   id,
@@ -255,6 +292,8 @@ export const FeaturesSchema = z.object({
   exhibitions: z.boolean(),
   transport: z.boolean(),
   helpers: z.boolean(),
+  /** Physical builds: permanent IDs, condition, storage, repairs, photos, progress. */
+  builds: z.boolean().default(false),
 });
 
 export const ProjectSchema = z.object({
@@ -293,6 +332,7 @@ export const ProjectSchema = z.object({
   curves: z.array(CurveSchema).default([]),
   stairs: z.array(StairSchema).default([]),
   spending: z.array(SpendingSchema).default([]),
+  builds: z.array(BuildSchema).default([]),
 });
 
 export type Level = z.infer<typeof LevelSchema>;
@@ -309,6 +349,9 @@ export type Design = z.infer<typeof DesignSchema>;
 export type Curve = z.infer<typeof CurveSchema>;
 export type Stair = z.infer<typeof StairSchema>;
 export type Spending = z.infer<typeof SpendingSchema>;
+export type Build = z.infer<typeof BuildSchema>;
+export type BuildStatus = Build['status'];
+export type BuildCondition = Build['condition'];
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Features = z.infer<typeof FeaturesSchema>;
 export type Project = z.infer<typeof ProjectSchema>;

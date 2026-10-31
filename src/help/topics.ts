@@ -211,6 +211,16 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'builds',
+    title: 'Physical builds',
+    body: [
+      'Switch on Physical builds in the ⋯ menu. Then select a real build on the plan — the castle and what’s on it, a ride on its base — and choose Track as a physical build. It gets a permanent ID (PB-001, PB-002…).',
+      'Its record keeps where it is stored, its condition, build progress (add steps and tick them off), photos, setup notes for this build, how it differs from its design, and a history of every change, note and repair.',
+      'It changed: Rebuilt keeps the same ID (it’s the same build). Taken apart (partly or all) is recorded in its history. Replaced by a new build gives the new one a new ID; the old record stays with its history and points to the new one.',
+      'Builds… at the bottom lists them all. Show on plan selects the build on the layout. Builds travel with the project file; photos stay on the device they were added on.',
+    ],
+  },
+  {
     id: 'stairs',
     title: 'Stairs',
     body: [

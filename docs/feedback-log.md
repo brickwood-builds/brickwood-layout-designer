@@ -78,3 +78,9 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 |---|---|---|---|
 | 1 | Brickwith or genuine depends on the display (castle and mountain: Brickwith first, then BrickLink; small display for official LEGO events: all genuine). A checkbox per layout | Parts list: "Use Brickwith first, BrickLink for the rest" per layout (off = genuine LEGO / BrickLink only). "Brickwith has it" per part and colour, remembered for all projects, or imported from CSV. Separate BrickLink and Brickwith shopping lists | Done |
 | 2 | Track costs, even if estimated | Price each per supplier; usual price per piece for estimates (marked ~); estimate split by supplier; "Money spent on this layout" log saved with the layout | Done |
+
+## 31 Oct 2026, round 9
+
+| # | Request | What was done | Status |
+|---|---|---|---|
+| 1 | Go ahead with Phase 4 | 4A Physical builds (⋯ menu): track a real build with a permanent ID; storage, condition, progress steps, photos (kept on the device), setup notes, differences from design, history with notes and repairs; rebuilt (same ID), taken apart, replaced (new ID, old kept) | Done |

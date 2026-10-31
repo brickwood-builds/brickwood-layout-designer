@@ -10,10 +10,11 @@ import { updateStairs } from './actions';
 import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, saveSelectionAsDesign, ungroupSelection } from './actions';
 import { designable, isOutdated, unlinkCopy, updateCopyToDesign, updateDesignFromCopy } from '../domain/designs';
 import { Modal } from '../ui/Modal';
-import { groupOf, modulesUnder, renameGroup, resizeObject, saveShape } from '../domain/objects';
+import { groupOf, modulesUnder, withCarriedItems, renameGroup, resizeObject, saveShape } from '../domain/objects';
 import { markerKind } from '../domain/catalog';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { DrawPanel } from './DrawPanel';
+import { CONDITION_LABEL, STATUS_LABEL, buildOfItem, createBuild, suggestedName } from '../domain/builds';
 import { useLibraryPart } from './partPrefs';
 import { PARTS_SOURCE } from '../domain/partsLibrary';
 import { curveOfGroup, currentPoints } from '../domain/curves';
@@ -102,6 +103,7 @@ export function Properties({ store }: { store: EditorStore }) {
     return (
       <aside className="props" aria-label="Properties" key={group?.id ?? 'multi'}>
         {group ? <GroupFields store={store} groupId={group.id} /> : <h2>{selection.length} selected</h2>}
+        <BuildBox store={store} />
         <SelectionActions store={store} />
       </aside>
     );
@@ -119,6 +121,7 @@ export function Properties({ store }: { store: EditorStore }) {
         value={item.notes}
         onCommit={(notes) => store.getState().commit((p) => (isModule(item) ? updateModule(p, item.id, { notes }) : updateObject(p, item.id, { notes })))}
       />
+      <BuildBox store={store} />
       <SelectionActions store={store} />
     </aside>
   );
@@ -390,6 +393,54 @@ function StairBox({ store, groupId }: { store: EditorStore; groupId: string }) {
       ) : (
         <span className="small muted">These stairs were turned, so they can’t be re-laid as stairs any more — they’re an ordinary group of steps.</span>
       )}
+    </div>
+  );
+}
+
+/** Physical builds: which build the selection is, or start tracking it as one. */
+function BuildBox({ store }: { store: EditorStore }) {
+  const project = useStore(store, (s) => s.project);
+  const selection = useStore(store, (s) => s.selection);
+  if (!project.features.builds || !selection.length) return null;
+  const builds = [...new Set(selection.map((id) => buildOfItem(project, id)).filter((b): b is NonNullable<typeof b> => !!b))];
+  if (builds.length) {
+    return (
+      <div className="design-box build-box">
+        {builds.map((b) => (
+          <div key={b.id} className="small">
+            Physical build <strong>{b.code}</strong> {b.name} — {STATUS_LABEL[b.status]}
+            {b.condition !== 'good' && `, ${CONDITION_LABEL[b.condition].toLowerCase()}`}
+            {b.storage && <span className="muted"> · {b.storage}</span>}
+            <div className="actions">
+              <button type="button" onClick={() => store.getState().set({ buildDialog: b.id })}>
+                Open build record
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="design-box build-box">
+      <span className="muted small">Is this a real build you keep (the castle, a ride)? Give it a permanent ID to track storage, condition, repairs and photos.</span>
+      <div className="actions">
+        <button
+          type="button"
+          onClick={() => {
+            let buildId = '';
+            store.getState().commit((p) => {
+              const ids = withCarriedItems(p, selection);
+              const r = createBuild(p, ids, suggestedName(p, selection));
+              buildId = r?.buildId ?? '';
+              return r?.project ?? p;
+            });
+            if (buildId) store.getState().set({ buildDialog: buildId });
+          }}
+        >
+          Track as a physical build
+        </button>
+      </div>
     </div>
   );
 }

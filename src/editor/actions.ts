@@ -5,6 +5,7 @@ import {
   addModule,
   allItems,
   deleteItems,
+  findItem,
   duplicateItems,
   insertCopies,
   itemsOnLevel,
@@ -27,6 +28,21 @@ export function fitToLevel(store: EditorStore) {
   if (!viewport.width || !viewport.height) return;
   const b = levelBounds(project, levelId) ?? { x: 0, y: 0, width: 128, depth: 64 };
   store.getState().setView(fitView(b, viewport.width, viewport.height));
+}
+
+/** Select these things and bring them into view (switching level if needed). */
+export function showItems(store: EditorStore, ids: string[]) {
+  const s = store.getState();
+  const items = ids.map((id) => findItem(s.project, id)).filter((i): i is NonNullable<typeof i> => !!i);
+  if (!items.length) return;
+  const levelId = items[0]!.levelId;
+  const here = items.filter((i) => i.levelId === levelId);
+  if (levelId !== s.levelId) s.set({ levelId });
+  s.select(here.map((i) => i.id));
+  const b = unionRect(here.map(footprint))!;
+  const pad = Math.max(16, Math.max(b.width, b.depth) * 0.6);
+  const { viewport } = store.getState();
+  if (viewport.width) store.getState().setView(fitView({ x: b.x - pad, y: b.y - pad, width: b.width + pad * 2, depth: b.depth + pad * 2 }, viewport.width, viewport.height));
 }
 
 export function zoomBy(store: EditorStore, factor: number) {
