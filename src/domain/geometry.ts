@@ -66,3 +66,12 @@ export function levelBounds(project: Project, levelId: string): Rect | null {
   ].map(footprint);
   return unionRect(rects);
 }
+
+/**
+ * Two plates/features overlapping is a problem, unless one sits entirely on the other
+ * (a mountain built on its castle base).
+ */
+export function solidsClash(a: Rect, b: Rect): boolean {
+  return rectsOverlap(a, b) && !rectContains(a, b) && !rectContains(b, a);
+}
+

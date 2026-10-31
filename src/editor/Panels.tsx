@@ -180,11 +180,11 @@ function ModuleFields({ store, m, unit }: { store: EditorStore; m: MilsModule; u
           />
         </div>
       )}
-      {!isBase(m) && (
+      {(
         <LegoColorPicker
           label="Plate colour (for Finished look)"
           value={m.plateColor}
-          allowNone="Not set (shown as Green)"
+          allowNone={isBase(m) ? 'Not set (keeps its colour)' : 'Not set (shown as Green)'}
           onChange={(hex) => commit((p) => updateModule(p, m.id, { plateColor: hex }))}
         />
       )}

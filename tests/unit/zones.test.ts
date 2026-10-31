@@ -58,3 +58,17 @@ describe('operating zones', () => {
     expect(splitWarnings(acknowledge(q, w), checkLayout(q)).open).toEqual([]);
   });
 });
+
+describe('a feature built on a plate', () => {
+  it('sitting entirely on a base is not an overlap; hanging partly off it is', async () => {
+    const { addModule: add, moveItems: move } = await import('../../src/domain/edits');
+    let p: Project = createProject({ name: 'Castle', table: { widthIn: 40, depthIn: 30 } });
+    const level = p.levels[0]!.id;
+    const base = add(p, { levelId: level, kind: 'custom', width: 64, depth: 48, center: { x: 32, y: 24 }, exact: true, name: 'Castle Base' }, 'full');
+    const mountain = add(base.project, { levelId: level, kind: 'custom', width: 32, depth: 48, center: { x: 40, y: 24 }, exact: true, name: 'Castle Mountain' }, 'full');
+    p = mountain.project;
+    expect(checkLayout(p).filter((w) => w.kind === 'overlap')).toEqual([]);
+    const off = move(p, [mountain.id], 30, 0);
+    expect(checkLayout(off).filter((w) => w.kind === 'overlap')).toHaveLength(1);
+  });
+});

@@ -59,7 +59,7 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
   for (const i of items) {
     const r = footprint(i);
     if (isModule(i)) {
-      out.push(`<rect class="pv-module" data-label="${esc(i.label)}" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" fill="${project.settings.moduleColors === 'plate' && !isBase(i) ? (i.plateColor ?? DEFAULT_PLATE_COLOR) : (i.color ?? MILS_COLORS[i.kind])}"/>`);
+      out.push(`<rect class="pv-module" data-label="${esc(i.label)}" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" fill="${project.settings.moduleColors === 'plate' && (i.plateColor || !isBase(i)) ? (i.plateColor ?? DEFAULT_PLATE_COLOR) : (i.color ?? MILS_COLORS[i.kind])}"/>`);
       const text = moduleDisplayName(i);
       if (opts.labels && text) out.push(`<text class="pv-label" x="${n(r.x + r.width / 2)}" y="${n(r.y + r.depth / 2)}" font-size="${n(fitText(text, r.width, r.depth, 5))}">${esc(text)}</text>`);
     } else if (i.round) {

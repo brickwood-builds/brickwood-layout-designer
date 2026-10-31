@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Ellipse, Group, Layer, Line, Rect, Shape, Stage, Text } from 'react-konva';
 import type Konva from 'konva';
 import { useStore } from 'zustand';
-import { footprint, snap, unionRect, type Rect as R } from '../domain/geometry';
+import { footprint, rectContains, snap, unionRect, type Rect as R } from '../domain/geometry';
 import { allItems, isModule, moveItems, type Item } from '../domain/edits';
 import { makeDragChecker } from './dragCheck';
 import { drawOrder, itemAt } from '../domain/hit';
@@ -118,6 +118,17 @@ export function Canvas({ store }: { store: EditorStore }) {
   // Labels only re-render when zoom crosses one of these steps (not on every wheel tick).
   const labelZoom = Math.pow(2, Math.round(Math.log2(view.scale) * 4) / 4);
   const showLabels = project.settings.showLabels;
+  // Plates with a feature built on them: their name moves to the top edge, out of the way.
+  const builtOn = useMemo(() => {
+    const solids = levelItems.filter((i) => isModule(i) || i.type === 'footprint');
+    const index = new SpatialIndex(solids);
+    const out = new Set<string>();
+    for (const s of solids) {
+      const r = footprint(s);
+      for (const id of index.overlapping(r)) if (id !== s.id && rectContains(r, footprint(solids.find((x) => x.id === id)!))) out.add(s.id);
+    }
+    return out;
+  }, [levelItems]);
   const shading = useMemo(() => {
     if (!project.features.heights || !project.settings.heightShading) return null;
     const stack = computeStack(project, level.id);
@@ -370,7 +381,7 @@ export function Canvas({ store }: { store: EditorStore }) {
               <Items items={baseItems} dx={0} dy={0} selected={selectedSet} problems={EMPTY} editable={editable} plateColors={plateColors} />
               {studsVisible && <Studs items={baseItems} view={view} viewport={viewport} />}
               {shading && <HeightShading items={baseItems} stack={shading.stack} max={shading.max} />}
-              {showLabels && <Labels items={baseItems} dx={0} dy={0} zoom={labelZoom} />}
+              {showLabels && <Labels items={baseItems} dx={0} dy={0} zoom={labelZoom} builtOn={builtOn} />}
             </Group>
           </Layer>
           <Layer listening={false}>
@@ -378,7 +389,7 @@ export function Canvas({ store }: { store: EditorStore }) {
               {drag && (
                 <>
                   <Items items={draggedItems} dx={drag.dx} dy={drag.dy} selected={selectedSet} problems={dragProblems} editable={editable} plateColors={plateColors} />
-                  {showLabels && <Labels items={draggedItems} dx={drag.dx} dy={drag.dy} zoom={labelZoom} />}
+                  {showLabels && <Labels items={draggedItems} dx={drag.dx} dy={drag.dy} zoom={labelZoom} builtOn={builtOn} />}
                 </>
               )}
               {levelItems.filter(hasZone).map((i) => {
@@ -488,14 +499,16 @@ const ItemShape = memo(function ItemShape({
 });
 
 /** Module IDs and ride names. Hidden when too small to read (adaptive detail); small items unlabelled. */
-const Labels = memo(function Labels({ items, dx, dy, zoom }: { items: Item[]; dx: number; dy: number; zoom: number }) {
+const Labels = memo(function Labels({ items, dx, dy, zoom, builtOn }: { items: Item[]; dx: number; dy: number; zoom: number; builtOn: ReadonlySet<string> }) {
   return (
     <>
       {items.map((item) => {
         const module = isModule(item);
         if (!module && item.type !== 'footprint') return null;
         const text = module ? moduleDisplayName(item) : item.name;
-        const r = footprint({ ...item, x: item.x + dx, y: item.y + dy });
+        const full = footprint({ ...item, x: item.x + dx, y: item.y + dy });
+        // Something built on it: label in a band along the top edge instead of the middle.
+        const r = builtOn.has(item.id) ? { ...full, y: full.y + 0.5, depth: Math.min(full.depth / 4, 6) } : full;
         const fontSize = fitText(text, r.width, r.depth, module ? 5 : 6);
         if (!text || fontSize * zoom < 7) return null;
         return (
@@ -708,7 +721,8 @@ function hasStuds(i: Item): boolean {
 }
 
 function moduleFill(m: Extract<Item, { kind: unknown }>, plateColors: boolean): string {
-  if (plateColors && !isBase(m)) return m.plateColor ?? DEFAULT_PLATE_COLOR;
+  if (plateColors && m.plateColor) return m.plateColor;
+  if (plateColors && !isBase(m)) return DEFAULT_PLATE_COLOR;
   return m.color ?? MILS_COLORS[m.kind];
 }
 
