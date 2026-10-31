@@ -6,7 +6,8 @@ import { addObject } from '../../src/domain/objects';
 import { paintCells } from '../../src/domain/brush';
 import { drawStairs } from '../../src/domain/stairs';
 import { lego } from '../../src/domain/legoColors';
-import { applyImport, emptyInventory, inventoryCsv, partsListCsv, partsNeeded, readInventoryCsv, rebrickableCsv, setHave, shoppingList } from '../../src/domain/inventory';
+import { applyImport, brickwithCsv, costSummary, emptyInventory, inventoryCsv, partsListCsv, partsNeeded, readBrickwithCsv, readInventoryCsv, rebrickableCsv, setBrickwith, setHave, setPrice, setUsualPrice, shoppingList, spentTotal } from '../../src/domain/inventory';
+import { InventorySchema } from '../../src/domain/inventory';
 
 const lib = buildLibrary(doc as never);
 
@@ -45,7 +46,7 @@ describe('parts needed, have, to buy', () => {
     const { csv, skipped } = rebrickableCsv(rows, lib.colorIds);
     expect(skipped).toEqual([]);
     expect(csv).toBe(`Part,Color,Quantity\n6141,${lib.colorIds.get('Tan')},7\n`);
-    expect(partsListCsv(rows).split('\n')[1]).toBe('6141,Plate Round 1×1,Tan,12,5,7');
+    expect(partsListCsv(rows).split('\n')[1]).toBe('6141,Plate Round 1×1,Tan,12,5,7,BrickLink,,');
   });
 
   it('imports Rebrickable (colour ids) and our own export (colour names); round trip', () => {
@@ -57,5 +58,39 @@ describe('parts needed, have, to buy', () => {
     const back = readInventoryCsv(inventoryCsv(inv), lib.colorNames);
     expect(applyImport(emptyInventory(), back).have).toEqual(inv.have);
     expect(readInventoryCsv('a,b\n1,2', lib.colorNames).problems[0]).toMatch(/Part, Colour/);
+  });
+
+  it('Brickwith first: parts Brickwith makes move to Brickwith, the rest stay on BrickLink', () => {
+    let inv = setBrickwith(emptyInventory(), '3020', 'Light Bluish Gray', true);
+    const needed = partsNeeded(layout()).parts;
+    expect(shoppingList(needed, inv, false).map((r) => r.supplier)).toEqual(['bricklink', 'bricklink']); // genuine only
+    const rows = shoppingList(needed, inv, true);
+    expect(rows.map((r) => [r.partNo, r.supplier])).toEqual([
+      ['6141', 'bricklink'],
+      ['3020', 'brickwith'],
+    ]);
+    expect(rebrickableCsv(rows.filter((r) => r.supplier === 'bricklink'), lib.colorIds).csv).not.toContain('3020');
+    inv = setPrice(inv, 'brickwith', '3020', 'Light Bluish Gray', 0.12);
+    expect(brickwithCsv(shoppingList(needed, inv, true), inv)).toBe('Part,Brickwith part,Name,Colour,Quantity,Price each\n3020,3020,Plate 2×4,Light Bluish Gray,2,0.12\n');
+  });
+
+  it('costs: own prices, usual prices as estimates, unpriced pieces counted', () => {
+    let inv = setPrice(emptyInventory(), 'bricklink', '6141', 'Tan', 0.05);
+    let c = costSummary(shoppingList(partsNeeded(layout()).parts, inv));
+    expect(c).toMatchObject({ total: 0.6, unpriced: 2, estimated: false });
+    inv = setUsualPrice(inv, 'bricklink', 0.25);
+    c = costSummary(shoppingList(partsNeeded(layout()).parts, inv));
+    expect(c).toMatchObject({ total: 1.1, unpriced: 0, estimated: true });
+    expect(c.bySupplier.bricklink.pieces).toBe(14);
+  });
+
+  it('a Brickwith CSV marks parts and prices; older saved inventories still load', () => {
+    const r = readBrickwithCsv('Part,Colour,Brickwith part,Price\n3020,Light Bluish Gray,BW3020,$0.10\n3024,Purple Haze,,0.01\n', lib.colorNames);
+    expect(r.count).toBe(2);
+    const inv = r.apply(emptyInventory());
+    expect(inv.brickwith['3020|Light Bluish Gray']).toEqual({ no: 'BW3020' });
+    expect(inv.prices['brickwith|3020|Light Bluish Gray']).toBe(0.1);
+    expect(InventorySchema.parse({ have: { '3024|White': 3 }, updatedAt: 'x' })).toMatchObject({ brickwith: {}, prices: {}, usualPrice: {} });
+    expect(spentTotal({ spending: [{ id: 'a', date: '2026-10-01', supplier: 'BrickLink', note: '', amount: 12.3 }, { id: 'b', date: '2026-10-02', supplier: 'Brickwith', note: '', amount: 7.7 }] })).toBe(20);
   });
 });

@@ -204,7 +204,10 @@ export const HELP_TOPICS: HelpTopic[] = [
       'Switch on Parts & inventory in the ⋯ menu. A Parts list… button appears at the bottom.',
       'The parts list shows every real LEGO part the layout uses, by part number and colour: how many it needs, how many you have, and how many to buy. Pieces you made yourself (no part number) and stairs aren’t counted.',
       'Have is your own parts — one list for all your projects, kept on this device. Type a number, or Import what I have… from a CSV with Part, Colour and Quantity columns (Rebrickable’s parts-list export works). Export what I have saves it as a CSV, as a backup or to move it to another device.',
-      'Download shopping list gives a CSV in Rebrickable’s format (part, colour, quantity). Import it on rebrickable.com (free account) to see prices and turn it into a BrickLink wanted list. Download parts list gives the whole table for Excel.',
+      'Where to buy: tick Use Brickwith first, BrickLink for the rest to save money on a big display. Then tick Brickwith has it for each part Brickwith makes (remembered for all your projects, or Import Brickwith parts… from a CSV with Part, Colour and Price). Everything Brickwith doesn’t make stays on the BrickLink list. Leave it off for genuine LEGO only (official LEGO events). It’s set per layout; the layout itself always keeps the LEGO part.',
+      'Costs: type a price each in the Each column, or set a usual price per piece for BrickLink and Brickwith to get an estimate before everything is priced (shown with ~). The estimate is split by supplier.',
+      'Money spent: add what you paid (date, where, what, amount). It is saved with the layout and shown next to what is still to buy.',
+      'BrickLink shopping list gives a CSV in Rebrickable’s format (part, colour, quantity). Import it on rebrickable.com (free account) to see prices and turn it into a BrickLink wanted list. Brickwith shopping list lists their part numbers, colours and quantities. Download parts list gives the whole table for Excel.',
     ],
   },
   {

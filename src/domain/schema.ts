@@ -202,6 +202,17 @@ export const StairSchema = z.object({
   bounds: z.object({ x: studs, y: studs, width: z.number().finite(), depth: z.number().finite() }),
 });
 
+/** Money spent on this layout (FR-08: cost tracking). */
+export const SpendingSchema = z.object({
+  id,
+  /** yyyy-mm-dd */
+  date: z.string(),
+  /** Where: BrickLink, Brickwith, a LEGO store… */
+  supplier: z.string(),
+  note: z.string().default(''),
+  amount: z.number().finite(),
+});
+
 /** A saved measurement on a level (FR-01.05), end points in studs. */
 export const DimensionSchema = z.object({
   id,
@@ -232,6 +243,8 @@ export const SettingsSchema = z.object({
   moduleColors: z.enum(['size', 'plate']).default('size'),
   /** Heights: colour things by how high they are, to read slopes from above. */
   heightShading: z.boolean().default(false),
+  /** Buying parts: Brickwith first with BrickLink for the rest, or genuine LEGO from BrickLink only. */
+  brickwithFirst: z.boolean().default(false),
 });
 
 /** Advanced areas stay hidden until the user switches them on. */
@@ -279,6 +292,7 @@ export const ProjectSchema = z.object({
   designs: z.array(DesignSchema).default([]),
   curves: z.array(CurveSchema).default([]),
   stairs: z.array(StairSchema).default([]),
+  spending: z.array(SpendingSchema).default([]),
 });
 
 export type Level = z.infer<typeof LevelSchema>;
@@ -294,6 +308,7 @@ export type Dimension = z.infer<typeof DimensionSchema>;
 export type Design = z.infer<typeof DesignSchema>;
 export type Curve = z.infer<typeof CurveSchema>;
 export type Stair = z.infer<typeof StairSchema>;
+export type Spending = z.infer<typeof SpendingSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Features = z.infer<typeof FeaturesSchema>;
 export type Project = z.infer<typeof ProjectSchema>;

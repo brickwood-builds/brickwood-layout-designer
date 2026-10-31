@@ -291,6 +291,15 @@ input[type='color'] { width: 100%; height: 36px; padding: 2px; border: 1px solid
 .parts-table-wrap { max-height: 50vh; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
 .parts-table { width: 100%; }
 .parts-table th { position: sticky; top: 0; background: var(--surface); }
-.parts-table tr.short td:last-child { font-weight: 600; color: #b45309; }
+.parts-table tr.short td.to-buy { color: #b45309; }
 .parts-table input.have { width: 72px; min-height: 30px; }
 .actions.wrap { flex-wrap: wrap; }
+.parts-table input.money { width: 64px; min-height: 30px; }
+.parts-table td.to-buy { font-weight: 600; }
+.parts-table tr:not(.short) td.to-buy { font-weight: normal; }
+.check.sourcing { align-items: flex-start; padding: 8px; border: 1px solid var(--border); border-radius: 8px; }
+.cost-box { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
+.parts-more > summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; padding: 4px 0; }
+.spend-form { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.spend-form input { min-height: 32px; flex: 1 1 110px; min-width: 0; }
+.spend-form input[aria-label='What'] { flex: 2 1 180px; }

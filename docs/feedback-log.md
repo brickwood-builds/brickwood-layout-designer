@@ -71,3 +71,10 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 |---|---|---|---|
 | 1 | Go ahead with Phase 3 | 3A: real LEGO parts list (about 2,400 plain parts from Rebrickable's free downloads, shipped with the app so it works offline). Search Single pieces by name, size or part number; parts come in at real size, smooth tiles, heights; favourites ☆ and recently used; colours the part is made in come first; part numbers on the printout. Also answers the earlier request "choose single pieces from actual parts" | Done |
 | 2 | (Phase 3, continued) | 3B: Parts & inventory (⋯ menu). Parts list per layout: needed / have / to buy. "Have" is one list for all projects on this device, typed in or imported from CSV (Rebrickable format works), exportable. Shopping list downloads in Rebrickable's CSV format → price it / make a BrickLink wanted list there | Done |
+
+## 31 Oct 2026, round 8
+
+| # | Request | What was done | Status |
+|---|---|---|---|
+| 1 | Brickwith or genuine depends on the display (castle and mountain: Brickwith first, then BrickLink; small display for official LEGO events: all genuine). A checkbox per layout | Parts list: "Use Brickwith first, BrickLink for the rest" per layout (off = genuine LEGO / BrickLink only). "Brickwith has it" per part and colour, remembered for all projects, or imported from CSV. Separate BrickLink and Brickwith shopping lists | Done |
+| 2 | Track costs, even if estimated | Price each per supplier; usual price per piece for estimates (marked ~); estimate split by supplier; "Money spent on this layout" log saved with the layout | Done |
