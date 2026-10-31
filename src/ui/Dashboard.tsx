@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { OverheadPreview } from './OverheadPreview';
 import { HelpButton } from '../help/HelpDialog';
+import { fileLinksSupported, pickOpenFile, type FileLinks } from '../storage/fileLink';
 import { CheckpointsDialog, NewProjectDialog, RenameDialog } from './dialogs';
 import { formatDate, summary, tableSize } from './format';
 import { exportFileName, exportProject, parseProjectFile } from '../domain/exchange';
@@ -15,7 +16,7 @@ type DialogState =
   | { kind: 'checkpoints'; id: string; name: string }
   | null;
 
-export function Dashboard({ repo, onOpen }: { repo: ProjectRepository; onOpen: (id: string) => void }) {
+export function Dashboard({ repo, links, onOpen }: { repo: ProjectRepository; links: FileLinks; onOpen: (id: string) => void }) {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [damaged, setDamaged] = useState<DamagedProject[]>([]);
   const [showArchived, setShowArchived] = useState(false);
@@ -73,6 +74,27 @@ export function Dashboard({ repo, onOpen }: { repo: ProjectRepository; onOpen: (
     await refresh();
   };
 
+  /** Open a project's file (e.g. from the OneDrive folder) and keep saving to it. */
+  const openFile = async () => {
+    try {
+      const handle = await pickOpenFile();
+      const fromFile = parseProjectFile(await (await handle.getFile()).text());
+      const local = await repo.getProject(fromFile.id).catch(() => null);
+      let project = fromFile;
+      if (!local) project = await repo.createProject({ ...fromFile, archived: false });
+      else if (local.revisionId !== fromFile.revisionId) {
+        // The file wins (the user opened it); this computer's copy is kept as a checkpoint.
+        project = await repo.replaceWithVersion(fromFile, 'Before opening the version from its file', { keepRevisionId: true });
+      }
+      await links.adopt(project, handle);
+      onOpen(project.id);
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return;
+      const details = e instanceof ProjectFormatError && e.details.length ? ` (${e.details.slice(0, 3).join('; ')})` : '';
+      setMessage({ text: `Could not open that file: ${(e as Error).message}${details}`, error: true });
+    }
+  };
+
   return (
     <div className="page">
       <header className="topbar">
@@ -81,6 +103,11 @@ export function Dashboard({ repo, onOpen }: { repo: ProjectRepository; onOpen: (
           <button type="button" className="primary" onClick={() => setDialog({ kind: 'new' })}>
             New project
           </button>
+          {fileLinksSupported() && (
+            <button type="button" onClick={openFile} title="Open a project file (for example from your OneDrive folder) and keep saving to it">
+              Open file…
+            </button>
+          )}
           <button type="button" onClick={() => fileInput.current?.click()}>
             Import…
           </button>

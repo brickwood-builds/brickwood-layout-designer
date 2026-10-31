@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { addLevel, canDeleteLevel, deleteLevel, setLevelTable, updateLevel } from '../domain/edits';
 import { duplicateProject } from '../domain/project';
@@ -22,6 +22,8 @@ import {
   zoomBy,
 } from './actions';
 import { startAutosave, type Autosave } from './autosave';
+import { useFileSync } from './fileSync';
+import type { FileLinks } from '../storage/fileLink';
 import { Canvas } from './Canvas';
 import { Properties } from './Panels';
 import { Palette } from './Palette';
@@ -30,8 +32,10 @@ import { HelpButton } from '../help/HelpDialog';
 import { createEditorStore, type EditorStore } from './store';
 import { toScreen } from './view';
 
-export function Editor({ repo, id, onBack }: { repo: ProjectRepository; id: string; onBack: () => void }) {
-  const [loaded, setLoaded] = useState<{ store: EditorStore; autosave: Autosave } | null>(null);
+type OnSaved = (p: Project) => void;
+
+export function Editor({ repo, links, id, onBack }: { repo: ProjectRepository; links: FileLinks; id: string; onBack: () => void }) {
+  const [loaded, setLoaded] = useState<{ store: EditorStore; autosave: Autosave; registerOnSaved: (fn: OnSaved) => void } | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -41,8 +45,10 @@ export function Editor({ repo, id, onBack }: { repo: ProjectRepository; id: stri
       (p) => {
         if (cancelled) return;
         const store = createEditorStore(p);
-        autosave = startAutosave(store, repo);
-        setLoaded({ store, autosave });
+        // Lets the linked-file sync hear about each successful save.
+        let onSaved: OnSaved | undefined;
+        autosave = startAutosave(store, repo, 600, (saved) => onSaved?.(saved));
+        setLoaded({ store, autosave, registerOnSaved: (fn) => (onSaved = fn) });
       },
       (e: Error) => setError(e.message),
     );
@@ -62,12 +68,27 @@ export function Editor({ repo, id, onBack }: { repo: ProjectRepository; id: stri
       </div>
     );
   if (!loaded) return null;
-  return <EditorScreen store={loaded.store} autosave={loaded.autosave} repo={repo} onBack={onBack} />;
+  return <EditorScreen store={loaded.store} autosave={loaded.autosave} repo={repo} links={links} registerOnSaved={loaded.registerOnSaved} onBack={onBack} />;
 }
 
-function EditorScreen({ store, autosave, repo, onBack }: { store: EditorStore; autosave: Autosave; repo: ProjectRepository; onBack: () => void }) {
+function EditorScreen({
+  store,
+  autosave,
+  repo,
+  links,
+  registerOnSaved,
+  onBack,
+}: {
+  store: EditorStore;
+  autosave: Autosave;
+  repo: ProjectRepository;
+  links: FileLinks;
+  registerOnSaved: (fn: OnSaved) => void;
+  onBack: () => void;
+}) {
   useKeyboard(store);
   useFlushWhenHidden(autosave);
+  const file = useFileSync(store, repo, links, autosave, registerOnSaved);
   const saveState = useStore(store, (s) => s.saveState);
   const saveError = useStore(store, (s) => s.saveError);
   const project = useStore(store, (s) => s.project);
@@ -105,6 +126,29 @@ function EditorScreen({ store, autosave, repo, onBack }: { store: EditorStore; a
           </span>
         </div>
       )}
+      {file.state.kind === 'changed' && (
+        <div className="banner error" role="alert">
+          <span>
+            <strong>{file.state.link.fileName}</strong> was changed somewhere else (probably on another computer), so this version wasn’t saved to it.
+            Whichever you don’t pick is kept as a checkpoint.
+          </span>
+          <span className="banner-actions">
+            <button type="button" onClick={() => file.useFileVersion()}>Use the file’s version</button>
+            <button type="button" onClick={() => file.keepThisVersion()}>Keep this version</button>
+          </span>
+        </div>
+      )}
+      {file.state.kind === 'error' && (
+        <div className="banner error" role="alert">
+          <span>
+            Couldn’t save to <strong>{file.state.link.fileName}</strong>: {file.state.message}
+          </span>
+          <span className="banner-actions">
+            <button type="button" onClick={() => file.writeNow()}>Try again</button>
+            <button type="button" onClick={() => file.stop()}>Stop saving to the file</button>
+          </span>
+        </div>
+      )}
       {saveState === 'error' && (
         <div className="banner error" role="alert">
           <span>Could not save: {saveError}. Your next change will try again; export a copy if this keeps happening.</span>
@@ -115,7 +159,7 @@ function EditorScreen({ store, autosave, repo, onBack }: { store: EditorStore; a
         <Canvas store={store} />
         <Properties store={store} />
       </div>
-      <StatusBar store={store} />
+      <StatusBar store={store} file={<FileStatus file={file} />} />
     </div>
   );
 }
@@ -342,7 +386,52 @@ function LevelDialog({
   );
 }
 
-function StatusBar({ store }: { store: EditorStore }) {
+/** Status-bar control for "Save to a file" (Chrome/Edge on a computer). */
+function FileStatus({ file }: { file: ReturnType<typeof useFileSync> }) {
+  const s = file.state;
+  const [menu, setMenu] = useState(false);
+  switch (s.kind) {
+    case 'unsupported':
+    case 'loading':
+      return null;
+    case 'none':
+      return (
+        <button type="button" className="file-btn" onClick={() => file.linkNow()} title="Pick a file (for example in your OneDrive folder); the project then keeps saving there too">
+          Save to a file…
+        </button>
+      );
+    case 'paused':
+      return (
+        <button type="button" className="file-btn warn" onClick={() => file.resume()} title="The browser needs your OK again after a restart">
+          Resume saving to {s.link.fileName}
+        </button>
+      );
+    default:
+      return (
+        <span className="popover-wrap">
+          <button type="button" className={s.kind === 'ok' ? 'file-btn ok' : 'file-btn warn'} onClick={() => setMenu(!menu)} aria-expanded={menu}>
+            {s.kind === 'ok' ? '✓' : '⚠'} {s.link.fileName}
+          </button>
+          {menu && (
+            <span className="popover file-menu" role="dialog" aria-label="Linked file">
+              <span className="small muted">Every save also goes to this file. Keep it in your OneDrive folder and OneDrive copies it to the cloud.</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenu(false);
+                  file.stop();
+                }}
+              >
+                Stop saving to this file
+              </button>
+            </span>
+          )}
+        </span>
+      );
+  }
+}
+
+function StatusBar({ store, file }: { store: EditorStore; file: ReactNode }) {
   const project = useStore(store, (s) => s.project);
   const levelId = useStore(store, (s) => s.levelId);
   const pointer = useStore(store, (s) => s.pointer);
@@ -390,6 +479,7 @@ function StatusBar({ store }: { store: EditorStore }) {
           <option value="studs">studs</option>
         </select>
       </label>
+      {file}
       <span className="spacer" />
       <div className="warnings">
         <button

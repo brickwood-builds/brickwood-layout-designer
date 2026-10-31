@@ -145,9 +145,20 @@ export const HELP_TOPICS: HelpTopic[] = [
     id: 'backups',
     title: 'Saving, backups and recovery',
     body: [
-      'Projects are saved in this browser on this device. The toolbar shows Saved, Saving… or Not saved.',
+      'Projects are saved in this browser on this device. The toolbar shows Saved, Saving… or Not saved. To keep a project in OneDrive as well, see Saving to OneDrive.',
       'The browser can clear its storage (for example after “clear website data”), so export important projects: on the project list choose More → Export file. Import… brings a file back; if the project already exists it’s imported as a copy and nothing is overwritten.',
       'Checkpoints are snapshots taken automatically every 10 minutes while you work and before a restore. More → Checkpoints… lets you preview one and restore it; the current version is kept as a checkpoint first.',
+    ],
+  },
+  {
+    id: 'onedrive',
+    title: 'Saving to OneDrive (or any folder)',
+    body: [
+      'In Chrome or Edge on a computer, Save to a file… (bottom of the editor) lets you pick a file — put it in your OneDrive folder. From then on every save also goes to that file, and the OneDrive app copies it to the cloud. The bottom bar shows ✓ and the file name while it’s working.',
+      'On another computer, choose Open file… on the project list and pick the same file in the OneDrive folder. It opens there and keeps saving to the same file.',
+      'If the file was changed on another computer since this one last saved it, nothing is overwritten: you choose Use the file’s version or Keep this version, and the one you don’t pick is kept as a checkpoint.',
+      'After restarting the browser it may show Resume saving to …: click it and allow access.',
+      'Tip: let OneDrive finish syncing before you open the project on another computer, and avoid editing the same project on two computers at once.',
     ],
   },
   {

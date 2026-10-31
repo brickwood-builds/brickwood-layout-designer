@@ -5,7 +5,9 @@ It replaces the Visio drawings first, then grows into planning, packing and setu
 
 **Status: Phase 1 (1A–1D) complete; 1E cloud sync not started.** Projects, local storage, export/import,
 recovery checkpoints, both starter displays, the MILS editor, markers, items, groups, layers, measuring, print/PDF/pictures, built-in help and offline use work.
-Milestone reports: [1A](docs/milestone-1a-report.md), [1B](docs/milestone-1b-report.md), [1C](docs/milestone-1c-report.md), [1D](docs/milestone-1d-report.md).
+Milestone reports: [1A](docs/milestone-1a-report.md), [1B](docs/milestone-1b-report.md), [1C](docs/milestone-1c-report.md), [1D](docs/milestone-1d-report.md), [Save to a file / OneDrive folder](docs/file-sync-report.md).
+
+Live app: https://brickwood-builds.github.io/brickwood-layout-designer/ (published automatically from `main`).
 
 ## Run it
 

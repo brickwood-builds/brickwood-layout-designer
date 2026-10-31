@@ -188,6 +188,36 @@ export class ProjectRepository {
     });
   }
 
+  /**
+   * Replace a project with another copy of itself (e.g. the newer version from its linked
+   * file). The current version is checkpointed first, so nothing is lost.
+   */
+  async replaceWithVersion(incoming: Project, reason: string, opts: { keepRevisionId?: boolean } = {}): Promise<Project> {
+    const db = this.db;
+    return db.transaction('rw', db.projects, db.checkpoints, async () => {
+      const row = await db.projects.get(incoming.id);
+      let revision = incoming.revision;
+      if (row) {
+        try {
+          const current = migrateProject(row.doc);
+          await this.writeCheckpoint(current, reason);
+          revision = Math.max(revision, current.revision);
+        } catch {
+          // A damaged copy is simply replaced.
+        }
+      }
+      // keepRevisionId: the incoming copy *is* that saved revision (e.g. read from its file).
+      const next = ProjectSchema.parse({
+        ...incoming,
+        revision: revision + 1,
+        revisionId: opts.keepRevisionId ? incoming.revisionId : newId(),
+        updatedAt: opts.keepRevisionId ? incoming.updatedAt : nowIso(),
+      });
+      await db.projects.put({ id: next.id, updatedAt: next.updatedAt, doc: next });
+      return next;
+    });
+  }
+
   /** Add the bundled starter projects the first time the app runs. */
   async seedStarters(starters: Project[]): Promise<number> {
     const db = this.db;

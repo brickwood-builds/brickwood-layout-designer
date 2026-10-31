@@ -1,5 +1,6 @@
 import { RevisionConflictError, type ProjectRepository } from '../storage/repository';
 import type { EditorStore } from './store';
+import type { Project } from '../domain/schema';
 
 export interface Autosave {
   /** Save now if anything is pending; resolves when stored. */
@@ -12,7 +13,7 @@ export interface Autosave {
  * edits made during a save are picked up by the next one. A revision conflict
  * (the project was saved from another tab) stops autosave instead of overwriting.
  */
-export function startAutosave(store: EditorStore, repo: ProjectRepository, delayMs = 600): Autosave {
+export function startAutosave(store: EditorStore, repo: ProjectRepository, delayMs = 600, onSaved?: (saved: Project) => void): Autosave {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let running: Promise<void> | null = null;
 
@@ -28,6 +29,7 @@ export function startAutosave(store: EditorStore, repo: ProjectRepository, delay
     running = (async () => {
       try {
         const saved = await repo.saveProject(doc);
+        onSaved?.(saved);
         const editedMeanwhile = store.getState().project !== doc;
         store.getState().markSaved({ revision: saved.revision, revisionId: saved.revisionId, updatedAt: saved.updatedAt });
         store.getState().setSaveState(editedMeanwhile ? 'pending' : 'saved');

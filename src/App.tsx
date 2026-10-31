@@ -4,9 +4,12 @@ import { Editor } from './editor/Editor';
 import { PrintView } from './ui/PrintView';
 import { openDb } from './storage/db';
 import { ProjectRepository } from './storage/repository';
+import { FileLinks, dbLinkStore } from './storage/fileLink';
 import { starterProjects } from './starters';
 
-const repo = new ProjectRepository(openDb());
+const db = openDb();
+const repo = new ProjectRepository(db);
+const links = new FileLinks(dbLinkStore(db));
 
 /** Hash routing keeps the open project across a browser reload: #/project/<id>[/print]. */
 function readRoute(): { id: string; print: boolean } | null {
@@ -35,8 +38,8 @@ export function App() {
   if (!ready) return null;
   if (route?.print) return <PrintView key={route.id} repo={repo} id={route.id} onBack={() => (window.location.hash = `#/project/${route.id}`)} />;
   return route ? (
-    <Editor key={route.id} repo={repo} id={route.id} onBack={() => (window.location.hash = '')} />
+    <Editor key={route.id} repo={repo} links={links} id={route.id} onBack={() => (window.location.hash = '')} />
   ) : (
-    <Dashboard repo={repo} onOpen={(id) => (window.location.hash = `#/project/${id}`)} />
+    <Dashboard repo={repo} links={links} onOpen={(id) => (window.location.hash = `#/project/${id}`)} />
   );
 }
