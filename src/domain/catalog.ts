@@ -23,6 +23,7 @@ export const STARTER_PARTS: CatalogPart[] = [
   { key: 'plate-4x4', name: 'Plate 4×4', width: 4, depth: 4, color: lego('Light Bluish Gray') },
   { key: 'tile-1x2', name: 'Tile 1×2', width: 2, depth: 1, color: lego('Yellow') },
   { key: 'tile-2x2', name: 'Tile 2×2', width: 2, depth: 2, color: lego('Yellow') },
+  { key: 'round-1x1', name: 'Plate Round 1×1', width: 1, depth: 1, color: lego('Tan'), round: true },
   { key: 'round-2x2', name: 'Round 2×2', width: 2, depth: 2, color: lego('Light Bluish Gray'), round: true },
 ];
 

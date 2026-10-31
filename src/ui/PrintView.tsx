@@ -7,6 +7,8 @@ import type { ProjectRepository } from '../storage/repository';
 import { exportFileName } from '../domain/exchange';
 import { overheadSvg, svgToPng } from './overheadSvg';
 import { tableSize } from './format';
+import { countPieces } from '../domain/brush';
+import { legoColorName } from '../domain/legoColors';
 import { computeStack, formatHeight, type StackInfo } from '../domain/heights';
 import { HelpButton } from '../help/HelpDialog';
 
@@ -38,7 +40,9 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
     .sort((a, b) => moduleDisplayName(a).localeCompare(moduleDisplayName(b), undefined, { numeric: true }));
   // Rides and buildings: named bases, plus any older footprint shapes.
   const rides = [...project.modules.filter((m) => m.levelId === levelId && isBase(m)), ...project.objects.filter((o) => o.levelId === levelId && o.type === 'footprint')].sort((a, b) => a.x - b.x);
-  const small = project.objects.filter((o) => o.levelId === levelId && o.type !== 'footprint');
+  const small = project.objects.filter((o) => o.levelId === levelId && o.type !== 'footprint' && o.type !== 'piece');
+  // Single pieces are counted, not listed one by one (a walkway can be hundreds of plates).
+  const pieces = countPieces(project.objects.filter((o) => o.levelId === levelId && o.type === 'piece'));
   const dims = project.dimensions.filter((d) => d.levelId === levelId);
   const heights = project.features.heights;
   const stack = heights ? computeStack(project, levelId) : new Map<string, StackInfo>();
@@ -130,7 +134,7 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
 
       {small.length > 0 && (
         <section className="print-section">
-          <h2>Markers, small items & pieces</h2>
+          <h2>Markers & small items</h2>
           <table className="print-table">
             <thead>
               <tr><th>Item</th><th>On module</th><th>From left</th><th>From back</th>{heights && <th>Sits at → top</th>}</tr>
@@ -143,6 +147,28 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
                   <td>{pos(o.x)}</td>
                   <td>{pos(o.y)}</td>
                   {heights && <td>{stack.get(o.id) ? `${stack.get(o.id)!.base} → ${stack.get(o.id)!.top} plates` : ''}</td>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      {pieces.length > 0 && (
+        <section className="print-section">
+          <h2>Single pieces</h2>
+          <table className="print-table">
+            <thead>
+              <tr><th>Piece</th><th>Colour</th><th>How many</th></tr>
+            </thead>
+            <tbody>
+              {pieces.map((p) => (
+                <tr key={`${p.name}|${p.color}`}>
+                  <td>{p.name}</td>
+                  <td>
+                    <i className="swatch" style={{ background: p.color }} /> {legoColorName(p.color) ?? p.color}
+                  </td>
+                  <td>{p.count}</td>
                 </tr>
               ))}
             </tbody>

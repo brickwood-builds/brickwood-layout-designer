@@ -11,6 +11,8 @@ import {
   rotateItems,
 } from '../domain/edits';
 import type { MilsKind } from '../domain/schema';
+import { eraseCells, paintCells, type Cell } from '../domain/brush';
+import { paintTemplate } from './drawTool';
 import { addObject, defaultItemLayerId, groupItems, ungroup, withCarriedItems, type NewObject } from '../domain/objects';
 import type { EditorStore } from './store';
 import { fitView, toWorld, zoomAt } from './view';
@@ -150,5 +152,23 @@ export function isEditable(store: EditorStore, layerId: string): boolean {
 export function itemLayerId(store: EditorStore): string {
   const { project, activeLayerId } = store.getState();
   return activeLayerId && project.layers.some((l) => l.id === activeLayerId) ? activeLayerId : defaultItemLayerId(project);
+}
+
+/** Finish a Draw stroke: paint (or erase) its cells as one undoable change. */
+export function finishStroke(store: EditorStore, cells: Cell[]) {
+  const s = store.getState();
+  const layerId = itemLayerId(store);
+  const template = paintTemplate(s.project, s.draw);
+  if (s.draw.erase) {
+    s.commit((p) => eraseCells(p, s.levelId, layerId, cells, { cellW: template.width, cellD: template.depth, width: s.draw.width }).project, []);
+    return;
+  }
+  let ids: string[] = [];
+  s.commit((p) => {
+    const r = paintCells(p, s.levelId, layerId, template, cells);
+    ids = r.ids;
+    return r.project;
+  });
+  if (ids.length) s.select([]);
 }
 

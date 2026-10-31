@@ -13,7 +13,9 @@ import { DEFAULT_PLATE_COLOR } from '../domain/legoColors';
 import { STUDS_PER_INCH, formatLength, type DisplayUnit } from '../domain/units';
 import { dimensionLength } from '../domain/edits';
 import { expandToGroups, withCarriedItems } from '../domain/objects';
-import { fitToLevel, isEditable } from './actions';
+import { finishStroke, fitToLevel, isEditable } from './actions';
+import { cellsForBox, cellsForLine, cellsForPath, type Cell } from '../domain/brush';
+import { paintTemplate } from './drawTool';
 import type { EditorStore } from './store';
 import { gridStep, toScreen, toWorld, zoomAt, type View } from './view';
 
@@ -26,7 +28,8 @@ type Gesture =
   | { type: 'pinch'; startView: View; dist: number; mid: { x: number; y: number } }
   | { type: 'move'; ids: string[]; sx: number; sy: number; anchor: { x: number; y: number }; moved: boolean; touch: boolean }
   | { type: 'marquee'; sx: number; sy: number; x: number; y: number; additive: boolean }
-  | { type: 'measure'; x1: number; y1: number };
+  | { type: 'measure'; x1: number; y1: number }
+  | { type: 'draw'; points: { x: number; y: number }[] };
 
 /** Font size (studs) that keeps a one-line label inside its rectangle. */
 function fitText(text: string, width: number, depth: number, max: number) {
@@ -48,6 +51,8 @@ export function Canvas({ store }: { store: EditorStore }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  /** Cells of the stroke being drawn (preview until the finger/mouse lifts). */
+  const [stroke, setStroke] = useState<Cell[] | null>(null);
   const [spaceDown, setSpaceDown] = useState(false);
   const [cursor, setCursor] = useState('default');
   const spaceDownRef = useRef(false);
@@ -147,12 +152,19 @@ export function Canvas({ store }: { store: EditorStore }) {
         // Second finger: switch whatever was happening into a pinch.
         endDrag(false);
         setMarquee(null);
+        setStroke(null);
         const [a, b] = [...pointers.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
         gesture.current = { type: 'pinch', startView: s.view, dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
         return;
       }
       if (pointers.current.size > 2) return;
       const touch = e.pointerType === 'touch';
+      if (s.mode === 'draw' && e.button === 0 && !spaceDownRef.current) {
+        const w = toWorld(s.view, p.x, p.y);
+        gesture.current = { type: 'draw', points: [w] };
+        setStroke(strokeCells(store, [w]));
+        return;
+      }
       if (s.mode === 'measure' && e.button === 0 && !spaceDownRef.current) {
         const w = toWorld(s.view, p.x, p.y);
         const mode = s.project.settings.snap;
@@ -198,7 +210,7 @@ export function Canvas({ store }: { store: EditorStore }) {
       }
       const g = gesture.current;
       if (!g) {
-        if (e.pointerType === 'mouse') setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' ? 'crosshair' : hitTest(p) ? 'move' : 'default');
+        if (e.pointerType === 'mouse') setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' ? 'crosshair' : hitTest(p) ? 'move' : 'default');
         return;
       }
       if (g.type === 'pinch') {
@@ -221,6 +233,9 @@ export function Canvas({ store }: { store: EditorStore }) {
         const dx = snap(g.anchor.x + (p.x - g.sx) / s.view.scale, mode) - g.anchor.x;
         const dy = snap(g.anchor.y + (p.y - g.sy) / s.view.scale, mode) - g.anchor.y;
         if (!s.drag || s.drag.dx !== dx || s.drag.dy !== dy) s.set({ drag: { ids: g.ids, dx, dy } });
+      } else if (g.type === 'draw') {
+        g.points.push(toWorld(s.view, p.x, p.y));
+        setStroke(strokeCells(store, g.points));
       } else if (g.type === 'measure') {
         const w = toWorld(s.view, p.x, p.y);
         const mode = s.project.settings.snap;
@@ -249,6 +264,11 @@ export function Canvas({ store }: { store: EditorStore }) {
         return;
       }
       gesture.current = null;
+      if (g.type === 'draw') {
+        setStroke(null);
+        if (!cancelled) finishStroke(store, strokeCells(store, g.points));
+        return;
+      }
       if (g.type === 'measure') {
         if (cancelled) s.set({ measure: null });
         return;
@@ -369,6 +389,7 @@ export function Canvas({ store }: { store: EditorStore }) {
                   <DimensionLine key={d.id} d={d} scale={view.scale} unit={project.settings.displayUnit} />
                 ))}
               {measure && <DimensionLine d={measure} scale={view.scale} unit={project.settings.displayUnit} live />}
+              {stroke && <StrokePreview cells={stroke} store={store} />}
             </Group>
             <Rulers view={view} viewport={viewport} unit={project.settings.displayUnit} />
             {marquee && <Rect x={marquee.x} y={marquee.y} width={marquee.w} height={marquee.h} fill="rgba(31,111,235,0.1)" stroke={ACCENT} strokeWidth={1} dash={[4, 3]} listening={false} />}
@@ -683,5 +704,42 @@ function hiddenByHeight(project: Project, levelId: string, limit: number | null)
   const hidden = new Set<string>();
   for (const [id, info] of computeStack(project, levelId)) if (info.base >= limit && info.height > 0) hidden.add(id);
   return hidden;
+}
+
+/** Cells for the current stroke, following the Draw tool's shape and brush. */
+function strokeCells(store: EditorStore, points: { x: number; y: number }[]): Cell[] {
+  const { project, draw } = store.getState();
+  const t = paintTemplate(project, draw);
+  const b = { cellW: t.width, cellD: t.depth, width: draw.width };
+  const first = points[0]!;
+  const last = points[points.length - 1]!;
+  if (draw.shape === 'box') return cellsForBox(first, last, b);
+  if (draw.shape === 'line') return cellsForLine(first, last, b);
+  return cellsForPath(points, b);
+}
+
+/** What the stroke will paint (or, red, what it will erase). */
+function StrokePreview({ cells, store }: { cells: Cell[]; store: EditorStore }) {
+  const { project, draw } = store.getState();
+  const t = paintTemplate(project, draw);
+  return (
+    <Shape
+      listening={false}
+      sceneFunc={(ctx) => {
+        const c = ctx._context;
+        c.globalAlpha = draw.erase ? 0.35 : 0.75;
+        c.fillStyle = draw.erase ? '#d1242f' : t.color;
+        c.beginPath();
+        for (const cell of cells) {
+          if (t.round && !draw.erase) {
+            c.moveTo(cell.x + t.width, cell.y + t.depth / 2);
+            c.ellipse(cell.x + t.width / 2, cell.y + t.depth / 2, t.width / 2, t.depth / 2, 0, 0, Math.PI * 2);
+          } else c.rect(cell.x, cell.y, t.width, t.depth);
+        }
+        c.fill();
+        c.globalAlpha = 1;
+      }}
+    />
+  );
 }
 

@@ -13,6 +13,7 @@ export const HELP_CONTEXT = {
   dashboard: 'getting-started',
   editor: 'editor-basics',
   measure: 'measure',
+  draw: 'draw',
   print: 'print',
 } as const;
 
@@ -65,7 +66,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       '• Ctrl+A: select all on this level · Escape: clear selection',
       '• Ctrl+D: duplicate · Ctrl+C / Ctrl+V: copy / paste',
       '• Ctrl+G: group · Ctrl+Shift+G: ungroup · Alt-click: pick one piece of a group',
-      '• V: select · H: pan (or hold Space) · M: measure',
+      '• V: select · H: pan (or hold Space) · M: measure · B: draw',
       '• F: fit the table in view · + / −: zoom',
       '• ?: this help',
       'On a Mac use ⌘ instead of Ctrl.',
@@ -164,6 +165,18 @@ export const HELP_TOPICS: HelpTopic[] = [
       'If the file was changed on another computer since this one last saved it, nothing is overwritten: you choose Use the file’s version or Keep this version, and the one you don’t pick is kept as a checkpoint.',
       'After restarting the browser it may show Resume saving to …: click it and allow access.',
       'Tip: let OneDrive finish syncing before you open the project on another computer, and avoid editing the same project on two computers at once.',
+    ],
+  },
+  {
+    id: 'draw',
+    title: 'Drawing walkways and rows',
+    body: [
+      'Draw (B) paints pieces onto the table — for example a walkway of 1×1 round plates, a hedge or a row of lamps.',
+      'In the panel pick what to draw with (any single piece, or this project’s own pieces, items and markers), a LEGO colour and the brush width in studs. Then drag: Freehand follows your finger or mouse, Straight draws a line from where you start to where you let go, Fill box fills a rectangle.',
+      'One piece goes in each stud (or each piece-sized spot for bigger pieces), and painting over what’s already there doesn’t double it up. Each stroke is a single Undo.',
+      'Tick Erase to remove things on the drawing layer under the brush instead.',
+      'It draws on the layer chosen in Layers → New items (for walkways, Surface details is a good choice). Two fingers still move and zoom on the iPad.',
+      'The printout counts identical pieces, e.g. “Plate Round 1×1, Tan × 412”.',
     ],
   },
   {

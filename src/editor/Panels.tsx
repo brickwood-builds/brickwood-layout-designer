@@ -10,6 +10,7 @@ import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, u
 import { groupOf, modulesUnder, renameGroup, resizeObject, saveShape } from '../domain/objects';
 import { markerKind } from '../domain/catalog';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
+import { DrawPanel } from './DrawPanel';
 import type { EditorStore } from './store';
 
 export const KIND_LABEL: Record<MilsKind, string> = { '32x32': '32×32', '32x16': '32×16', '16x16': '16×16', '16x8': '16×8', custom: 'Custom' };
@@ -80,6 +81,7 @@ export function Properties({ store }: { store: EditorStore }) {
   const mode = useStore(store, (s) => s.mode);
   const unit = project.settings.displayUnit;
   if (mode === 'measure') return <MeasurePanel store={store} />;
+  if (mode === 'draw') return <DrawPanel store={store} />;
   if (selection.length === 0) {
     return (
       <aside className="props empty" aria-label="Properties">

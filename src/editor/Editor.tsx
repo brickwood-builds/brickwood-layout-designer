@@ -189,6 +189,7 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
       <div className="tool-group" role="group" aria-label="Pointer mode">
         <button type="button" aria-pressed={mode === 'select'} onClick={() => s.set({ mode: 'select', measure: null })} title="Select and move (V)">Select</button>
         <button type="button" aria-pressed={mode === 'pan'} onClick={() => s.set({ mode: 'pan', measure: null })} title="Pan (H, or hold Space)">Pan</button>
+        <button type="button" aria-pressed={mode === 'draw'} onClick={() => s.set({ mode: 'draw', measure: null })} title="Draw: paint pieces, e.g. a walkway of 1×1 round plates (B)">Draw</button>
         <button type="button" aria-pressed={mode === 'measure'} onClick={() => s.set({ mode: 'measure' })} title="Measure: drag between two points (M)">Measure</button>
       </div>
       <div className="tool-group">
@@ -212,7 +213,7 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
       <LayersMenu store={store} />
       <button type="button" onClick={onPrint} title="Printable plan, PDF and picture downloads">Print…</button>
       <OptionsMenu store={store} />
-      <HelpButton context={mode === 'measure' ? 'measure' : 'editor'} />
+      <HelpButton context={mode === 'measure' ? 'measure' : mode === 'draw' ? 'draw' : 'editor'} />
     </header>
   );
 }
@@ -581,6 +582,7 @@ function useKeyboard(store: EditorStore) {
       if (key === 'v') return s.set({ mode: 'select', measure: null });
       if (key === 'h') return s.set({ mode: 'pan', measure: null });
       if (key === 'm') return s.set({ mode: 'measure' });
+      if (key === 'b') return s.set({ mode: 'draw', measure: null });
       if (e.key === '+' || e.key === '=') return handled(), zoomBy(store, 1.25);
       if (e.key === '-' || e.key === '_') return handled(), zoomBy(store, 1 / 1.25);
     };
