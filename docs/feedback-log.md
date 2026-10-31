@@ -70,3 +70,4 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 | # | Request | What was done | Status |
 |---|---|---|---|
 | 1 | Go ahead with Phase 3 | 3A: real LEGO parts list (about 2,400 plain parts from Rebrickable's free downloads, shipped with the app so it works offline). Search Single pieces by name, size or part number; parts come in at real size, smooth tiles, heights; favourites ☆ and recently used; colours the part is made in come first; part numbers on the printout. Also answers the earlier request "choose single pieces from actual parts" | Done |
+| 2 | (Phase 3, continued) | 3B: Parts & inventory (⋯ menu). Parts list per layout: needed / have / to buy. "Have" is one list for all projects on this device, typed in or imported from CSV (Rebrickable format works), exportable. Shopping list downloads in Rebrickable's CSV format → price it / make a BrickLink wanted list there | Done |

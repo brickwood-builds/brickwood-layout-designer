@@ -3,6 +3,9 @@ import { migrateProject, ProjectFormatError } from '../domain/migrations';
 import { duplicateProject } from '../domain/project';
 import { ProjectSchema, type Project } from '../domain/schema';
 import type { BrickwoodDb, CheckpointRow } from './db';
+import { InventorySchema, emptyInventory, type Inventory } from '../domain/inventory';
+
+const INVENTORY = 'inventory';
 
 /** A save was based on an out-of-date copy. Nothing was written. */
 export class RevisionConflictError extends Error {
@@ -225,6 +228,17 @@ export class ProjectRepository {
    * A starter the user archived or changed is never re-added. `legacyIds` are starters that
    * browsers seeded before seeding was tracked per starter.
    */
+  /** Your parts (one list for all projects), or an empty one. */
+  async getInventory(): Promise<Inventory> {
+    const row = await this.db.meta.get(INVENTORY);
+    const parsed = InventorySchema.safeParse(row?.value);
+    return parsed.success ? parsed.data : emptyInventory();
+  }
+
+  async saveInventory(inv: Inventory): Promise<void> {
+    await this.db.meta.put({ key: INVENTORY, value: InventorySchema.parse(inv) });
+  }
+
   async seedStarters(starters: Project[], legacyIds: string[] = []): Promise<number> {
     const db = this.db;
     return db.transaction('rw', db.projects, db.meta, async () => {

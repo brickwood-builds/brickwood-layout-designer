@@ -32,8 +32,9 @@ export interface PartsLibrary {
   generated: string;
   parts: LibraryPart[];
   byNo: Map<string, LibraryPart>;
-  /** Rebrickable colour id by colour name (for parts-list exports). */
+  /** Rebrickable colour id by colour name (for parts-list exports), and back. */
   colorIds: Map<string, number>;
+  colorNames: Map<number, string>;
 }
 
 type RawPart = [string, string, string, number, number, number, number, number[]];
@@ -67,6 +68,7 @@ export function buildLibrary(doc: RawDoc): PartsLibrary {
     parts,
     byNo: new Map(parts.map((p) => [p.partNo, p])),
     colorIds: new Map(doc.colors.map(([id, name]) => [name, id])),
+    colorNames: new Map(doc.colors.map(([id, name]) => [id, name])),
   };
 }
 

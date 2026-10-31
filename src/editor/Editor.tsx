@@ -30,6 +30,7 @@ import { Properties } from './Panels';
 import { Palette } from './Palette';
 import { LayersMenu } from './LayersMenu';
 import { HeightFilter, HeightShadingToggle, OptionsMenu } from './OptionsMenu';
+import { PartsListButton } from './PartsList';
 import { computeStack } from '../domain/heights';
 import { HelpButton } from '../help/HelpDialog';
 import { createEditorStore, type EditorStore } from './store';
@@ -162,7 +163,7 @@ function EditorScreen({
         <Canvas store={store} />
         <Properties store={store} />
       </div>
-      <StatusBar store={store} file={<FileStatus file={file} />} />
+      <StatusBar store={store} file={<FileStatus file={file} />} parts={<PartsListButton store={store} repo={repo} />} />
     </div>
   );
 }
@@ -439,7 +440,7 @@ function FileStatus({ file }: { file: ReturnType<typeof useFileSync> }) {
   }
 }
 
-function StatusBar({ store, file }: { store: EditorStore; file: ReactNode }) {
+function StatusBar({ store, file, parts }: { store: EditorStore; file: ReactNode; parts: ReactNode }) {
   const project = useStore(store, (s) => s.project);
   const levelId = useStore(store, (s) => s.levelId);
   const pointer = useStore(store, (s) => s.pointer);
@@ -492,6 +493,7 @@ function StatusBar({ store, file }: { store: EditorStore; file: ReactNode }) {
         </select>
       </label>
       {file}
+      {project.features.inventory && parts}
       {project.features.heights && <HeightFilter store={store} maxTop={maxTop} />}
       {project.features.heights && <HeightShadingToggle store={store} maxTop={maxTop} />}
       <span className="spacer" />

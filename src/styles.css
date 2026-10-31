@@ -285,3 +285,12 @@ input[type='color'] { width: 100%; height: 36px; padding: 2px; border: 1px solid
 .palette-sub { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-top: 6px; }
 .lego-grid .not-made { opacity: 0.35; }
 .lego-grid .made-label { grid-column: 1 / -1; font-size: 0.75rem; color: var(--muted); }
+
+/* Parts list (3B) */
+.parts-list { display: flex; flex-direction: column; gap: 8px; }
+.parts-table-wrap { max-height: 50vh; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.parts-table { width: 100%; }
+.parts-table th { position: sticky; top: 0; background: var(--surface); }
+.parts-table tr.short td:last-child { font-weight: 600; color: #b45309; }
+.parts-table input.have { width: 72px; min-height: 30px; }
+.actions.wrap { flex-wrap: wrap; }
