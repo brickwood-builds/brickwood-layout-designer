@@ -2,7 +2,9 @@
 // Used for dashboard thumbnails, the print page and picture downloads.
 import { footprint, levelBounds } from '../domain/geometry';
 import { allItems, dimensionLength, isModule } from '../domain/edits';
-import { MILS_COLORS, moduleDisplayName, type Project } from '../domain/schema';
+import { drawOrder } from '../domain/hit';
+import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
+import { DEFAULT_PLATE_COLOR } from '../domain/legoColors';
 import { formatLength } from '../domain/units';
 
 export interface SvgOptions {
@@ -50,14 +52,14 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
     const r = footprint(t);
     out.push(`<rect class="pv-table" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" rx="1.5"/>`);
   }
-  const rank = (i: ReturnType<typeof allItems>[number]) => (isModule(i) ? 0 : i.type === 'footprint' ? 1 : 2);
-  const items = allItems(project)
-    .filter((i) => i.levelId === level.id && visible.has(i.layerId))
-    .sort((a, c) => rank(a) - rank(c));
+  const items = drawOrder(
+    project,
+    allItems(project).filter((i) => i.levelId === level.id && visible.has(i.layerId)),
+  );
   for (const i of items) {
     const r = footprint(i);
     if (isModule(i)) {
-      out.push(`<rect class="pv-module" data-label="${esc(i.label)}" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" fill="${i.color ?? MILS_COLORS[i.kind]}"/>`);
+      out.push(`<rect class="pv-module" data-label="${esc(i.label)}" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" fill="${project.settings.moduleColors === 'plate' && !isBase(i) ? (i.plateColor ?? DEFAULT_PLATE_COLOR) : (i.color ?? MILS_COLORS[i.kind])}"/>`);
       const text = moduleDisplayName(i);
       if (opts.labels && text) out.push(`<text class="pv-label" x="${n(r.x + r.width / 2)}" y="${n(r.y + r.depth / 2)}" font-size="${n(fitText(text, r.width, r.depth, 5))}">${esc(text)}</text>`);
     } else if (i.round) {

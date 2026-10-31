@@ -250,7 +250,8 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     levels: [{ id: levelId, name: 'Main table', elevationIn: DEFAULT_TABLE_HEIGHT_IN, offsetX: 0, offsetY: 0, visible: true, order: 0 }],
     layers: [
       { id: moduleLayer, name: 'Table, modules & bases', visible: true, locked: false, order: 0 },
-      { id: attractionLayer, name: 'Markers & small items', visible: true, locked: false, order: 1 },
+      { id: sid('layer:surface'), name: 'Surface details', visible: true, locked: false, order: 1 },
+      { id: attractionLayer, name: 'Markers & small items', visible: true, locked: false, order: 2 },
     ],
     tables: [table],
     modules,

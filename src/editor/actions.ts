@@ -11,7 +11,7 @@ import {
   rotateItems,
 } from '../domain/edits';
 import type { MilsKind } from '../domain/schema';
-import { addObject, groupItems, ungroup, withCarriedItems, type NewObject } from '../domain/objects';
+import { addObject, defaultItemLayerId, groupItems, ungroup, withCarriedItems, type NewObject } from '../domain/objects';
 import type { EditorStore } from './store';
 import { fitView, toWorld, zoomAt } from './view';
 
@@ -59,7 +59,7 @@ export function addObjectAt(store: EditorStore, template: ObjectTemplate, at?: {
   s.commit((p) => {
     const r = addObject(
       p,
-      { ...template, levelId: s.levelId, center: at ?? viewCenter(store), findSpace: !at && template.type === 'footprint' },
+      { layerId: itemLayerId(store), ...template, levelId: s.levelId, center: at ?? viewCenter(store), findSpace: !at && template.type === 'footprint' },
       p.settings.snap,
     );
     id = r.id;
@@ -145,3 +145,10 @@ export function isEditable(store: EditorStore, layerId: string): boolean {
   const layer = store.getState().project.layers.find((l) => l.id === layerId);
   return !!layer && layer.visible && !layer.locked;
 }
+
+/** The layer new markers and items go on: the one picked in Layers, or the default. */
+export function itemLayerId(store: EditorStore): string {
+  const { project, activeLayerId } = store.getState();
+  return activeLayerId && project.layers.some((l) => l.id === activeLayerId) ? activeLayerId : defaultItemLayerId(project);
+}
+

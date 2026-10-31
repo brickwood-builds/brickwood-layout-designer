@@ -73,7 +73,7 @@ test.describe('save to a file (desktop Chrome)', () => {
       sessionStorage.setItem(`file:${n}`, JSON.stringify(doc));
     }, FILE);
     await nudgeC05(page);
-    await expect(page.locator('.save-state')).toHaveText('Saved');
+    await expect(page.locator('.save-state')).toHaveText(/^Saved/);
     await expect(page.getByRole('alert')).toContainText('was changed somewhere else', { timeout: 10_000 });
     expect((await fileDoc(page))!.project.name).toBe('Adventure Park (edited on laptop)');
     await page.getByRole('button', { name: 'Use the file’s version' }).click();

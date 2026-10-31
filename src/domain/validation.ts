@@ -62,10 +62,14 @@ export function checkLayout(project: Project): LayoutWarning[] {
     for (const [a, b] of new SpatialIndex(solid.values()).overlapPairs()) {
       warnings.push({ kind: 'overlap', levelId: level.id, ids: [a, b], message: `${solid.get(a)!.name} overlaps ${solid.get(b)!.name}` });
     }
-    // Small items and markers sit on modules, but two of them in the same spot is a mistake.
-    const small = new Map(project.objects.filter((o) => o.levelId === level.id && o.type !== 'footprint').map((o) => [o.id, o]));
-    for (const [a, b] of new SpatialIndex(small.values()).overlapPairs()) {
-      warnings.push({ kind: 'overlap', levelId: level.id, ids: [a, b], message: `${small.get(a)!.name || 'Item'} overlaps ${small.get(b)!.name || 'item'}` });
+    // Small items sit on modules, and things on different layers stack (a lamp on a
+    // sidewalk); but two things on the same layer in the same spot is a mistake.
+    const small = project.objects.filter((o) => o.levelId === level.id && o.type !== 'footprint');
+    for (const layerId of new Set(small.map((o) => o.layerId))) {
+      const onLayer = new Map(small.filter((o) => o.layerId === layerId).map((o) => [o.id, o]));
+      for (const [a, b] of new SpatialIndex(onLayer.values()).overlapPairs()) {
+        warnings.push({ kind: 'overlap', levelId: level.id, ids: [a, b], message: `${onLayer.get(a)!.name || 'Item'} overlaps ${onLayer.get(b)!.name || 'item'}` });
+      }
     }
   }
   return warnings;

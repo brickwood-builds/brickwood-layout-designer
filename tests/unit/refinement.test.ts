@@ -34,8 +34,8 @@ describe('layers', () => {
     const locked = updateLayer(r, id, { locked: true, name: 'Locked' });
     expect(locked.layers.find((l) => l.id === id)).toMatchObject({ locked: true, name: 'Locked' });
     expect(deleteLayer(q, id).layers).toHaveLength(p.layers.length);
-    // Every starter layer holds something, so none can be deleted.
-    for (const l of p.layers) expect(canDeleteLayer(p, l.id)).toBe(false);
+    // Layers holding something can't be deleted; the empty "Surface details" layer can.
+    for (const l of p.layers) expect(canDeleteLayer(p, l.id)).toBe(l.name === 'Surface details');
   });
 });
 

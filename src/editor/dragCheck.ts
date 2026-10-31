@@ -15,7 +15,11 @@ export function makeDragChecker(project: Project, levelId: string, draggedIds: R
   const onLevel = allItems(project).filter((i) => i.levelId === levelId);
   const others = onLevel.filter((i) => !draggedIds.has(i.id));
   const solid = new SpatialIndex(others.filter(isSolid));
-  const small = new SpatialIndex(others.filter((i) => !isSolid(i)));
+  // Small items only clash with small items on the same layer.
+  const smallByLayer = new Map<string, SpatialIndex>();
+  for (const layerId of new Set(others.filter((i) => !isSolid(i)).map((i) => i.layerId))) {
+    smallByLayer.set(layerId, new SpatialIndex(others.filter((i) => !isSolid(i) && i.layerId === layerId)));
+  }
   const tables = project.tables.filter((t) => t.levelId === levelId).map(footprint);
   const acknowledged = new Set(project.acknowledgements.map((a) => a.key));
   const dragged = onLevel.filter((i) => draggedIds.has(i.id));
@@ -24,7 +28,8 @@ export function makeDragChecker(project: Project, levelId: string, draggedIds: R
     const problems = new Set<string>();
     for (const item of dragged) {
       const r = footprint({ ...item, x: item.x + dx, y: item.y + dy });
-      for (const other of (isSolid(item) ? solid : small).overlapping(r)) {
+      const index = isSolid(item) ? solid : smallByLayer.get(item.layerId);
+      for (const other of index?.overlapping(r) ?? []) {
         if (!acknowledged.has(warningKey({ kind: 'overlap', ids: [item.id, other] }))) problems.add(item.id);
       }
       if (tables.length && !tables.some((t) => rectContains(t, r)) && !acknowledged.has(warningKey({ kind: 'overhang', ids: [item.id] }))) {

@@ -159,7 +159,8 @@ export interface NewModule {
 }
 
 export function addModule(p: Project, spec: NewModule, mode: SnapMode): { project: Project; id: string } {
-  const size = spec.kind === 'custom' ? { width: spec.width ?? 32, depth: spec.depth ?? 32 } : MILS_SIZES[spec.kind];
+  // A standard kind may be given turned (e.g. 8×16 is a 16×8 plate standing upright).
+  const size = spec.width && spec.depth ? { width: spec.width, depth: spec.depth } : spec.kind === 'custom' ? { width: 32, depth: 32 } : MILS_SIZES[spec.kind];
   const at = spec.exact
     ? { x: snap(spec.center.x - size.width / 2, mode), y: snap(spec.center.y - size.depth / 2, mode) }
     : findFreeSpot(p, spec.levelId, size.width, size.depth, spec.center, mode);
@@ -330,3 +331,14 @@ export function deleteDimension(p: Project, id: string): Project {
 }
 
 export const dimensionLength = (d: Pick<Dimension, 'x1' | 'y1' | 'x2' | 'y2'>) => Math.hypot(d.x2 - d.x1, d.y2 - d.y1);
+
+/** Move a layer one step up (drawn later, on top) or down in the stacking order. */
+export function moveLayer(p: Project, id: string, direction: 1 | -1): Project {
+  const sorted = [...p.layers].sort((a, b) => a.order - b.order);
+  const i = sorted.findIndex((l) => l.id === id);
+  const j = i + direction;
+  if (i < 0 || j < 0 || j >= sorted.length) return p;
+  const a = sorted[i]!;
+  const b = sorted[j]!;
+  return { ...p, layers: p.layers.map((l) => (l.id === a.id ? { ...l, order: b.order } : l.id === b.id ? { ...l, order: a.order } : l)) };
+}

@@ -3,11 +3,13 @@ import { createPortal } from 'react-dom';
 import { useStore } from 'zustand';
 import { STARTER_PARTS } from '../domain/catalog';
 import { MARKER_KINDS } from '../domain/markers';
-import { deleteShape } from '../domain/objects';
-import { MILS_COLORS, MILS_SIZES, milsKindForSize, type MilsKind } from '../domain/schema';
+import { addShape, defaultItemLayerId, deleteShape } from '../domain/objects';
+import { lego, legoColorName } from '../domain/legoColors';
+import { LegoColorPicker } from '../ui/LegoColorPicker';
+import { MILS_COLORS, MILS_SIZES, milsKindForSize, type MilsKind, type Shape } from '../domain/schema';
 import { formatLength } from '../domain/units';
 import { Modal } from '../ui/Modal';
-import { addModuleAt, addObjectAt, type ObjectTemplate } from './actions';
+import { addModuleAt, addObjectAt, itemLayerId, type ObjectTemplate } from './actions';
 import type { EditorStore } from './store';
 import { toWorld } from './view';
 import { KIND_LABEL } from './Panels';
@@ -83,18 +85,43 @@ function Section({ title, open, children }: { title: string; open?: boolean; chi
 /** Left column: everything that can be added. Modules open; the rest folded away until needed. */
 export function Palette({ store }: { store: EditorStore }) {
   const shapes = useStore(store, (s) => s.project.shapes);
-  const [dialog, setDialog] = useState<'module' | 'ride' | null>(null);
+  const [dialog, setDialog] = useState<'module' | 'ride' | 'marker' | 'item' | null>(null);
+  const userMarkers = shapes.filter((sh) => sh.type === 'setupMarker');
+  const userItems = shapes.filter((sh) => sh.type !== 'setupMarker');
+
+  const shapeEntry = (sh: Shape) => {
+    const template: ObjectTemplate = { type: sh.type, name: sh.name, width: sh.width, depth: sh.depth, color: sh.color, round: sh.round, catalogKey: `shape:${sh.id}` };
+    return (
+      <div className="shape-row" key={sh.id}>
+        <PaletteItem store={store} title={`${sh.name} (${sh.width}×${sh.depth} studs, ${legoColorName(sh.color) ?? 'custom colour'})`} place={(at) => addObjectAt(store, template, at)}>
+          <Swatch color={sh.color} ratio={sh.width / sh.depth} round={sh.round} />
+          {sh.name}
+        </PaletteItem>
+        <button type="button" className="icon" aria-label={`Remove ${sh.name} from the palette`} onClick={() => store.getState().commit((p) => deleteShape(p, sh.id))}>
+          ×
+        </button>
+      </div>
+    );
+  };
 
   return (
     <aside className="palette" aria-label="Add">
       <p className="muted small palette-hint">Tap to add, or drag onto the table.</p>
       <Section title="Modules" open>
-        {(['32x32', '16x16', '16x8', '32x16'] as const).map((k) => (
+        {(['32x32', '16x16', '16x8'] as const).map((k) => (
           <PaletteItem key={k} store={store} title={`Add a ${KIND_LABEL[k]} MILS module`} place={(at) => addModuleAt(store, k, undefined, at)}>
             <Swatch color={MILS_COLORS[k]} ratio={MILS_SIZES[k].width / MILS_SIZES[k].depth} />
             {KIND_LABEL[k]}
           </PaletteItem>
         ))}
+        <PaletteItem store={store} title="Add an 8×16 MILS module (a 16×8 plate standing upright; gets an A-xx ID)" place={(at) => addModuleAt(store, '16x8', { width: 8, depth: 16 }, at)}>
+          <Swatch color={MILS_COLORS['16x8']} ratio={0.5} />
+          8×16
+        </PaletteItem>
+        <PaletteItem store={store} title="Add a 32×16 MILS module" place={(at) => addModuleAt(store, '32x16', undefined, at)}>
+          <Swatch color={MILS_COLORS['32x16']} ratio={2} />
+          32×16
+        </PaletteItem>
         <button type="button" onClick={() => setDialog('module')} title="Add a module of any size">
           <Swatch color={MILS_COLORS.custom} />
           Custom…
@@ -102,7 +129,7 @@ export function Palette({ store }: { store: EditorStore }) {
       </Section>
 
       <Section title="Rides & buildings">
-        <button type="button" onClick={() => setDialog('ride')} title="Add a ride or building footprint">
+        <button type="button" onClick={() => setDialog('ride')} title="A ride or building built on its own base">
           <Swatch color="#c05046" />
           New…
         </button>
@@ -120,9 +147,17 @@ export function Palette({ store }: { store: EditorStore }) {
             {m.name}
           </PaletteItem>
         ))}
+        {userMarkers.map(shapeEntry)}
+        <button type="button" onClick={() => setDialog('marker')} title="Make your own setup marker and keep it in this list">
+          + New marker…
+        </button>
       </Section>
 
-      <Section title="Bricks & plates">
+      <Section title="Small items">
+        <button type="button" onClick={() => setDialog('item')} title="A street light, sidewalk, bench… any small thing, in a LEGO colour">
+          + New item…
+        </button>
+        {userItems.map(shapeEntry)}
         {STARTER_PARTS.map((part) => (
           <PaletteItem
             key={part.key}
@@ -135,25 +170,6 @@ export function Palette({ store }: { store: EditorStore }) {
           </PaletteItem>
         ))}
       </Section>
-
-      {shapes.length > 0 && (
-        <Section title="My shapes" open>
-          {shapes.map((sh) => {
-            const template: ObjectTemplate = { type: sh.type, name: sh.name, width: sh.width, depth: sh.depth, color: sh.color, round: sh.round, catalogKey: `shape:${sh.id}` };
-            return (
-              <div className="shape-row" key={sh.id}>
-                <PaletteItem store={store} title={`${sh.name} (${sh.width}×${sh.depth} studs)`} place={(at) => addObjectAt(store, template, at)}>
-                  <Swatch color={sh.color} ratio={sh.width / sh.depth} round={sh.round} />
-                  {sh.name}
-                </PaletteItem>
-                <button type="button" className="icon" aria-label={`Remove ${sh.name} from My shapes`} onClick={() => store.getState().commit((p) => deleteShape(p, sh.id))}>
-                  ×
-                </button>
-              </div>
-            );
-          })}
-        </Section>
-      )}
 
       {dialog === 'module' && (
         <SizeDialog
@@ -179,7 +195,81 @@ export function Palette({ store }: { store: EditorStore }) {
           }}
         />
       )}
+      {(dialog === 'marker' || dialog === 'item') && (
+        <NewThingDialog
+          store={store}
+          kind={dialog}
+          onClose={() => setDialog(null)}
+          onAdd={(template) => {
+            setDialog(null);
+            let shapeId = '';
+            store.getState().commit((p) => {
+              const r = addShape(p, { name: template.name, type: template.type, width: template.width, depth: template.depth, color: template.color, round: template.round });
+              shapeId = r.id;
+              return r.project;
+            });
+            addObjectAt(store, { ...template, catalogKey: `shape:${shapeId}` });
+          }}
+        />
+      )}
     </aside>
+  );
+}
+
+/** New setup marker or small item: name, size, LEGO colour, layer. Kept in the palette. */
+function NewThingDialog({ store, kind, onAdd, onClose }: { store: EditorStore; kind: 'marker' | 'item'; onAdd: (t: ObjectTemplate & { layerId: string }) => void; onClose: () => void }) {
+  const project = store.getState().project;
+  const layers = [...project.layers].sort((a, b) => b.order - a.order);
+  const [name, setName] = useState('');
+  const [w, setW] = useState(kind === 'marker' ? 2 : 1);
+  const [d, setD] = useState(kind === 'marker' ? 2 : 1);
+  const [round, setRound] = useState(false);
+  const [color, setColor] = useState(lego(kind === 'marker' ? 'White' : 'Light Bluish Gray'));
+  const [layerId, setLayerId] = useState(kind === 'marker' ? defaultItemLayerId(project) : itemLayerId(store));
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || w <= 0 || d <= 0) return;
+    onAdd({ type: kind === 'marker' ? 'setupMarker' : 'item', name: name.trim(), width: w, depth: d, color, round, layerId });
+  };
+  return (
+    <Modal title={kind === 'marker' ? 'New setup marker' : 'New small item'} onClose={onClose}>
+      <form className="form" onSubmit={submit}>
+        <label>
+          Name
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={kind === 'marker' ? 'e.g. Popcorn cart' : 'e.g. Street light, Sidewalk'} maxLength={80} autoFocus required />
+        </label>
+        <div className="row">
+          <label>
+            Width (studs)
+            <input type="number" min={1} max={2000} value={w} onChange={(e) => setW(Number(e.target.value))} required />
+          </label>
+          <label>
+            Depth (studs)
+            <input type="number" min={1} max={2000} value={d} onChange={(e) => setD(Number(e.target.value))} required />
+          </label>
+        </div>
+        <label className="radio">
+          <input type="checkbox" checked={round} onChange={(e) => setRound(e.target.checked)} />
+          Round
+        </label>
+        <LegoColorPicker label="LEGO colour" value={color} onChange={(hex) => hex && setColor(hex)} />
+        <label>
+          Layer
+          <select value={layerId} onChange={(e) => setLayerId(e.target.value)}>
+            {layers.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="muted small">It’s added to the palette so you can place more, and one is placed now.</p>
+        <footer className="modal-actions">
+          <button type="button" onClick={onClose}>Cancel</button>
+          <button type="submit" className="primary">Add</button>
+        </footer>
+      </form>
+    </Modal>
   );
 }
 

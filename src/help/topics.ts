@@ -32,7 +32,8 @@ export const HELP_TOPICS: HelpTopic[] = [
     id: 'editor-basics',
     title: 'Adding and moving modules',
     body: [
-      '• Add: tap a size in the left column (it goes in a free spot near the middle of the view), or drag it onto the table.',
+      '• Add: tap a size in the left column (it goes in a free spot near the middle of the view), or drag it onto the table. 8×16 is a 16×8 plate standing upright (it gets an A-xx ID).',
+      '• Studs: zoom in and the studs appear on the plates, so you can place things exactly; everything snaps to whole studs.',
       '• Select: click or tap. Shift-click adds to the selection. With a mouse, drag a box on empty space to select everything it touches.',
       '• Move: drag. Everything selected moves together and snaps to whole studs (change this with Snap). A red outline while dragging means it would overlap something or hang off the table — you can still drop it.',
       '• Rotate: R (or the Rotate buttons). Several modules rotate together as one block.',
@@ -86,9 +87,11 @@ export const HELP_TOPICS: HelpTopic[] = [
     body: [
       '• Rides & buildings: New… asks for a name and size. Rides and buildings are built on their own base, so they act like a module with a name instead of an ID, and get their power in volts.',
       '• Setup markers: the coloured placeholder bricks that show helpers where things go (lamp = white 2×2, tree = sand 1×4, and so on).',
-      '• Bricks & plates: a few common parts for small items.',
+      '• Small items: New item… makes anything small — a street light, a sidewalk strip, a bench — with a name, size in studs and a real LEGO colour. It’s kept in the list so you can place more. A few common bricks and plates are there too.',
+      '• Your own setup markers: + New marker… at the bottom of Setup markers works the same way and keeps the marker in that list.',
+      '• Rides & buildings is only for things built on their own base (one unit with a name and no plate ID).',
       'Markers and items sit on top of modules and can cross module edges; the details panel says which modules they’re on. When you move, rotate or copy a module or ride, the markers sitting on it (by their centre) come along. Lock the markers’ layer if you want them to stay put.',
-      'Select a ride or item and choose Save to My shapes to reuse its size and colour from the palette.',
+      'Select any item and choose Add to palette to reuse its size and colour. Colours are real LEGO colours only.',
     ],
   },
   {
@@ -121,8 +124,11 @@ export const HELP_TOPICS: HelpTopic[] = [
     id: 'layers',
     title: 'Layers',
     body: [
-      'Layers lets you hide or lock groups of things. For example, lock “Table & modules” while placing setup markers so the modules can’t be moved by accident.',
-      'Select something and choose Move here to put it on another layer. Add layers with + Add layer; empty layers can be deleted.',
+      'Layers stack like the real build: plates at the bottom, then Surface details (sidewalks, roads, grass), then Markers & small items on top. ▲ ▼ change the order.',
+      'The New items circle picks the layer new markers and items go on — for example choose Surface details while drawing sidewalks.',
+      'Hide or lock any layer. For example, lock the plates while placing markers so they can’t be moved by accident.',
+      'MILS IDs & names can be hidden like a layer, and Finished look shows each plate in its real LEGO colour (set it in the plate’s details; plates without one show as Green) — together they show what the finished display looks like.',
+      'Select something and choose Move here to put it on another layer. Add layers with + Add layer; empty layers can be deleted. Things on a plate move with the plate, whatever layer they’re on.',
     ],
   },
   {
@@ -145,7 +151,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     id: 'backups',
     title: 'Saving, backups and recovery',
     body: [
-      'Projects are saved in this browser on this device. The toolbar shows Saved, Saving… or Not saved. To keep a project in OneDrive as well, see Saving to OneDrive.',
+      'There is no Save button to remember: every change is saved automatically within about a second. The toolbar shows “Saved” with the time, “Saving…” or “Not saved”. To keep a project in OneDrive as well, see Saving to OneDrive.',
       'The browser can clear its storage (for example after “clear website data”), so export important projects: on the project list choose More → Export file. Import… brings a file back; if the project already exists it’s imported as a copy and nothing is overwritten.',
       'Checkpoints are snapshots taken automatically every 10 minutes while you work and before a restore. More → Checkpoints… lets you preview one and restore it; the current version is kept as a checkpoint first.',
     ],

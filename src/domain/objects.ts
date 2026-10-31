@@ -21,16 +21,17 @@ export interface NewObject {
   center: { x: number; y: number };
   /** Rides/buildings need their own space; small items may sit on modules. */
   findSpace?: boolean;
+  /** Put it on this layer (otherwise the usual layer for its kind). */
+  layerId?: string;
 }
 
-/** Layer for a new object: the layer most objects of this kind on the level use. */
-function objectLayerId(p: Project, levelId: string, type: CanvasObject['type']): string {
-  const counts = new Map<string, number>();
-  for (const o of p.objects) if (o.levelId === levelId && o.type === type) counts.set(o.layerId, (counts.get(o.layerId) ?? 0) + 1);
-  if (counts.size === 0) for (const o of p.objects) if (o.levelId === levelId) counts.set(o.layerId, (counts.get(o.layerId) ?? 0) + 1);
-  const best = [...counts].sort((a, b) => b[1] - a[1])[0];
+/**
+ * Where new markers and items go unless the user picked a layer: "Markers & small items"
+ * if there is one, else the top layer.
+ */
+export function defaultItemLayerId(p: Project): string {
   const layers = [...p.layers].sort((a, b) => a.order - b.order);
-  return best?.[0] ?? (layers[1] ?? layers[0]!).id;
+  return (layers.find((l) => /marker/i.test(l.name)) ?? layers[layers.length - 1]!).id;
 }
 
 export function addObject(p: Project, spec: NewObject, mode: SnapMode): { project: Project; id: string } {
@@ -40,7 +41,7 @@ export function addObject(p: Project, spec: NewObject, mode: SnapMode): { projec
   const object: CanvasObject = {
     id: newId(),
     levelId: spec.levelId,
-    layerId: objectLayerId(p, spec.levelId, spec.type),
+    layerId: spec.layerId && p.layers.some((l) => l.id === spec.layerId) ? spec.layerId : defaultItemLayerId(p),
     type: spec.type,
     name: spec.name,
     x: at.x,
@@ -82,17 +83,16 @@ export function modulesUnder(p: Project, item: Item): string[] {
     .map(moduleDisplayName);
 }
 
-export function saveShape(p: Project, o: CanvasObject, name: string): { project: Project; id: string } {
-  const shape: Shape = {
-    id: newId(),
-    name: name.trim() || o.name || 'Shape',
-    type: o.type,
-    width: o.width,
-    depth: o.depth,
-    color: o.color,
-    ...(o.round ? { round: true } : {}),
-  };
+/** Add a reusable shape to the palette (its section follows its type). */
+export function addShape(p: Project, s: Omit<Shape, 'id'>): { project: Project; id: string } {
+  const shape: Shape = { ...s, id: newId(), name: s.name.trim() || 'Shape' };
+  if (!shape.round) delete shape.round;
   return { project: { ...p, shapes: [...p.shapes, shape] }, id: shape.id };
+}
+
+/** Keep a placed item's size and colour in the palette. */
+export function saveShape(p: Project, o: CanvasObject, name: string): { project: Project; id: string } {
+  return addShape(p, { name: name.trim() || o.name, type: o.type, width: o.width, depth: o.depth, color: o.color, round: o.round });
 }
 
 export function deleteShape(p: Project, id: string): Project {

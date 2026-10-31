@@ -8,6 +8,7 @@ import { formatLength } from '../domain/units';
 import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, ungroupSelection } from './actions';
 import { groupOf, modulesUnder, renameGroup, resizeObject, saveShape } from '../domain/objects';
 import { markerKind } from '../domain/catalog';
+import { LegoColorPicker } from '../ui/LegoColorPicker';
 import type { EditorStore } from './store';
 
 export const KIND_LABEL: Record<MilsKind, string> = { '32x32': '32×32', '32x16': '32×16', '16x16': '16×16', '16x8': '16×8', custom: 'Custom' };
@@ -171,6 +172,14 @@ function ModuleFields({ store, m, unit }: { store: EditorStore; m: MilsModule; u
           />
         </div>
       )}
+      {!isBase(m) && (
+        <LegoColorPicker
+          label="Plate colour (for Finished look)"
+          value={m.plateColor}
+          allowNone="Not set (shown as Green)"
+          onChange={(hex) => commit((p) => updateModule(p, m.id, { plateColor: hex }))}
+        />
+      )}
       {storedNotPlaced(project).length > 0 && <p className="muted small">Plates not in this layout: {storedNotPlaced(project).join(', ')}</p>}
       {project.retiredLabels.length > 0 && <p className="muted small">Retired IDs (never reused): {project.retiredLabels.join(', ')}</p>}
     </>
@@ -203,10 +212,7 @@ function ObjectFields({ store, o, unit }: { store: EditorStore; o: CanvasObject;
           hint={formatLength(f.depth, unit === 'studs' ? 'in' : unit)}
         />
       </div>
-      <label className="field">
-        <span>Colour</span>
-        <input type="color" value={o.color} onChange={(e) => commit((p) => updateObject(p, o.id, { color: e.target.value }))} />
-      </label>
+      <LegoColorPicker label="Colour" value={o.color} onChange={(hex) => hex && commit((p) => updateObject(p, o.id, { color: hex }))} />
       {o.type !== 'footprint' && <OnModules store={store} o={o} />}
       {o.type === 'footprint' && (
         <Field
@@ -231,7 +237,7 @@ function OnModules({ store, o }: { store: EditorStore; o: CanvasObject }) {
 
 function SaveShape({ store, o }: { store: EditorStore; o: CanvasObject }) {
   const [done, setDone] = useState(false);
-  if (done) return <p className="muted small">Saved to My shapes.</p>;
+  if (done) return <p className="muted small">Added to the palette.</p>;
   return (
     <button
       type="button"
@@ -239,9 +245,9 @@ function SaveShape({ store, o }: { store: EditorStore; o: CanvasObject }) {
         store.getState().commit((p) => saveShape(p, o, o.name).project);
         setDone(true);
       }}
-      title="Keep this size and colour in the palette under My shapes"
+      title="Keep this size and colour in the palette so you can add more"
     >
-      Save to My shapes
+      Add to palette
     </button>
   );
 }

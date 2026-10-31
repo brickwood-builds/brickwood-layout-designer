@@ -175,8 +175,10 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
     <header className="topbar toolbar">
       <button type="button" onClick={onBack}>← Projects</button>
       <h1 title={project.name}>{project.name}</h1>
-      <span className="save-state" role="status" data-state={saveState}>
-        {{ saved: 'Saved', pending: 'Saving…', saving: 'Saving…', error: 'Not saved', conflict: 'Not saved' }[saveState]}
+      <span className="save-state" role="status" data-state={saveState} title="Every change saves automatically within a second">
+        {saveState === 'saved'
+          ? `Saved ${new Date(project.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+          : { pending: 'Saving…', saving: 'Saving…', error: 'Not saved', conflict: 'Not saved' }[saveState]}
       </span>
       <div className="tool-group">
         <button type="button" onClick={s.undo} disabled={!canUndo} title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>

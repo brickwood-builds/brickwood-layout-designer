@@ -189,7 +189,7 @@ input[type='color'] { width: 100%; height: 36px; padding: 2px; border: 1px solid
 .layers th { font-weight: 600; color: var(--muted); font-size: 0.75rem; text-align: left; padding: 0 4px; }
 .layers td { padding: 2px 4px; vertical-align: middle; }
 .layers input[type='checkbox'] { width: 20px; height: 20px; }
-.layers .layer-name { width: 130px; min-height: 32px; }
+.layers .layer-name { width: 190px; min-height: 32px; }
 .layers td button { min-height: 30px; padding: 0 8px; font-size: 0.8rem; }
 .measure-result { font-size: 1.4rem; font-weight: 600; margin: 0; }
 .dim-list { list-style: none; margin: 0; padding: 0; }
@@ -245,3 +245,14 @@ input[type='color'] { width: 100%; height: 36px; padding: 2px; border: 1px solid
 .file-btn.ok { color: #1a7f37; border-color: #1a7f37; }
 .file-btn.warn { color: var(--warn); border-color: var(--warn); }
 .file-menu { bottom: 40px; top: auto; left: 0; right: auto; width: 280px; }
+.layers-pop { min-width: 520px; }
+.layers .pseudo-layer td { border-bottom: 1px solid var(--border); padding-bottom: 6px; font-weight: 600; }
+.layers input[type='radio'] { width: 18px; height: 18px; }
+.layer-actions { white-space: nowrap; }
+.layer-actions .icon { min-height: 28px; padding: 0 6px; font-size: 0.8rem; }
+.layers-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.lego-current { display: flex; align-items: center; gap: 8px; justify-content: flex-start; width: 100%; }
+.lego-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(28px, 1fr)); gap: 4px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+.lego-grid button { min-height: 28px; padding: 0; border: 1px solid rgba(0, 0, 0, 0.35); border-radius: 4px; }
+.lego-grid button[aria-selected='true'] { outline: 3px solid var(--accent); outline-offset: 1px; }
+.lego-grid .lego-none { background: var(--surface); font-size: 0.9rem; }

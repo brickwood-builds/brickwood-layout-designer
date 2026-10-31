@@ -5,8 +5,10 @@ import { useStore } from 'zustand';
 import { footprint, snap, unionRect, type Rect as R } from '../domain/geometry';
 import { allItems, isModule, moveItems, type Item } from '../domain/edits';
 import { makeDragChecker } from './dragCheck';
+import { drawOrder, itemAt } from '../domain/hit';
 import { SpatialIndex } from '../domain/spatial';
-import { MILS_COLORS, moduleDisplayName, type Project } from '../domain/schema';
+import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
+import { DEFAULT_PLATE_COLOR } from '../domain/legoColors';
 import { STUDS_PER_INCH, formatLength, type DisplayUnit } from '../domain/units';
 import { dimensionLength } from '../domain/edits';
 import { expandToGroups, withCarriedItems } from '../domain/objects';
@@ -88,11 +90,10 @@ export function Canvas({ store }: { store: EditorStore }) {
   const editable = useMemo(() => new Set(project.layers.filter((l) => l.visible && !l.locked).map((l) => l.id)), [project.layers]);
   const visibleLayers = useMemo(() => new Set(project.layers.filter((l) => l.visible).map((l) => l.id)), [project.layers]);
   const levelItems = useMemo(() => {
-    // Modules at the bottom, then rides/buildings, then small items on top.
-    const rank = (i: Item) => (isModule(i) ? 0 : i.type === 'footprint' ? 1 : 2);
-    return allItems(project)
-      .filter((i) => i.levelId === level.id && visibleLayers.has(i.layerId))
-      .sort((a, b) => rank(a) - rank(b));
+    return drawOrder(
+      project,
+      allItems(project).filter((i) => i.levelId === level.id && visibleLayers.has(i.layerId)),
+    );
   }, [project, level.id, visibleLayers]);
   const selectedSet = useMemo(() => new Set(selection), [selection]);
 
@@ -105,6 +106,10 @@ export function Canvas({ store }: { store: EditorStore }) {
   const dragProblems = useMemo(() => (drag && checkDrag ? checkDrag(drag.dx, drag.dy) : new Set<string>()), [drag, checkDrag]);
   // Labels only re-render when zoom crosses one of these steps (not on every wheel tick).
   const labelZoom = Math.pow(2, Math.round(Math.log2(view.scale) * 4) / 4);
+  const showLabels = project.settings.showLabels;
+  const plateColors = project.settings.moduleColors === 'plate';
+  // Studs appear once they are big enough to aim at.
+  const studsVisible = view.scale >= STUD_MIN_PX;
 
   // Gesture handling on the container with Pointer Events (mouse, pen and touch alike).
   const gesture = useRef<Gesture | null>(null);
@@ -117,18 +122,9 @@ export function Canvas({ store }: { store: EditorStore }) {
       return { x: e.clientX - r.left, y: e.clientY - r.top };
     };
     const hitTest = (p: { x: number; y: number }): Item | null => {
-      // Hit detection may be paused right after a zoom/pan; rebuild it now if so.
-      const base = baseLayerRef.current;
-      if (base && !base.listening()) {
-        base.listening(true);
-        base.drawHit();
-      }
-      const shape = stageRef.current?.getIntersection(p);
-      const id = shape?.id();
-      if (!id) return null;
       const s = store.getState();
-      const item = allItems(s.project).find((i) => i.id === id);
-      return item && item.levelId === s.levelId && isEditable(store, item.layerId) ? item : null;
+      const w = toWorld(s.view, p.x, p.y);
+      return itemAt(s.project, s.levelId, w.x, w.y);
     };
     const endDrag = (commit: boolean) => {
       const s = store.getState();
@@ -300,21 +296,6 @@ export function Canvas({ store }: { store: EditorStore }) {
     };
   }, [store]);
 
-  // While zooming or panning, skip redrawing Konva's hit-detection canvas for the big
-  // base layer; it is rebuilt once the view settles.
-  const baseLayerRef = useRef<Konva.Layer>(null);
-  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => {
-    const layer = baseLayerRef.current;
-    if (!layer) return;
-    layer.listening(false);
-    clearTimeout(settleTimer.current);
-    settleTimer.current = setTimeout(() => {
-      layer.listening(true);
-      layer.batchDraw();
-    }, 120);
-  }, [view]);
-
   // Test/automation hook: map studs on the active level to page coordinates.
   useEffect(() => {
     (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor = {
@@ -340,7 +321,7 @@ export function Canvas({ store }: { store: EditorStore }) {
     >
       {viewport.width > 0 && (
         <Stage ref={stageRef} width={viewport.width} height={viewport.height}>
-          <Layer ref={baseLayerRef}>
+          <Layer listening={false}>
             <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale}>
               {otherLevels.map((l) => (
                 <Group key={l.id} x={l.offsetX - level.offsetX} y={l.offsetY - level.offsetY} opacity={0.3} listening={false}>
@@ -354,16 +335,17 @@ export function Canvas({ store }: { store: EditorStore }) {
                   return <Rect key={t.id} x={r.x} y={r.y} width={r.width} height={r.depth} fill="#d9b27c" stroke="#a67c45" strokeWidth={1.5} strokeScaleEnabled={false} cornerRadius={1} listening={false} />;
                 })}
               <Grid view={view} viewport={viewport} />
-              <Items items={baseItems} dx={0} dy={0} selected={selectedSet} problems={EMPTY} editable={editable} />
-              <Labels items={baseItems} dx={0} dy={0} zoom={labelZoom} />
+              <Items items={baseItems} dx={0} dy={0} selected={selectedSet} problems={EMPTY} editable={editable} plateColors={plateColors} />
+              {studsVisible && <Studs items={baseItems} view={view} viewport={viewport} />}
+              {showLabels && <Labels items={baseItems} dx={0} dy={0} zoom={labelZoom} />}
             </Group>
           </Layer>
-          <Layer>
+          <Layer listening={false}>
             <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale}>
               {drag && (
                 <>
-                  <Items items={draggedItems} dx={drag.dx} dy={drag.dy} selected={selectedSet} problems={dragProblems} editable={editable} />
-                  <Labels items={draggedItems} dx={drag.dx} dy={drag.dy} zoom={labelZoom} />
+                  <Items items={draggedItems} dx={drag.dx} dy={drag.dy} selected={selectedSet} problems={dragProblems} editable={editable} plateColors={plateColors} />
+                  {showLabels && <Labels items={draggedItems} dx={drag.dx} dy={drag.dy} zoom={labelZoom} />}
                 </>
               )}
               {project.groups
@@ -395,6 +377,8 @@ export function Canvas({ store }: { store: EditorStore }) {
 
 const EMPTY: ReadonlySet<string> = new Set();
 
+const STUD_MIN_PX = 7;
+
 interface ItemsProps {
   items: Item[];
   dx: number;
@@ -402,10 +386,12 @@ interface ItemsProps {
   selected: ReadonlySet<string>;
   problems: ReadonlySet<string>;
   editable: ReadonlySet<string>;
+  /** "Finished look": modules in their real plate colour. */
+  plateColors: boolean;
 }
 
 /** All shapes of one layer. Memoised per item, so a selection change redraws only what changed. */
-const Items = memo(function Items({ items, dx, dy, selected, problems, editable }: ItemsProps) {
+const Items = memo(function Items({ items, dx, dy, selected, problems, editable, plateColors }: ItemsProps) {
   return (
     <>
       {items.map((item) => (
@@ -417,16 +403,33 @@ const Items = memo(function Items({ items, dx, dy, selected, problems, editable 
           selected={selected.has(item.id)}
           problem={problems.has(item.id)}
           locked={!editable.has(item.layerId)}
+          plateColors={plateColors}
         />
       ))}
     </>
   );
 });
 
-const ItemShape = memo(function ItemShape({ item, dx, dy, selected, problem, locked }: { item: Item; dx: number; dy: number; selected: boolean; problem: boolean; locked: boolean }) {
+const ItemShape = memo(function ItemShape({
+  item,
+  dx,
+  dy,
+  selected,
+  problem,
+  locked,
+  plateColors,
+}: {
+  item: Item;
+  dx: number;
+  dy: number;
+  selected: boolean;
+  problem: boolean;
+  locked: boolean;
+  plateColors: boolean;
+}) {
   const r = footprint({ ...item, x: item.x + dx, y: item.y + dy });
   const module = isModule(item);
-  const fill = module ? (item.color ?? MILS_COLORS[item.kind]) : item.color;
+  const fill = module ? moduleFill(item, plateColors) : item.color;
   const stroke = problem ? WARN : selected ? ACCENT : 'rgba(0,0,0,0.45)';
   // Stroke widths are in screen pixels, so zooming doesn't need a re-render.
   const common = {
@@ -604,4 +607,67 @@ const Rulers = memo(function Rulers({ view, viewport, unit }: { view: View; view
     </Group>
   );
 });
+
+/** Studs on plates (and on bricks/plates placed as items), only for what's on screen. */
+const Studs = memo(function Studs({ items, view, viewport }: { items: Item[]; view: View; viewport: { width: number; height: number } }) {
+  const a = toWorld(view, 0, 0);
+  const b = toWorld(view, viewport.width, viewport.height);
+  const visible = items.filter((i) => {
+    if (!hasStuds(i)) return false;
+    const r = footprint(i);
+    return r.x < b.x && r.x + r.width > a.x && r.y < b.y && r.y + r.depth > a.y;
+  });
+  // One pattern fill per plate (not one circle per stud) keeps big layouts fast.
+  const px = Math.min(64, Math.max(8, Math.round(view.scale)));
+  return (
+    <Shape
+      listening={false}
+      perfectDrawEnabled={false}
+      sceneFunc={(ctx) => {
+        const c = ctx._context;
+        const pattern = c.createPattern(studTile(px), 'repeat');
+        if (!pattern) return;
+        for (const i of visible) {
+          const r = footprint(i);
+          pattern.setTransform(new DOMMatrix().translate(r.x, r.y).scale(1 / px));
+          c.fillStyle = pattern;
+          c.fillRect(r.x, r.y, r.width, r.depth);
+        }
+      }}
+    />
+  );
+});
+
+const studTiles = new Map<number, HTMLCanvasElement>();
+
+/** One stud, drawn at `px` pixels per stud: a LEGO stud is 4.8 mm across on an 8 mm pitch. */
+function studTile(px: number): HTMLCanvasElement {
+  let tile = studTiles.get(px);
+  if (!tile) {
+    tile = document.createElement('canvas');
+    tile.width = tile.height = px;
+    const g = tile.getContext('2d')!;
+    g.beginPath();
+    g.arc(px / 2, px / 2, px * 0.3, 0, Math.PI * 2);
+    g.fillStyle = 'rgba(255,255,255,0.3)';
+    g.fill();
+    g.lineWidth = Math.max(1, px / 24);
+    g.strokeStyle = 'rgba(0,0,0,0.3)';
+    g.stroke();
+    studTiles.set(px, tile);
+  }
+  return tile;
+}
+
+/** Plates and bricks show studs; tiles and flat markers don't. */
+function hasStuds(i: Item): boolean {
+  if (isModule(i)) return !isBase(i);
+  if (i.type === 'footprint') return false;
+  return !(i.catalogKey ?? '').startsWith('tile');
+}
+
+function moduleFill(m: Extract<Item, { kind: unknown }>, plateColors: boolean): string {
+  if (plateColors && !isBase(m)) return m.plateColor ?? DEFAULT_PLATE_COLOR;
+  return m.color ?? MILS_COLORS[m.kind];
+}
 

@@ -54,7 +54,7 @@ async function mouseDrag(page: Page, from: Pt, to: Pt) {
   await page.mouse.up();
 }
 
-const saved = (page: Page) => expect(page.locator('.save-state')).toHaveText('Saved');
+const saved = (page: Page) => expect(page.locator('.save-state')).toHaveText(/^Saved/);
 
 test.describe('mouse (desktop Chrome)', () => {
   test.beforeEach(async ({ page }, info) => {
@@ -218,7 +218,7 @@ test.describe('objects and groups (desktop Chrome)', () => {
   });
 
   test('tap-add a plate, resize it in properties, undo', async ({ page }) => {
-    await page.getByText('Bricks & plates', { exact: true }).click();
+    await page.getByText('Small items', { exact: true }).click();
     await page.getByRole('button', { name: 'Plate 2×2', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Item' })).toBeVisible();
     const width = page.getByLabel('Width (studs)');
@@ -285,12 +285,12 @@ test.describe('objects and groups (desktop Chrome)', () => {
     await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
   });
 
-  test('a small item saved to My shapes can be reused', async ({ page }) => {
-    await page.getByText('Bricks & plates', { exact: true }).click();
+  test('a small item added to the palette can be reused', async ({ page }) => {
+    await page.getByText('Small items', { exact: true }).click();
     await page.getByRole('button', { name: 'Brick 2×4', exact: true }).click();
     await page.getByLabel('Name').fill('Ticket booth');
     await page.getByLabel('Name').press('Enter');
-    await page.getByRole('button', { name: 'Save to My shapes' }).click();
+    await page.getByRole('button', { name: 'Add to palette' }).click();
     await page.getByRole('button', { name: 'Ticket booth', exact: true }).click();
     expect((await objects(page)).filter((o) => o.name === 'Ticket booth')).toHaveLength(2);
   });

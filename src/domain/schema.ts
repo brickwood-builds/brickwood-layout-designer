@@ -68,6 +68,8 @@ export const MilsModuleSchema = z.object({
   color: color.optional(),
   /** Ride power in volts, for rides built on their own base. */
   powerVolts: z.number().positive().optional(),
+  /** Real LEGO colour of the baseplate, used by "Finished look". */
+  plateColor: color.optional(),
 });
 
 export const OBJECT_TYPES = ['footprint', 'setupMarker', 'item'] as const;
@@ -137,7 +139,10 @@ export const SettingsSchema = z.object({
   displayUnit: z.enum(['studs', 'in', 'cm']),
   snap: z.enum(['full', 'half', 'free']),
   showGrid: z.boolean(),
+  /** Show MILS IDs and names on the plan (hide for a "finished look"). */
   showLabels: z.boolean(),
+  /** 'size' colours modules by plate size (planning); 'plate' uses each plate's real colour. */
+  moduleColors: z.enum(['size', 'plate']).default('size'),
 });
 
 /** Advanced areas stay hidden until the user switches them on. */
