@@ -37,6 +37,8 @@ test.describe('feedback round 1 (desktop)', () => {
 
   test('new marker with a LEGO colour is kept in the Setup markers list', async ({ page }) => {
     await page.getByText('Setup markers', { exact: true }).click();
+    // Markers don't carry over: a new project's list is empty.
+    await expect(page.locator('.palette-section', { hasText: 'Setup markers' }).getByRole('button')).toHaveText(['+ New marker…']);
     await page.getByRole('button', { name: '+ New marker…' }).click();
     const dlg = page.getByRole('dialog');
     await dlg.getByLabel('Name').fill('Popcorn cart');
@@ -71,8 +73,11 @@ test.describe('feedback round 1 (desktop)', () => {
     await page.getByRole('button', { name: 'Layers' }).click();
     await page.getByLabel('New items go on Markers & small items').check();
     await page.getByRole('button', { name: 'Layers' }).click();
+    // A new project has no markers of its own yet: make one.
     await page.getByText('Setup markers', { exact: true }).click();
-    await page.getByRole('button', { name: 'Lamp', exact: true }).click();
+    await page.getByRole('button', { name: '+ New marker…' }).click();
+    await page.getByRole('dialog').getByLabel('Name').fill('Lamp');
+    await page.getByRole('dialog').getByRole('button', { name: 'Add', exact: true }).click();
     const p = await state(page);
     const layerName = (id: string) => p.layers.find((l) => l.id === id)!.name;
     expect(p.objects.map((o) => [o.name, layerName(o.layerId)])).toEqual([

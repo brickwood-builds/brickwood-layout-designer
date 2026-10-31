@@ -20,3 +20,16 @@ Notes
 - Projects created before this change keep their layers; use Layers → + Add layer to add "Surface details" if wanted.
 - Plates without a plate colour show as Green in Finished look.
 - Found while testing this round: clicks were matched to shapes using Konva's hit-detection canvas, which is redrawn on the next frame. On a busy computer a click right after a change could miss. Clicks are now matched from the layout itself (same stacking order as the screen), which is always current and also makes zooming cheaper.
+
+## 31 Oct 2026, round 2
+
+| # | Request | What was done | Status |
+|---|---|---|---|
+| 1 | Build a new layout "Development" | Blank "Development" project (3.5 × 8 ft table, three layers) is added to the project list automatically. Starters are now tracked one by one, so new ones appear and archived ones never come back | Done |
+| 2 | Setup markers came over; each project should make its own | Setup markers list starts empty with "+ New marker…". The nine Adventure Park markers belong to the Adventure Park project only | Done |
+| 3 | Small items = street lights, bushes and such | "Small items" holds only your own items ("+ New item…") | Done |
+| 4 | Add a section "Single pieces" | "Single pieces": LEGO bricks, plates, tiles (with studs), "+ New piece…" | Done |
+| 5 | Rename "Rides and buildings" to "Features" | Renamed everywhere (palette, details, counts, print, help) | Done |
+| 6 | Give Claude access to the Development layout | `shared/` folder in the repo; upload the file there (or attach it in chat) and Claude can open it | Done; waiting for the file |
+
+Note: projects already in your browser keep the markers they had. Delete them from the palette with × if you don't want them.

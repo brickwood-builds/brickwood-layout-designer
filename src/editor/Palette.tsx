@@ -2,7 +2,6 @@ import { useRef, useState, type FormEvent, type PointerEvent as ReactPointerEven
 import { createPortal } from 'react-dom';
 import { useStore } from 'zustand';
 import { STARTER_PARTS } from '../domain/catalog';
-import { MARKER_KINDS } from '../domain/markers';
 import { addShape, defaultItemLayerId, deleteShape } from '../domain/objects';
 import { lego, legoColorName } from '../domain/legoColors';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
@@ -85,9 +84,11 @@ function Section({ title, open, children }: { title: string; open?: boolean; chi
 /** Left column: everything that can be added. Modules open; the rest folded away until needed. */
 export function Palette({ store }: { store: EditorStore }) {
   const shapes = useStore(store, (s) => s.project.shapes);
-  const [dialog, setDialog] = useState<'module' | 'ride' | 'marker' | 'item' | null>(null);
+  const [dialog, setDialog] = useState<'module' | 'ride' | 'marker' | 'item' | 'piece' | null>(null);
+  // Each project has its own markers, items and pieces (nothing carries over between projects).
   const userMarkers = shapes.filter((sh) => sh.type === 'setupMarker');
-  const userItems = shapes.filter((sh) => sh.type !== 'setupMarker');
+  const userPieces = shapes.filter((sh) => sh.type === 'piece');
+  const userItems = shapes.filter((sh) => sh.type === 'item' || sh.type === 'footprint');
 
   const shapeEntry = (sh: Shape) => {
     const template: ObjectTemplate = { type: sh.type, name: sh.name, width: sh.width, depth: sh.depth, color: sh.color, round: sh.round, catalogKey: `shape:${sh.id}` };
@@ -128,47 +129,43 @@ export function Palette({ store }: { store: EditorStore }) {
         </button>
       </Section>
 
-      <Section title="Rides & buildings">
-        <button type="button" onClick={() => setDialog('ride')} title="A ride or building built on its own base">
+      <Section title="Features">
+        <button type="button" onClick={() => setDialog('ride')} title="A ride, building or other feature built on its own base">
           <Swatch color="#c05046" />
           New…
         </button>
       </Section>
 
       <Section title="Setup markers">
-        {MARKER_KINDS.map((m) => (
-          <PaletteItem
-            key={m.key}
-            store={store}
-            title={`${m.name}: ${m.brick}`}
-            place={(at) => addObjectAt(store, { type: 'setupMarker', name: m.name, width: m.width, depth: m.depth, color: m.color, round: m.shape === 'round', markerKind: m.key }, at)}
-          >
-            <Swatch color={m.color} ratio={m.width / m.depth} round={m.shape === 'round'} />
-            {m.name}
-          </PaletteItem>
-        ))}
         {userMarkers.map(shapeEntry)}
-        <button type="button" onClick={() => setDialog('marker')} title="Make your own setup marker and keep it in this list">
+        <button type="button" onClick={() => setDialog('marker')} title="Make a setup marker for this project and keep it in this list">
           + New marker…
         </button>
       </Section>
 
       <Section title="Small items">
-        <button type="button" onClick={() => setDialog('item')} title="A street light, sidewalk, bench… any small thing, in a LEGO colour">
+        {userItems.map(shapeEntry)}
+        <button type="button" onClick={() => setDialog('item')} title="A street light, bush, bench… any small thing, in a LEGO colour">
           + New item…
         </button>
-        {userItems.map(shapeEntry)}
+      </Section>
+
+      <Section title="Single pieces">
         {STARTER_PARTS.map((part) => (
           <PaletteItem
             key={part.key}
             store={store}
             title={part.name}
-            place={(at) => addObjectAt(store, { type: 'item', name: part.name, width: part.width, depth: part.depth, color: part.color, round: part.round, catalogKey: part.key }, at)}
+            place={(at) => addObjectAt(store, { type: 'piece', name: part.name, width: part.width, depth: part.depth, color: part.color, round: part.round, catalogKey: part.key }, at)}
           >
             <Swatch color={part.color} ratio={part.width / part.depth} round={part.round} />
             {part.name}
           </PaletteItem>
         ))}
+        {userPieces.map(shapeEntry)}
+        <button type="button" onClick={() => setDialog('piece')} title="Any single LEGO piece: size in studs and a LEGO colour">
+          + New piece…
+        </button>
       </Section>
 
       {dialog === 'module' && (
@@ -185,7 +182,7 @@ export function Palette({ store }: { store: EditorStore }) {
       )}
       {dialog === 'ride' && (
         <SizeDialog
-          title="New ride or building"
+          title="New feature"
           named
           defaults={{ width: 32, depth: 32 }}
           onClose={() => setDialog(null)}
@@ -195,7 +192,7 @@ export function Palette({ store }: { store: EditorStore }) {
           }}
         />
       )}
-      {(dialog === 'marker' || dialog === 'item') && (
+      {(dialog === 'marker' || dialog === 'item' || dialog === 'piece') && (
         <NewThingDialog
           store={store}
           kind={dialog}
@@ -216,27 +213,34 @@ export function Palette({ store }: { store: EditorStore }) {
   );
 }
 
-/** New setup marker or small item: name, size, LEGO colour, layer. Kept in the palette. */
-function NewThingDialog({ store, kind, onAdd, onClose }: { store: EditorStore; kind: 'marker' | 'item'; onAdd: (t: ObjectTemplate & { layerId: string }) => void; onClose: () => void }) {
+const THING = {
+  marker: { type: 'setupMarker', title: 'New setup marker', placeholder: 'e.g. Popcorn cart', size: 2, color: 'White' },
+  item: { type: 'item', title: 'New small item', placeholder: 'e.g. Street light, Bush', size: 1, color: 'Light Bluish Gray' },
+  piece: { type: 'piece', title: 'New single piece', placeholder: 'e.g. Plate 1×6', size: 1, color: 'Light Bluish Gray' },
+} as const;
+
+/** New setup marker, small item or single piece: name, size, LEGO colour, layer. Kept in the palette. */
+function NewThingDialog({ store, kind, onAdd, onClose }: { store: EditorStore; kind: keyof typeof THING; onAdd: (t: ObjectTemplate & { layerId: string }) => void; onClose: () => void }) {
+  const t = THING[kind];
   const project = store.getState().project;
   const layers = [...project.layers].sort((a, b) => b.order - a.order);
   const [name, setName] = useState('');
-  const [w, setW] = useState(kind === 'marker' ? 2 : 1);
-  const [d, setD] = useState(kind === 'marker' ? 2 : 1);
+  const [w, setW] = useState<number>(t.size);
+  const [d, setD] = useState<number>(t.size);
   const [round, setRound] = useState(false);
-  const [color, setColor] = useState(lego(kind === 'marker' ? 'White' : 'Light Bluish Gray'));
+  const [color, setColor] = useState(lego(t.color));
   const [layerId, setLayerId] = useState(kind === 'marker' ? defaultItemLayerId(project) : itemLayerId(store));
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim() || w <= 0 || d <= 0) return;
-    onAdd({ type: kind === 'marker' ? 'setupMarker' : 'item', name: name.trim(), width: w, depth: d, color, round, layerId });
+    onAdd({ type: t.type, name: name.trim(), width: w, depth: d, color, round, layerId });
   };
   return (
-    <Modal title={kind === 'marker' ? 'New setup marker' : 'New small item'} onClose={onClose}>
+    <Modal title={t.title} onClose={onClose}>
       <form className="form" onSubmit={submit}>
         <label>
           Name
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={kind === 'marker' ? 'e.g. Popcorn cart' : 'e.g. Street light, Sidewalk'} maxLength={80} autoFocus required />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.placeholder} maxLength={80} autoFocus required />
         </label>
         <div className="row">
           <label>

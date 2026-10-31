@@ -116,7 +116,7 @@ function ModuleFields({ store, m, unit }: { store: EditorStore; m: MilsModule; u
   const project = store.getState().project;
   return (
     <>
-      <h2>{isBase(m) ? 'Ride / building (on its own base)' : 'MILS module'}</h2>
+      <h2>{isBase(m) ? 'Feature (on its own base)' : 'MILS module'}</h2>
       <Field
         label="ID (on back of plate)"
         value={m.label}
@@ -191,7 +191,7 @@ function ObjectFields({ store, o, unit }: { store: EditorStore; o: CanvasObject;
   const f = footprint(o);
   return (
     <>
-      <h2>{o.type === 'footprint' ? 'Ride / building' : o.type === 'setupMarker' ? 'Setup marker' : 'Item'}</h2>
+      <h2>{{ footprint: 'Feature', setupMarker: 'Setup marker', item: 'Small item', piece: 'Single piece' }[o.type]}</h2>
       <Field label="Name" value={o.name} onCommit={(v) => commit((p) => updateObject(p, o.id, { name: v.trim() }))} />
       {o.type === 'setupMarker' && markerKind(o.markerKind) && <p className="muted small">Placeholder: {markerKind(o.markerKind)!.brick}</p>}
       <div className="row">

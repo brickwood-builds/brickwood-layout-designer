@@ -5,7 +5,7 @@ import { PrintView } from './ui/PrintView';
 import { openDb } from './storage/db';
 import { ProjectRepository } from './storage/repository';
 import { FileLinks, dbLinkStore } from './storage/fileLink';
-import { starterProjects } from './starters';
+import { LEGACY_STARTER_IDS, starterProjects } from './starters';
 
 const db = openDb();
 const repo = new ProjectRepository(db);
@@ -26,7 +26,7 @@ export function App() {
     // Ask the browser not to evict our data under storage pressure (best effort).
     navigator.storage?.persist?.().catch(() => undefined);
     repo
-      .seedStarters(starterProjects().map((s) => s.project))
+      .seedStarters(starterProjects().map((s) => s.project), LEGACY_STARTER_IDS)
       .then(() => setReady(true))
       .catch((e: Error) => setError(`Browser storage is not available: ${e.message}`));
     const onHash = () => setRoute(readRoute());

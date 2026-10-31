@@ -218,9 +218,9 @@ test.describe('objects and groups (desktop Chrome)', () => {
   });
 
   test('tap-add a plate, resize it in properties, undo', async ({ page }) => {
-    await page.getByText('Small items', { exact: true }).click();
+    await page.getByText('Single pieces', { exact: true }).click();
     await page.getByRole('button', { name: 'Plate 2×2', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Item' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Single piece' })).toBeVisible();
     const width = page.getByLabel('Width (studs)');
     await width.fill('4');
     await width.press('Enter');
@@ -274,19 +274,19 @@ test.describe('objects and groups (desktop Chrome)', () => {
   });
 
   test('new ride from the dialog is a named base with no plate ID, placed in free space', async ({ page }) => {
-    await page.getByText('Rides & buildings', { exact: true }).click();
+    await page.getByText('Features', { exact: true }).click();
     await page.getByRole('button', { name: 'New…' }).click();
     await page.getByLabel('Name').fill('Bumper Boats');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Ride / building (on its own base)' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Feature (on its own base)' })).toBeVisible();
     await expect(page.getByLabel('ID (on back of plate)')).toHaveValue('');
     await expect(page.getByLabel('Power (volts)')).toBeVisible();
-    await expect(page.getByText('92 modules · 17 rides & buildings')).toBeVisible();
+    await expect(page.getByText('92 modules · 17 features')).toBeVisible();
     await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
   });
 
   test('a small item added to the palette can be reused', async ({ page }) => {
-    await page.getByText('Small items', { exact: true }).click();
+    await page.getByText('Single pieces', { exact: true }).click();
     await page.getByRole('button', { name: 'Brick 2×4', exact: true }).click();
     await page.getByLabel('Name').fill('Ticket booth');
     await page.getByLabel('Name').press('Enter');

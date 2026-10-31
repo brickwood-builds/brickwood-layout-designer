@@ -448,7 +448,7 @@ function StatusBar({ store, file }: { store: EditorStore; file: ReactNode }) {
     const bases = onLevel.filter(isBase).length + project.objects.filter((o) => o.levelId === levelId && o.type === 'footprint').length;
     const items = project.objects.filter((o) => o.levelId === levelId && o.type !== 'footprint').length;
     const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
-    return [plural(mods, 'module'), bases ? `${bases} rides & buildings` : '', items ? plural(items, 'item') : ''].filter(Boolean).join(' · ');
+    return [plural(mods, 'module'), bases ? plural(bases, 'feature') : '', items ? plural(items, 'item') : ''].filter(Boolean).join(' · ');
   }, [project, levelId]);
 
   const show = (ids: string[]) => {

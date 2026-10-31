@@ -72,11 +72,12 @@ export const MilsModuleSchema = z.object({
   plateColor: color.optional(),
 });
 
-export const OBJECT_TYPES = ['footprint', 'setupMarker', 'item'] as const;
+/** footprint = older ride/building outline; setupMarker; item = small item (street light, bush); piece = a single LEGO piece. */
+export const OBJECT_TYPES = ['footprint', 'setupMarker', 'item', 'piece'] as const;
 
 export const CanvasObjectSchema = z.object({
   ...placed,
-  /** footprint = ride/building outline; setupMarker = placeholder brick; item = other small piece. */
+  /** See OBJECT_TYPES. */
   type: z.enum(OBJECT_TYPES),
   name: z.string(),
   color,

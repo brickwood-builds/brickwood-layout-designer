@@ -8,7 +8,7 @@ export function formatDate(iso: string): string {
 
 export function summary(s: ReturnType<typeof projectStats>): string {
   const parts = [plural(s.modules, 'module')];
-  if (s.footprints) parts.push(`${s.footprints} rides & buildings`);
+  if (s.footprints) parts.push(plural(s.footprints, 'feature'));
   if (s.markers) parts.push(plural(s.markers, 'marker'));
   if (s.items) parts.push(plural(s.items, 'item'));
   return parts.join(' · ');

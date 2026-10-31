@@ -71,14 +71,14 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
         <h1>{project.name}</h1>
         <p className="muted">
           {project.levels.length > 1 ? `${level.name} · ` : ''}
-          {tableSize(project)} · {modules.length} modules · {rides.length} rides & buildings · printed {new Date().toLocaleDateString()}
+          {tableSize(project)} · {modules.length} modules · {rides.length} features · printed {new Date().toLocaleDateString()}
         </p>
       </header>
       <div className="print-plan" dangerouslySetInnerHTML={{ __html: svg }} />
       <p className="legend print-legend">
         <i style={{ background: MILS_COLORS['32x32'] }} /> 32×32 <i style={{ background: MILS_COLORS['16x16'] }} /> 16×16
         <i style={{ background: MILS_COLORS['16x8'] }} /> 16×8 <i style={{ background: MILS_COLORS.custom }} /> custom
-        <i style={{ background: '#c05046' }} /> ride / building · positions measured from the back-left corner of the table
+        <i style={{ background: '#c05046' }} /> feature · positions measured from the back-left corner of the table
       </p>
 
       <section className="print-section">
@@ -104,7 +104,7 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
 
       {rides.length > 0 && (
         <section className="print-section">
-          <h2>Rides & buildings (left to right)</h2>
+          <h2>Features (left to right)</h2>
           <table className="print-table">
             <thead>
               <tr><th>Name</th><th>Size</th><th>From left</th><th>Power</th><th>Notes</th></tr>
@@ -126,7 +126,7 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
 
       {small.length > 0 && (
         <section className="print-section">
-          <h2>Markers & small items</h2>
+          <h2>Markers, small items & pieces</h2>
           <table className="print-table">
             <thead>
               <tr><th>Item</th><th>On module</th><th>From left</th><th>From back</th></tr>

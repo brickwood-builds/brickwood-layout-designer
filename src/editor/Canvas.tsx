@@ -659,11 +659,13 @@ function studTile(px: number): HTMLCanvasElement {
   return tile;
 }
 
-/** Plates and bricks show studs; tiles and flat markers don't. */
+/** Plates, single pieces (not tiles) and marker bricks show studs; features and small items don't. */
 function hasStuds(i: Item): boolean {
   if (isModule(i)) return !isBase(i);
-  if (i.type === 'footprint') return false;
-  return !(i.catalogKey ?? '').startsWith('tile');
+  const key = i.catalogKey ?? '';
+  if (i.type === 'setupMarker') return true;
+  if (i.type === 'piece') return !key.startsWith('tile');
+  return /^(brick|plate|round)-/.test(key); // pieces placed before "Single pieces" existed
 }
 
 function moduleFill(m: Extract<Item, { kind: unknown }>, plateColors: boolean): string {

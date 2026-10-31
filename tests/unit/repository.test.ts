@@ -4,7 +4,7 @@ import { ProjectRepository, RevisionConflictError, CHECKPOINT_INTERVAL_MS, MAX_C
 import { createProject } from '../../src/domain/project';
 import { exportProject, parseProjectFile } from '../../src/domain/exchange';
 import { ProjectFormatError } from '../../src/domain/migrations';
-import { starterProjects } from '../../src/starters';
+import { LEGACY_STARTER_IDS, starterProjects } from '../../src/starters';
 
 let dbName: string;
 let db: BrickwoodDb;
@@ -169,12 +169,32 @@ describe('export / import', () => {
 });
 
 describe('starter seeding', () => {
-  it('adds both starters once; archived starters are not re-added', async () => {
+  it('adds each starter once; archived starters are not re-added', async () => {
     const starters = starterProjects().map((s) => s.project);
-    expect(await repo.seedStarters(starters)).toBe(2);
+    expect(starters.map((p) => p.name)).toEqual(['Brickwood Adventure Park', 'Brickwood Kingdom (Village)', 'Development']);
+    expect(await repo.seedStarters(starters)).toBe(3);
     await repo.setArchived(starters[0]!.id, true);
     expect(await repo.seedStarters(starters)).toBe(0);
     const { projects } = await repo.listProjects();
-    expect(projects.map((p) => p.name)).toEqual(['Brickwood Kingdom (Village)']);
+    expect(projects.map((p) => p.name).sort()).toEqual(['Brickwood Kingdom (Village)', 'Development']);
+  });
+
+  it('a browser seeded by the earlier version gets only the new Development layout', async () => {
+    const [park, kingdom, dev] = starterProjects().map((s) => s.project);
+    await repo.createProject(kingdom!); // the Park was deleted by the user; it must not come back
+    await db.meta.put({ key: 'startersSeeded', value: '2026-10-30T22:00:00.000Z' });
+    expect(await repo.seedStarters([park!, kingdom!, dev!], LEGACY_STARTER_IDS)).toBe(1);
+    const { projects } = await repo.listProjects();
+    expect(projects.map((p) => p.name).sort()).toEqual(['Brickwood Kingdom (Village)', 'Development']);
+    expect(await repo.seedStarters([park!, kingdom!, dev!], LEGACY_STARTER_IDS)).toBe(0);
+  });
+
+  it('only the Adventure Park project brings setup markers; new projects start with none', async () => {
+    const [park, kingdom, dev] = starterProjects().map((s) => s.project);
+    expect(park!.shapes.filter((sh) => sh.type === 'setupMarker')).toHaveLength(9);
+    expect(kingdom!.shapes).toEqual([]);
+    expect(dev!.shapes).toEqual([]);
+    expect(dev!.layers.map((l) => l.name)).toEqual(['Table, modules & bases', 'Surface details', 'Markers & small items']);
+    expect(dev!.modules).toEqual([]);
   });
 });

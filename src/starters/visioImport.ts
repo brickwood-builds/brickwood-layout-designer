@@ -5,6 +5,7 @@ import { SCHEMA_VERSION, milsKindForSize, type CanvasObject, type MilsModule, ty
 import { DEFAULT_FEATURES, DEFAULT_SETTINGS, DEFAULT_TABLE_HEIGHT_IN } from '../domain/project';
 import { stableId } from '../domain/stableId';
 import { VISIO_STUDS_PER_INCH, inchesToStuds } from '../domain/units';
+import type { MarkerKind } from '../domain/markers';
 
 export interface VisioRow {
   display: string;
@@ -49,6 +50,8 @@ export interface StarterSpec {
   retiredLabels: string[];
   /** An earlier drawing of the same display: its plates not in this layout are recorded as stored. */
   previousDisplay?: string;
+  /** This display's own setup markers (each project has its own list). */
+  markers?: MarkerKind[];
   /** Where the layout sits along the table: centred, or at the left end (built left to right). */
   align?: 'center' | 'left';
   /** Visio page size; shapes entirely off the page (leftovers) are left out. */
@@ -259,7 +262,15 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     groups: [],
     retiredLabels: spec.retiredLabels,
     storedLabels: storedFrom(spec, allRows, modules),
-    shapes: [],
+    shapes: (spec.markers ?? []).map((m) => ({
+      id: sid(`marker:${m.key}`),
+      name: m.name,
+      type: 'setupMarker' as const,
+      width: m.width,
+      depth: m.depth,
+      color: m.color,
+      ...(m.shape === 'round' ? { round: true } : {}),
+    })),
     acknowledgements: [],
     dimensions: [],
   };

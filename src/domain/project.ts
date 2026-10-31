@@ -100,9 +100,9 @@ export function projectStats(p: Project) {
     /** MILS plates (bases are counted separately). */
     modules: p.modules.filter((m) => !isBase(m)).length,
     modulesByKind: byKind,
-    /** Rides and buildings: named bases plus any older footprint objects. */
+    /** Features (rides, buildings…): named bases plus any older footprint objects. */
     footprints: p.modules.filter(isBase).length + p.objects.filter((o) => o.type === 'footprint').length,
     markers: p.objects.filter((o) => o.type === 'setupMarker').length,
-    items: p.objects.filter((o) => o.type === 'item').length,
+    items: p.objects.filter((o) => o.type === 'item' || o.type === 'piece').length,
   };
 }

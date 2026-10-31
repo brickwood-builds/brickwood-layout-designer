@@ -43,7 +43,9 @@ export interface SaveOptions {
 export const CHECKPOINT_INTERVAL_MS = 10 * 60 * 1000;
 export const MAX_CHECKPOINTS_PER_PROJECT = 25;
 
-const STARTERS_SEEDED = 'startersSeeded';
+/** Before per-starter tracking, one flag recorded that the starters had been added. */
+const LEGACY_STARTERS_SEEDED = 'startersSeeded';
+const SEEDED_STARTERS = 'seededStarters';
 
 /**
  * All persistence goes through here. Every write is a single IndexedDB transaction,
@@ -218,19 +220,27 @@ export class ProjectRepository {
     });
   }
 
-  /** Add the bundled starter projects the first time the app runs. */
-  async seedStarters(starters: Project[]): Promise<number> {
+  /**
+   * Add each bundled starter project once (new starters appear when the app updates).
+   * A starter the user archived or changed is never re-added. `legacyIds` are starters that
+   * browsers seeded before seeding was tracked per starter.
+   */
+  async seedStarters(starters: Project[], legacyIds: string[] = []): Promise<number> {
     const db = this.db;
     return db.transaction('rw', db.projects, db.meta, async () => {
-      if (await db.meta.get(STARTERS_SEEDED)) return 0;
+      const row = await db.meta.get(SEEDED_STARTERS);
+      const seeded = new Set<string>(Array.isArray(row?.value) ? (row.value as string[]) : []);
+      if (!row && (await db.meta.get(LEGACY_STARTERS_SEEDED))) for (const id of legacyIds) seeded.add(id);
       let added = 0;
       for (const p of starters) {
+        if (seeded.has(p.id)) continue;
+        seeded.add(p.id);
         if (!(await db.projects.get(p.id))) {
           await db.projects.add({ id: p.id, updatedAt: p.updatedAt, doc: ProjectSchema.parse(p) });
           added++;
         }
       }
-      await db.meta.put({ key: STARTERS_SEEDED, value: nowIso() });
+      await db.meta.put({ key: SEEDED_STARTERS, value: [...seeded] });
       return added;
     });
   }

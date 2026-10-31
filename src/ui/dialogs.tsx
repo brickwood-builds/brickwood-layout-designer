@@ -8,7 +8,8 @@ import { starterProjects } from '../starters';
 import { formatDate, summary } from './format';
 
 export function NewProjectDialog({ onCreate, onClose }: { onCreate: (p: Project) => Promise<void>; onClose: () => void }) {
-  const starters = starterProjects();
+  // The Visio displays (Development is just an empty table, offered as "Empty table").
+  const starters = starterProjects().filter((s) => s.project.origin !== 'starter:development');
   const [start, setStart] = useState('blank');
   const [name, setName] = useState('');
   const [widthIn, setWidthIn] = useState(96);

@@ -63,7 +63,7 @@ test('new project from a starter copies the Kingdom layout', async ({ page }) =>
   await page.getByRole('textbox', { name: 'Name' }).fill('Kingdom 2027');
   await page.getByRole('radio', { name: KINGDOM }).check();
   await page.getByRole('button', { name: 'Create' }).click();
-  await expect(card(page, 'Kingdom 2027')).toContainText('25 modules · 14 rides & buildings');
+  await expect(card(page, 'Kingdom 2027')).toContainText('25 modules · 14 features');
 });
 
 test('export, re-import as copy, and reject an invalid file', async ({ page }, testInfo) => {
@@ -76,7 +76,7 @@ test('export, re-import as copy, and reject an invalid file', async ({ page }, t
 
   await page.getByTestId('import-input').setInputFiles(exported);
   await expect(page.getByRole('status')).toContainText('imported as a copy');
-  await expect(card(page, `${KINGDOM} (imported)`)).toContainText('25 modules · 14 rides & buildings');
+  await expect(card(page, `${KINGDOM} (imported)`)).toContainText('25 modules · 14 features');
 
   const bad = testInfo.outputPath('bad.json');
   writeFileSync(bad, '{"format":"brickwood-layout-project","formatVersion":1,"project":{"schemaVersion":1}}');
