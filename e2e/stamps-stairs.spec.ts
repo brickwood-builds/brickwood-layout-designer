@@ -34,7 +34,7 @@ test.describe('desktop', () => {
     await expect(page.getByRole('group', { name: 'Brush width (studs)' })).toHaveCount(0);
     const stroke = async () => {
       const a = await at(page, c05.x + 4, c05.y + 16);
-      const b = await at(page, c05.x + 28, c05.y + 16);
+      const b = await at(page, c05.x + 28.4, c05.y + 16); // a touch past the last spot
       await page.mouse.move(a.x, a.y);
       await page.mouse.down();
       await page.mouse.move(b.x, b.y, { steps: 5 });

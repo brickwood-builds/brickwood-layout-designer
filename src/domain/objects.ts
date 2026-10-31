@@ -18,6 +18,8 @@ export interface NewObject {
   smooth?: boolean;
   markerKind?: string;
   catalogKey?: string;
+  /** Height in plates, when the part says (catalog parts). */
+  heightPlates?: number;
   /** Where the centre should go (studs). */
   center: { x: number; y: number };
   /** Rides/buildings need their own space; small items may sit on modules. */
@@ -56,6 +58,7 @@ export function addObject(p: Project, spec: NewObject, mode: SnapMode): { projec
     ...(spec.smooth ? { smooth: true } : {}),
     ...(spec.markerKind ? { markerKind: spec.markerKind } : {}),
     ...(spec.catalogKey ? { catalogKey: spec.catalogKey } : {}),
+    ...(spec.heightPlates !== undefined ? { heightPlates: spec.heightPlates } : {}),
   };
   return { project: { ...p, objects: [...p.objects, object] }, id: object.id };
 }

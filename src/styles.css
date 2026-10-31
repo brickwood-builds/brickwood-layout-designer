@@ -161,7 +161,7 @@ input[aria-invalid='true'] { border-color: var(--error-text); }
 }
 
 /* ---------- Palette sections (1C) ---------- */
-.palette { width: 150px; gap: 4px; touch-action: pan-y; }
+.palette { width: 176px; gap: 4px; touch-action: pan-y; }
 .palette-hint { margin: 0 0 4px; }
 .palette-section > summary { list-style: none; min-height: 32px; padding: 0 2px; border: none; background: none; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); display: flex; align-items: center; }
 .palette-section > summary::before { content: '▸'; margin-right: 6px; }
@@ -276,3 +276,12 @@ input[type='color'] { width: 100%; height: 36px; padding: 2px; border: 1px solid
 .badge { margin-left: auto; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--warn); color: #fff; font-size: 0.75rem; text-align: center; }
 .height-shading .ramp { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
 .height-shading .ramp i { display: inline-block; width: 70px; height: 10px; border: 1px solid var(--border); border-radius: 3px; }
+
+/* Parts library rows in Single pieces: the part, and a favourite star. */
+.part-row { display: flex; gap: 4px; align-items: stretch; }
+.part-row > button:first-child { flex: 1; min-width: 0; white-space: normal; text-align: left; line-height: 1.2; padding-top: 4px; padding-bottom: 4px; font-size: 0.82rem; }
+.part-row .part-name { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.part-row .star { flex: none; width: 26px; padding: 0; font-size: 1rem; color: #b8860b; }
+.palette-sub { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-top: 6px; }
+.lego-grid .not-made { opacity: 0.35; }
+.lego-grid .made-label { grid-column: 1 / -1; font-size: 0.75rem; color: var(--muted); }

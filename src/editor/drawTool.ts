@@ -4,6 +4,8 @@ import { STARTER_PARTS } from '../domain/catalog';
 import type { PaintTemplate, WhenTaken } from '../domain/brush';
 import { touchingSpacing, type StampSource, type Turn } from '../domain/stamps';
 import type { Project } from '../domain/schema';
+import { libraryTemplate } from '../domain/partsLibrary';
+import { preferredParts } from './partPrefs';
 
 export interface StairDraft {
   width: number;
@@ -15,7 +17,7 @@ export interface StairDraft {
 }
 
 export interface DrawSettings {
-  /** "part:<catalog key>", "shape:<shape id>" or "design:<design id>". */
+  /** "part:<catalog key>", "shape:<shape id>", "rb:<part no>" (favourite/recent part) or "design:<design id>". */
   source: string;
   color: string;
   /** Brush width across, in studs. */
@@ -77,7 +79,8 @@ export function drawSources(project: Project): DrawSource[] {
     label: s.name,
     template: { type: s.type, name: s.name, width: s.width, depth: s.depth, color: s.color, round: s.round, smooth: s.smooth, catalogKey: `shape:${s.id}` },
   }));
-  return [...parts, ...own];
+  const library: DrawSource[] = preferredParts().map((p) => ({ key: p.key, label: `${p.name} (${p.partNo})`, template: libraryTemplate(p) }));
+  return [...parts, ...own, ...library];
 }
 
 /** The template to paint with, in the chosen colour. */

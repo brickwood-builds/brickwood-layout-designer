@@ -64,8 +64,8 @@ describe('painting', () => {
     let q = paintCells(p, level, layer, round1x1, cellsForBox({ x: 0, y: 0 }, { x: 10, y: 4 }, b1)).project;
     q = paintCells(q, level, layer, { ...round1x1, color: lego('Light Bluish Gray') }, cellsForBox({ x: 10, y: 0 }, { x: 12, y: 4 }, b1)).project;
     expect(countPieces(q.objects)).toEqual([
-      { name: 'Plate Round 1×1', color: lego('Tan'), count: 40 },
-      { name: 'Plate Round 1×1', color: lego('Light Bluish Gray'), count: 8 },
+      { name: 'Plate Round 1×1', color: lego('Tan'), count: 40, partNo: '6141' }, // Rebrickable's number for it
+      { name: 'Plate Round 1×1', color: lego('Light Bluish Gray'), count: 8, partNo: '6141' },
     ]);
   });
 });

@@ -14,6 +14,8 @@ import { groupOf, modulesUnder, renameGroup, resizeObject, saveShape } from '../
 import { markerKind } from '../domain/catalog';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { DrawPanel } from './DrawPanel';
+import { useLibraryPart } from './partPrefs';
+import { PARTS_SOURCE } from '../domain/partsLibrary';
 import { curveOfGroup, currentPoints } from '../domain/curves';
 import { stairOfGroup } from '../domain/stairs';
 import type { EditorStore } from './store';
@@ -200,10 +202,17 @@ function ModuleFields({ store, m, unit }: { store: EditorStore; m: MilsModule; u
 function ObjectFields({ store, o, unit }: { store: EditorStore; o: CanvasObject; unit: 'studs' | 'in' | 'cm' }) {
   const commit = store.getState().commit;
   const f = footprint(o);
+  const part = useLibraryPart(o.catalogKey);
   return (
     <>
       <h2>{{ footprint: 'Feature', setupMarker: 'Setup marker', item: 'Small item', piece: 'Single piece' }[o.type]}</h2>
       <Field label="Name" value={o.name} onCommit={(v) => commit((p) => updateObject(p, o.id, { name: v.trim() }))} />
+      {part && (
+        <p className="muted small">
+          LEGO part <strong>{part.partNo}</strong> ({part.category}) — {PARTS_SOURCE} number, usually the same on BrickLink.
+          {!part.sizeKnown && ' The parts list doesn’t give its size: set Width and Depth below.'}
+        </p>
+      )}
       {o.type === 'setupMarker' && markerKind(o.markerKind) && <p className="muted small">Placeholder: {markerKind(o.markerKind)!.brick}</p>}
       <div className="row">
         <Field
@@ -223,7 +232,7 @@ function ObjectFields({ store, o, unit }: { store: EditorStore; o: CanvasObject;
           hint={formatLength(f.depth, unit === 'studs' ? 'in' : unit)}
         />
       </div>
-      <LegoColorPicker label="Colour" value={o.color} onChange={(hex) => hex && commit((p) => updateObject(p, o.id, { color: hex }))} />
+      <LegoColorPicker label="Colour" value={o.color} madeIn={part?.colors} onChange={(hex) => hex && commit((p) => updateObject(p, o.id, { color: hex }))} />
       {o.type !== 'footprint' && <OnModules store={store} o={o} />}
       {o.type === 'footprint' && (
         <Field

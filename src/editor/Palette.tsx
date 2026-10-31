@@ -1,7 +1,9 @@
-import { useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore } from 'zustand';
 import { searchParts } from '../domain/catalog';
+import { PARTS_SOURCE, PARTS_SOURCE_URL, libraryIfLoaded, libraryTemplate, loadLibrary, searchLibrary, sizeText, type LibraryPart, type PartsLibrary } from '../domain/partsLibrary';
+import { noteUsed, toggleFavourite, usePartPrefs } from './partPrefs';
 import { addShape, defaultItemLayerId, deleteShape } from '../domain/objects';
 import { lego, legoColorName } from '../domain/legoColors';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
@@ -82,6 +84,77 @@ function Section({ title, open, children }: { title: string; open?: boolean; chi
   );
 }
 
+/** A part from the full LEGO parts list: place it (tap or drag), or star it as a favourite. */
+function LibraryEntry({ store, part }: { store: EditorStore; part: LibraryPart }) {
+  const prefs = usePartPrefs();
+  const fav = prefs.favourites.some((p) => p.key === part.key);
+  const t = libraryTemplate(part);
+  return (
+    <div className="part-row">
+      <PaletteItem
+        store={store}
+        title={`${part.name} — part ${part.partNo}, ${sizeText(part)}${part.sizeKnown ? '' : ': placed as 1×1, set its size after'}`}
+        place={(at) => {
+          addObjectAt(store, t, at);
+          noteUsed(part);
+        }}
+      >
+        <Swatch color={t.color} ratio={part.width / part.depth} round={part.round} />
+        <span className="part-name">
+          {part.name}
+          <small className="muted"> {part.partNo}</small>
+        </span>
+      </PaletteItem>
+      <button type="button" className="star" aria-pressed={fav} aria-label={fav ? `Remove ${part.name} from favourites` : `Add ${part.name} to favourites`} title={fav ? 'Favourite — click to remove' : 'Add to favourites'} onClick={() => toggleFavourite(part)}>
+        {fav ? '★' : '☆'}
+      </button>
+    </div>
+  );
+}
+
+function PartList({ store, title, parts }: { store: EditorStore; title: string; parts: LibraryPart[] }) {
+  if (!parts.length) return null;
+  return (
+    <>
+      <span className="palette-sub">{title}</span>
+      {parts.map((p) => (
+        <LibraryEntry key={p.key} store={store} part={p} />
+      ))}
+    </>
+  );
+}
+
+/** Search results from the full parts list (loaded the first time someone searches). */
+function LibraryResults({ store, query, skip }: { store: EditorStore; query: string; skip: string[] }) {
+  const [lib, setLib] = useState<PartsLibrary | null>(libraryIfLoaded());
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (lib) return;
+    let live = true;
+    loadLibrary().then(
+      (l) => live && setLib(l),
+      () => live && setFailed(true),
+    );
+    return () => {
+      live = false;
+    };
+  }, [lib]);
+  if (failed) return <span className="muted small">The full parts list couldn’t be loaded.</span>;
+  if (!lib) return <span className="muted small">Loading all LEGO parts…</span>;
+  const { parts, total } = searchLibrary(lib, query, 40);
+  const shown = parts.filter((p) => !skip.includes(p.partNo));
+  return (
+    <>
+      <span className="palette-sub">All LEGO parts</span>
+      {shown.map((p) => (
+        <LibraryEntry key={p.key} store={store} part={p} />
+      ))}
+      {total === 0 && <span className="muted small">No match. Try “plate 1x6”, “bush” or a part number.</span>}
+      {total > parts.length && <span className="muted small">Showing {parts.length} of {total} — type more to narrow it down.</span>}
+    </>
+  );
+}
+
 /** Left column: everything that can be added. Modules open; the rest folded away until needed. */
 export function Palette({ store }: { store: EditorStore }) {
   const project = useStore(store, (s) => s.project);
@@ -89,6 +162,7 @@ export function Palette({ store }: { store: EditorStore }) {
   const designs = project.designs;
   const [dialog, setDialog] = useState<'module' | 'ride' | 'marker' | 'item' | 'piece' | null>(null);
   const [partQuery, setPartQuery] = useState('');
+  const prefs = usePartPrefs();
   // Each project has its own markers, items and pieces (nothing carries over between projects).
   const userMarkers = shapes.filter((sh) => sh.type === 'setupMarker');
   const userPieces = shapes.filter((sh) => sh.type === 'piece');
@@ -178,11 +252,13 @@ export function Palette({ store }: { store: EditorStore }) {
         <input
           type="search"
           className="part-search"
-          placeholder="Search: tile 2x2, 3024…"
+          placeholder="Search all parts: tile 2x2, bush, 3024…"
           aria-label="Search single pieces"
           value={partQuery}
           onChange={(e) => setPartQuery(e.target.value)}
         />
+        {!partQuery && <PartList store={store} title="Favourites" parts={prefs.favourites} />}
+        {!partQuery && <PartList store={store} title="Recently used" parts={prefs.recent.filter((p) => !prefs.favourites.some((f) => f.key === p.key))} />}
         {searchParts(partQuery).map((part) => (
           <PaletteItem
             key={part.key}
@@ -196,7 +272,14 @@ export function Palette({ store }: { store: EditorStore }) {
             {part.name}
           </PaletteItem>
         ))}
-        {partQuery && searchParts(partQuery).length === 0 && <span className="muted small">No match. Try “plate 1x6”.</span>}
+        {partQuery && <LibraryResults store={store} query={partQuery} skip={searchParts(partQuery).map((p) => p.rbNo ?? '')} />}
+        <span className="muted small">
+          Parts list from{' '}
+          <a href={PARTS_SOURCE_URL} target="_blank" rel="noreferrer">
+            {PARTS_SOURCE}
+          </a>
+          .
+        </span>
         {userPieces.map(shapeEntry)}
         <button type="button" onClick={() => setDialog('piece')} title="A piece that isn't in the list yet: size in studs, smooth or studs, LEGO colour">
           + New piece…

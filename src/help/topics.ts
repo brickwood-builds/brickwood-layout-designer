@@ -186,6 +186,18 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'parts',
+    title: 'Finding real LEGO parts',
+    body: [
+      'Single pieces has the common plates, tiles and bricks ready to use. Type in its search box to look through about 2,400 real LEGO parts: plates, bricks, tiles, rounds, slopes, wedges, windows and doors, fences, rocks, plants and trees. Search by name and size (“tile 2x2”, “bush”, “slope 45”) or by part number (“3024”).',
+      'Tap a part to place it, or drag it onto the table. It comes in at its real size, smooth if it is a tile, and with its height for Heights.',
+      'Tap ☆ to keep a part in Favourites. Parts you place show under Recently used. Both stay on this device for every project, and also appear in Draw › Draw with.',
+      'Select a placed part to see its part number. Its colour list shows the colours it has really been made in first.',
+      'A few parts (some plants and animals) don’t have their size in the list: they come in as 1×1 — set their width and depth in the panel.',
+      'Part numbers are Rebrickable’s; they are nearly always the same as BrickLink’s. The parts list comes from Rebrickable’s free downloads and works offline.',
+    ],
+  },
+  {
     id: 'stairs',
     title: 'Stairs',
     body: [

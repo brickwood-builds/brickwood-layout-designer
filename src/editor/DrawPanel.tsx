@@ -5,6 +5,7 @@ import { designIdOf, drawSources, isStamping, type DrawSettings, type StairDraft
 import { partByKey, type PartKind } from '../domain/catalog';
 import type { Turn } from '../domain/stamps';
 import type { EditorStore } from './store';
+import { usePartPrefs } from './partPrefs';
 
 const PART_KINDS: PartKind[] = ['round plate', 'plate', 'tile', 'round tile', 'brick', 'round brick'];
 const WIDTHS = [1, 2, 3, 4, 6, 8];
@@ -39,11 +40,13 @@ export function DrawPanel({ store }: { store: EditorStore }) {
   const draw = useStore(store, (s) => s.draw);
   const draft = useStore(store, (s) => s.curveDraft);
   useStore(store, (s) => s.activeLayerId);
+  usePartPrefs();
   const set = (patch: Partial<DrawSettings>) => store.getState().set({ draw: { ...draw, ...patch } });
   const setStair = (patch: Partial<StairDraft>) => set({ stair: { ...draw.stair, ...patch } });
   const sources = drawSources(project);
   const parts = sources.filter((s) => s.key.startsWith('part:'));
   const own = sources.filter((s) => s.key.startsWith('shape:'));
+  const library = sources.filter((s) => s.key.startsWith('rb:'));
   const layer = project.layers.find((l) => l.id === itemLayerId(store));
   const stairs = draw.shape === 'stairs';
   const design = designIdOf(draw) ? project.designs.find((d) => d.id === designIdOf(draw)) : undefined;
@@ -147,6 +150,15 @@ export function DrawPanel({ store }: { store: EditorStore }) {
               {own.length > 0 && (
                 <optgroup label="This project">
                   {own.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {library.length > 0 && (
+                <optgroup label="Your favourite and recent parts">
+                  {library.map((s) => (
                     <option key={s.key} value={s.key}>
                       {s.label}
                     </option>

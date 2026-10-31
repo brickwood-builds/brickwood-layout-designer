@@ -64,3 +64,9 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 |---|---|---|---|
 | 1 | Go ahead with stairs | Draw › Stairs: click start, turns, end; width, step depth, rise (1 plate / 2 plates / 1 brick), start height, landings at turns or every N steps, colour, smooth tops. Select → change any setting or Edit path (handles); steps are laid again, one Undo. Step heights work with Heights | Done |
 | 2 | Go ahead with pattern stamping | Draw › Spacing: one piece every N studs along freehand, straight or curve strokes (grid for Fill box), with Turn (fixed or follow path). Designs can be stamped too (linked copies). Taken spots preview red and are skipped. One Undo per stroke | Done |
+
+## 31 Oct 2026, round 7
+
+| # | Request | What was done | Status |
+|---|---|---|---|
+| 1 | Go ahead with Phase 3 | 3A: real LEGO parts list (about 2,400 plain parts from Rebrickable's free downloads, shipped with the app so it works offline). Search Single pieces by name, size or part number; parts come in at real size, smooth tiles, heights; favourites ☆ and recently used; colours the part is made in come first; part numbers on the printout. Also answers the earlier request "choose single pieces from actual parts" | Done |

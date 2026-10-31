@@ -21,7 +21,12 @@ export interface CatalogPart {
   height: number;
   /** BrickLink part number, for reference. */
   partNo?: string;
+  /** Rebrickable part number (the parts library); differs from BrickLink for a few parts. */
+  rbNo?: string;
 }
+
+/** Where Rebrickable numbers a part differently from BrickLink. */
+const RB_NO: Record<string, string> = { '4073': '6141', '4032': '4032b' };
 
 const KIND: Record<PartKind, { prefix: string; label: string; studs: boolean; height: number; round?: boolean; color: string }> = {
   plate: { prefix: 'plate', label: 'Plate', studs: true, height: 1, color: lego('Light Bluish Gray') },
@@ -67,6 +72,7 @@ export const STARTER_PARTS: CatalogPart[] = (Object.keys(SIZES) as PartKind[]).f
       studs: k.studs,
       height: k.height,
       partNo,
+      rbNo: RB_NO[partNo] ?? partNo,
       ...(k.round ? { round: true } : {}),
     };
   }),

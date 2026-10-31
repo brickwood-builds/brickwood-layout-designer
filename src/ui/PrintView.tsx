@@ -160,12 +160,13 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
           <h2>Single pieces</h2>
           <table className="print-table">
             <thead>
-              <tr><th>Piece</th><th>Colour</th><th>How many</th></tr>
+              <tr><th>Piece</th><th>Part no.</th><th>Colour</th><th>How many</th></tr>
             </thead>
             <tbody>
               {pieces.map((p) => (
-                <tr key={`${p.name}|${p.color}`}>
+                <tr key={`${p.partNo ?? ""}|${p.name}|${p.color}`}>
                   <td>{p.name}</td>
+                  <td>{p.partNo ?? '—'}</td>
                   <td>
                     <i className="swatch" style={{ background: p.color }} /> {legoColorName(p.color) ?? p.color}
                   </td>

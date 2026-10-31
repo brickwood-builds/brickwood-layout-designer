@@ -5,6 +5,7 @@ import { footprint, type Rect } from './geometry';
 import { isModule } from './edits';
 import type { CanvasObject, Project } from './schema';
 import { SpatialIndex } from './spatial';
+import { partByKey } from './catalog';
 
 export interface Pt {
   x: number;
@@ -79,6 +80,8 @@ export interface PaintTemplate {
   smooth?: boolean;
   catalogKey?: string;
   markerKind?: string;
+  /** Height in plates, when known (catalog parts). */
+  heightPlates?: number;
 }
 
 /** What to do where something is already on the layer: skip it, or stack on top (terrain). */
@@ -113,6 +116,7 @@ export function paintCells(project: Project, levelId: string, layerId: string, t
       ...(template.smooth ? { smooth: true } : {}),
       ...(template.catalogKey ? { catalogKey: template.catalogKey } : {}),
       ...(template.markerKind ? { markerKind: template.markerKind } : {}),
+      ...(template.heightPlates !== undefined ? { heightPlates: template.heightPlates } : {}),
     };
     taken.insert(o);
     added.push(o);
@@ -144,12 +148,19 @@ export function eraseCells(project: Project, levelId: string, layerId: string, c
   };
 }
 
+/** The LEGO part number of a placed piece (Rebrickable numbering), when it is a real part. */
+export function partNumberOf(o: Pick<CanvasObject, 'catalogKey'>): string | undefined {
+  if (o.catalogKey?.startsWith('rb:')) return o.catalogKey.slice(3);
+  return partByKey(o.catalogKey)?.rbNo;
+}
+
 /** Group identical pieces for lists (a walkway is "Plate Round 1×1, Tan × 400"). */
-export function countPieces(objects: CanvasObject[]): { name: string; color: string; count: number }[] {
-  const m = new Map<string, { name: string; color: string; count: number }>();
+export function countPieces(objects: CanvasObject[]): { name: string; color: string; count: number; partNo?: string }[] {
+  const m = new Map<string, { name: string; color: string; count: number; partNo?: string }>();
   for (const o of objects) {
-    const k = `${o.name}|${o.color}`;
-    const e = m.get(k) ?? { name: o.name, color: o.color, count: 0 };
+    const partNo = partNumberOf(o);
+    const k = `${partNo ?? o.name}|${o.name}|${o.color}`;
+    const e = m.get(k) ?? { name: o.name, color: o.color, count: 0, ...(partNo ? { partNo } : {}) };
     e.count++;
     m.set(k, e);
   }
