@@ -177,7 +177,7 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
       <h1 title={project.name}>{project.name}</h1>
       <span className="save-state" role="status" data-state={saveState} title="Every change saves automatically within a second">
         {saveState === 'saved'
-          ? `Saved ${new Date(project.updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+          ? `Saved ${savedWhen(project.updatedAt)}`
           : { pending: 'Saving…', saving: 'Saving…', error: 'Not saved', conflict: 'Not saved' }[saveState]}
       </span>
       <div className="tool-group">
@@ -597,4 +597,11 @@ function useFlushWhenHidden(autosave: Autosave) {
       window.removeEventListener('pagehide', onHide);
     };
   }, []);
+}
+
+/** "2:41 PM" for today, otherwise "Oct 30, 2:41 PM", so an old save never looks fresh. */
+function savedWhen(iso: string): string {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return d.toDateString() === new Date().toDateString() ? time : `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${time}`;
 }
