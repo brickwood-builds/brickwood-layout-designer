@@ -2,6 +2,9 @@ import { useStore } from 'zustand';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { itemLayerId } from './actions';
 import { drawSources } from './drawTool';
+import { partByKey, type PartKind } from '../domain/catalog';
+
+const PART_KINDS: PartKind[] = ['round plate', 'plate', 'tile', 'round tile', 'brick', 'round brick'];
 import type { EditorStore } from './store';
 
 const WIDTHS = [1, 2, 3, 4, 6, 8];
@@ -30,13 +33,17 @@ export function DrawPanel({ store }: { store: EditorStore }) {
             set({ source: src.key, color: src.template.color });
           }}
         >
-          <optgroup label="Single pieces">
-            {parts.map((s) => (
-              <option key={s.key} value={s.key}>
-                {s.label}
-              </option>
-            ))}
-          </optgroup>
+          {PART_KINDS.map((kind) => (
+            <optgroup key={kind} label={`Single pieces — ${kind}s`}>
+              {parts
+                .filter((s) => partByKey(s.key.slice(5))?.kind === kind)
+                .map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
           {own.length > 0 && (
             <optgroup label="This project">
               {own.map((s) => (

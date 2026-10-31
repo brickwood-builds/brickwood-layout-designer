@@ -70,7 +70,9 @@ test.describe('heights (desktop)', () => {
     // A plate on C-05, then a brick on the plate.
     const c05 = (await st(page)).project.modules.find((m) => m.label === 'C-05')!;
     await page.getByText('Single pieces', { exact: true }).click();
+    await page.getByLabel('Search single pieces').fill('plate 4x4');
     await drop(page, 'Plate 4×4', c05.x + 10, c05.y + 10);
+    await page.getByLabel('Search single pieces').fill('');
     await drop(page, 'Brick 2×2', c05.x + 10, c05.y + 10);
     await expect(page.getByRole('heading', { name: 'Single piece' })).toBeVisible();
     await expect(page.getByText(/Sits at 1 plate .*, on Plate 4×4/)).toBeVisible();

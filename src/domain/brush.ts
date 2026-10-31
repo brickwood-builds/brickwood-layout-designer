@@ -76,6 +76,7 @@ export interface PaintTemplate {
   depth: number;
   color: string;
   round?: boolean;
+  smooth?: boolean;
   catalogKey?: string;
   markerKind?: string;
 }
@@ -104,6 +105,7 @@ export function paintCells(project: Project, levelId: string, layerId: string, t
       color: template.color,
       notes: '',
       ...(template.round ? { round: true } : {}),
+      ...(template.smooth ? { smooth: true } : {}),
       ...(template.catalogKey ? { catalogKey: template.catalogKey } : {}),
       ...(template.markerKind ? { markerKind: template.markerKind } : {}),
     };

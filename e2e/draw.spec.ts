@@ -94,3 +94,28 @@ test('draw a walkway with a finger on the iPad', async ({ page }, info) => {
   const walk = await plates(page);
   expect(new Set(walk.map((o) => o.x)).size).toBeGreaterThanOrEqual(16);
 });
+
+test('single pieces: search the built-in parts; a made-up tile is smooth', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop');
+  await page.goto('/');
+  await page.getByRole('article', { name: 'Development', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
+  await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
+  await page.getByText('Single pieces', { exact: true }).click();
+  const search = page.getByLabel('Search single pieces');
+  await search.fill('3024');
+  await expect(page.locator('.palette-section', { hasText: 'Single pieces' }).getByRole('button', { name: /^Plate 1×1$/ })).toBeVisible();
+  await search.fill('tile 1x6');
+  await page.getByRole('button', { name: 'Tile 1×6', exact: true }).click();
+  await search.fill('');
+  await page.getByRole('button', { name: '+ New piece…' }).click();
+  const dlg = page.getByRole('dialog');
+  await dlg.getByLabel('Name').fill('Tile 1×10');
+  await dlg.getByLabel('Width (studs)').fill('10');
+  await dlg.getByLabel(/Smooth top/).check();
+  await dlg.getByRole('button', { name: 'Add', exact: true }).click();
+  const objs = await page.evaluate(() =>
+    (window as unknown as { __brickwoodEditor: { state(): { project: { objects: { name: string; catalogKey?: string; smooth?: boolean }[] } } } }).__brickwoodEditor.state().project.objects,
+  );
+  expect(objs.find((o) => o.name === 'Tile 1×6')).toMatchObject({ catalogKey: 'tile-1x6' });
+  expect(objs.find((o) => o.name === 'Tile 1×10')).toMatchObject({ smooth: true });
+});

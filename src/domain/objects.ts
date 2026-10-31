@@ -15,6 +15,7 @@ export interface NewObject {
   depth: number;
   color: string;
   round?: boolean;
+  smooth?: boolean;
   markerKind?: string;
   catalogKey?: string;
   /** Where the centre should go (studs). */
@@ -52,6 +53,7 @@ export function addObject(p: Project, spec: NewObject, mode: SnapMode): { projec
     color: spec.color,
     notes: '',
     ...(spec.round ? { round: true } : {}),
+    ...(spec.smooth ? { smooth: true } : {}),
     ...(spec.markerKind ? { markerKind: spec.markerKind } : {}),
     ...(spec.catalogKey ? { catalogKey: spec.catalogKey } : {}),
   };
@@ -87,12 +89,13 @@ export function modulesUnder(p: Project, item: Item): string[] {
 export function addShape(p: Project, s: Omit<Shape, 'id'>): { project: Project; id: string } {
   const shape: Shape = { ...s, id: newId(), name: s.name.trim() || 'Shape' };
   if (!shape.round) delete shape.round;
+  if (!shape.smooth) delete shape.smooth;
   return { project: { ...p, shapes: [...p.shapes, shape] }, id: shape.id };
 }
 
 /** Keep a placed item's size and colour in the palette. */
 export function saveShape(p: Project, o: CanvasObject, name: string): { project: Project; id: string } {
-  return addShape(p, { name: name.trim() || o.name, type: o.type, width: o.width, depth: o.depth, color: o.color, round: o.round });
+  return addShape(p, { name: name.trim() || o.name, type: o.type, width: o.width, depth: o.depth, color: o.color, round: o.round, smooth: o.smooth });
 }
 
 export function deleteShape(p: Project, id: string): Project {

@@ -10,6 +10,7 @@ import { computeStack } from '../domain/heights';
 import { SpatialIndex } from '../domain/spatial';
 import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
 import { DEFAULT_PLATE_COLOR } from '../domain/legoColors';
+import { partByKey } from '../domain/catalog';
 import { STUDS_PER_INCH, formatLength, type DisplayUnit } from '../domain/units';
 import { dimensionLength } from '../domain/edits';
 import { expandToGroups, withCarriedItems } from '../domain/objects';
@@ -687,10 +688,10 @@ function studTile(px: number): HTMLCanvasElement {
 /** Plates, single pieces (not tiles) and marker bricks show studs; features and small items don't. */
 function hasStuds(i: Item): boolean {
   if (isModule(i)) return !isBase(i);
-  const key = i.catalogKey ?? '';
-  if (i.type === 'setupMarker') return true;
-  if (i.type === 'piece') return !key.startsWith('tile');
-  return /^(brick|plate|round)-/.test(key); // pieces placed before "Single pieces" existed
+  if (i.smooth) return false;
+  const part = partByKey(i.catalogKey);
+  if (part) return part.studs;
+  return i.type === 'setupMarker' || i.type === 'piece';
 }
 
 function moduleFill(m: Extract<Item, { kind: unknown }>, plateColors: boolean): string {

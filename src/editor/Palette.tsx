@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore } from 'zustand';
-import { STARTER_PARTS } from '../domain/catalog';
+import { searchParts } from '../domain/catalog';
 import { addShape, defaultItemLayerId, deleteShape } from '../domain/objects';
 import { lego, legoColorName } from '../domain/legoColors';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
@@ -85,6 +85,7 @@ function Section({ title, open, children }: { title: string; open?: boolean; chi
 export function Palette({ store }: { store: EditorStore }) {
   const shapes = useStore(store, (s) => s.project.shapes);
   const [dialog, setDialog] = useState<'module' | 'ride' | 'marker' | 'item' | 'piece' | null>(null);
+  const [partQuery, setPartQuery] = useState('');
   // Each project has its own markers, items and pieces (nothing carries over between projects).
   const userMarkers = shapes.filter((sh) => sh.type === 'setupMarker');
   const userPieces = shapes.filter((sh) => sh.type === 'piece');
@@ -151,19 +152,30 @@ export function Palette({ store }: { store: EditorStore }) {
       </Section>
 
       <Section title="Single pieces">
-        {STARTER_PARTS.map((part) => (
+        <input
+          type="search"
+          className="part-search"
+          placeholder="Search: tile 2x2, 3024…"
+          aria-label="Search single pieces"
+          value={partQuery}
+          onChange={(e) => setPartQuery(e.target.value)}
+        />
+        {searchParts(partQuery).map((part) => (
           <PaletteItem
             key={part.key}
             store={store}
-            title={part.name}
-            place={(at) => addObjectAt(store, { type: 'piece', name: part.name, width: part.width, depth: part.depth, color: part.color, round: part.round, catalogKey: part.key }, at)}
+            title={`${part.name}${part.partNo ? ` (part ${part.partNo})` : ''}`}
+            place={(at) =>
+              addObjectAt(store, { type: 'piece', name: part.name, width: part.width, depth: part.depth, color: part.color, round: part.round, smooth: !part.studs, catalogKey: part.key }, at)
+            }
           >
             <Swatch color={part.color} ratio={part.width / part.depth} round={part.round} />
             {part.name}
           </PaletteItem>
         ))}
+        {partQuery && searchParts(partQuery).length === 0 && <span className="muted small">No match. Try “plate 1x6”.</span>}
         {userPieces.map(shapeEntry)}
-        <button type="button" onClick={() => setDialog('piece')} title="Any single LEGO piece: size in studs and a LEGO colour">
+        <button type="button" onClick={() => setDialog('piece')} title="A piece that isn't in the list yet: size in studs, smooth or studs, LEGO colour">
           + New piece…
         </button>
       </Section>
@@ -201,7 +213,7 @@ export function Palette({ store }: { store: EditorStore }) {
             setDialog(null);
             let shapeId = '';
             store.getState().commit((p) => {
-              const r = addShape(p, { name: template.name, type: template.type, width: template.width, depth: template.depth, color: template.color, round: template.round });
+              const r = addShape(p, { name: template.name, type: template.type, width: template.width, depth: template.depth, color: template.color, round: template.round, smooth: template.smooth });
               shapeId = r.id;
               return r.project;
             });
@@ -228,12 +240,13 @@ function NewThingDialog({ store, kind, onAdd, onClose }: { store: EditorStore; k
   const [w, setW] = useState<number>(t.size);
   const [d, setD] = useState<number>(t.size);
   const [round, setRound] = useState(false);
+  const [smooth, setSmooth] = useState(false);
   const [color, setColor] = useState(lego(t.color));
   const [layerId, setLayerId] = useState(kind === 'marker' ? defaultItemLayerId(project) : itemLayerId(store));
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim() || w <= 0 || d <= 0) return;
-    onAdd({ type: t.type, name: name.trim(), width: w, depth: d, color, round, layerId });
+    onAdd({ type: t.type, name: name.trim(), width: w, depth: d, color, round, smooth: kind === 'piece' && smooth, layerId });
   };
   return (
     <Modal title={t.title} onClose={onClose}>
@@ -256,6 +269,12 @@ function NewThingDialog({ store, kind, onAdd, onClose }: { store: EditorStore; k
           <input type="checkbox" checked={round} onChange={(e) => setRound(e.target.checked)} />
           Round
         </label>
+        {kind === 'piece' && (
+          <label className="radio">
+            <input type="checkbox" checked={smooth} onChange={(e) => setSmooth(e.target.checked)} />
+            Smooth top (tile — no studs)
+          </label>
+        )}
         <LegoColorPicker label="LEGO colour" value={color} onChange={(hex) => hex && setColor(hex)} />
         <label>
           Layer

@@ -87,6 +87,8 @@ export const CanvasObjectSchema = z.object({
   catalogKey: z.string().optional(),
   /** Drawn as a circle (round bricks and markers). */
   round: z.boolean().optional(),
+  /** Smooth top, no studs (tiles). */
+  smooth: z.boolean().optional(),
   /** Ride power, kept for later power/packing planning. */
   powerVolts: z.number().positive().optional(),
 });
@@ -114,6 +116,7 @@ export const ShapeSchema = z.object({
   depth: positive,
   color,
   round: z.boolean().optional(),
+  smooth: z.boolean().optional(),
 });
 
 /** A saved measurement on a level (FR-01.05), end points in studs. */

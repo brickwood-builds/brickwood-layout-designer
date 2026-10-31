@@ -7,6 +7,7 @@ import { allItems, isModule, type Item } from './edits';
 import { drawOrder } from './hit';
 import { moduleDisplayName, type Project } from './schema';
 import { SpatialIndex } from './spatial';
+import { partByKey } from './catalog';
 
 export const MM_PER_PLATE = 3.2;
 export const PLATES_PER_BRICK = 3;
@@ -42,9 +43,8 @@ export function parseHeight(text: string): number | null {
 /** Height of a thing if the user hasn't set one: bricks 3 plates, plates/tiles 1, unknown 0. */
 export function defaultHeight(i: Item): number {
   if (isModule(i)) return 0; // heights are measured from the top of the module plate
-  const key = i.catalogKey ?? '';
-  if (/^brick-/.test(key)) return 3;
-  if (/^(plate|tile|round)-/.test(key)) return 1;
+  const part = partByKey(i.catalogKey);
+  if (part) return part.height;
   if (i.type === 'setupMarker') return i.markerKind === 'flowerpot' ? 1 : 3;
   return 0;
 }

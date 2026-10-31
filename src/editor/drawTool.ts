@@ -26,12 +26,12 @@ export function drawSources(project: Project): DrawSource[] {
   const parts: DrawSource[] = STARTER_PARTS.map((p) => ({
     key: `part:${p.key}`,
     label: p.name,
-    template: { type: 'piece', name: p.name, width: p.width, depth: p.depth, color: p.color, round: p.round, catalogKey: p.key },
+    template: { type: 'piece', name: p.name, width: p.width, depth: p.depth, color: p.color, round: p.round, smooth: !p.studs, catalogKey: p.key },
   }));
   const own: DrawSource[] = project.shapes.map((s) => ({
     key: `shape:${s.id}`,
     label: s.name,
-    template: { type: s.type, name: s.name, width: s.width, depth: s.depth, color: s.color, round: s.round, catalogKey: `shape:${s.id}` },
+    template: { type: s.type, name: s.name, width: s.width, depth: s.depth, color: s.color, round: s.round, smooth: s.smooth, catalogKey: `shape:${s.id}` },
   }));
   return [...parts, ...own];
 }
