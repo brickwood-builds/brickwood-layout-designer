@@ -176,6 +176,8 @@ export const HELP_TOPICS: HelpTopic[] = [
       'In the panel pick what to draw with (any single piece, or this project’s own pieces, items and markers), a LEGO colour and the brush width in studs. Then drag: Freehand follows your finger or mouse, Straight draws a line from where you start to where you let go, Fill box fills a rectangle.',
       'One piece goes in each stud (or each piece-sized spot for bigger pieces), and painting over what’s already there doesn’t double it up. Each stroke is a single Undo.',
       'Where something is already there: Leave it (the default — a walkway is never doubled up) or Stack on top, to build a slope or hill layer by layer: paint a wide patch of plates, then a smaller patch on top, and so on. With Heights on, each layer sits one plate higher — tick Shade by height to see it.',
+      'Curve: click (or tap) the points a curved walkway should pass through — the curve runs smoothly through every point. Finish with a double-click, Enter or Finish curve; Escape cancels. Dragging moves the view. The pieces become one group named “Curve of …”.',
+      'To reshape a curve later: Select it, choose Edit curve, and drag its round handles — the pieces are laid again along the new shape (one Undo). Moving the curve keeps it editable; turning it makes it an ordinary group.',
       'Tick Erase to remove things on the drawing layer under the brush instead.',
       'It draws on the layer chosen in Layers → New items (for walkways, Surface details is a good choice). Two fingers still move and zoom on the iPad.',
       'The printout counts identical pieces, e.g. “Plate Round 1×1, Tan × 412”.',

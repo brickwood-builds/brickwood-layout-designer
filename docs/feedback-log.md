@@ -56,4 +56,4 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 | 1 | A standalone module (e.g. "Castle Base", "Bridge") needs its real colour for Finished look | Plate colour picker is shown for every plate, features included; Finished look uses it | Done |
 | 2 | Found in the file: "Castle Mountain overlaps Castle Base" warning, though the mountain is built on its base | Something sitting entirely on a plate or base is no longer an overlap; partly hanging off still warns | Done |
 | 3 | Found in the file: the two names were drawn on top of each other | A plate with something built on it shows its name along the top edge | Done |
-| 4 | Do curves next | Editable curves (Phase 2) | In progress |
+| 4 | Do curves next | Draw › Curve: click points, pieces are laid along a smooth curve as one group. Select it → Edit curve → drag the round handles to reshape (re-lays the pieces, one Undo) | Done |

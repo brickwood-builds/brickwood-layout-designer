@@ -12,7 +12,8 @@ import {
   rotateItems,
 } from '../domain/edits';
 import type { MilsKind } from '../domain/schema';
-import { eraseCells, paintCells, type Cell } from '../domain/brush';
+import { cellsForPath, eraseCells, paintCells, type Cell, type Pt } from '../domain/brush';
+import { drawCurve, reshapeCurve, splinePoints } from '../domain/curves';
 import { paintTemplate } from './drawTool';
 import { designSize, placeDesign, saveDesign } from '../domain/designs';
 import { addObject, defaultItemLayerId, groupItems, ungroup, withCarriedItems, type NewObject } from '../domain/objects';
@@ -172,6 +173,44 @@ export function finishStroke(store: EditorStore, cells: Cell[]) {
     return r.project;
   });
   if (ids.length) s.select([]);
+}
+
+/** Control points without near-duplicates (a double-click lands twice on one spot). */
+export function cleanCurvePoints(points: Pt[]): Pt[] {
+  const out: Pt[] = [];
+  for (const q of points) {
+    const last = out[out.length - 1];
+    if (!last || Math.hypot(q.x - last.x, q.y - last.y) >= 0.5) out.push(q);
+  }
+  return out;
+}
+
+/** Draw › Curve finished: lay the pieces along the curve as one editable group (one undo). */
+export function finishCurve(store: EditorStore) {
+  const s = store.getState();
+  const points = cleanCurvePoints(s.curveDraft ?? []);
+  s.set({ curveDraft: null });
+  if (points.length < 2) return;
+  if (s.draw.erase) {
+    const t = paintTemplate(s.project, s.draw);
+    finishStroke(store, cellsForPath(splinePoints(points), { cellW: t.width, cellD: t.depth, width: s.draw.width }));
+    return;
+  }
+  s.commit((p) => drawCurve(p, { levelId: s.levelId, layerId: itemLayerId(store), points, width: s.draw.width, template: paintTemplate(p, s.draw), whenTaken: s.draw.whenTaken })?.project ?? p, []);
+}
+
+/** Move a curve's handle: re-lay its pieces and keep the group selected (one undo). */
+export function reshapeCurveTo(store: EditorStore, curveId: string, points: Pt[]) {
+  const s = store.getState();
+  const curve = s.project.curves.find((c) => c.id === curveId);
+  if (!curve) return;
+  let ids: string[] = [];
+  s.commit((p) => {
+    const next = reshapeCurve(p, curveId, points);
+    ids = next.groups.find((g) => g.id === curve.groupId)?.memberIds ?? [];
+    return next;
+  });
+  store.getState().select(ids);
 }
 
 /** Save the selection (and what sits on it) as a design; returns false if nothing qualifies. */

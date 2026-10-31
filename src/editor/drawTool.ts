@@ -10,7 +10,7 @@ export interface DrawSettings {
   color: string;
   /** Brush width across, in studs. */
   width: number;
-  shape: 'free' | 'line' | 'box';
+  shape: 'free' | 'line' | 'box' | 'curve';
   erase: boolean;
   /** Over existing pieces: skip (walkways) or stack on top (slopes, hills). */
   whenTaken: WhenTaken;

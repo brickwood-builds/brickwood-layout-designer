@@ -1,6 +1,6 @@
 import { useStore } from 'zustand';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
-import { itemLayerId } from './actions';
+import { finishCurve, itemLayerId } from './actions';
 import { drawSources } from './drawTool';
 import { partByKey, type PartKind } from '../domain/catalog';
 
@@ -13,6 +13,7 @@ const WIDTHS = [1, 2, 3, 4, 6, 8];
 export function DrawPanel({ store }: { store: EditorStore }) {
   const project = useStore(store, (s) => s.project);
   const draw = useStore(store, (s) => s.draw);
+  const draft = useStore(store, (s) => s.curveDraft);
   useStore(store, (s) => s.activeLayerId);
   const set = (patch: Partial<typeof draw>) => store.getState().set({ draw: { ...draw, ...patch } });
   const sources = drawSources(project);
@@ -22,7 +23,11 @@ export function DrawPanel({ store }: { store: EditorStore }) {
   return (
     <aside className="props" aria-label="Properties">
       <h2>Draw</h2>
-      <p className="muted small">Drag on the table to paint — for example a walkway of 1×1 round plates. Each stroke is one Undo.</p>
+      <p className="muted small">
+        {draw.shape === 'curve'
+          ? 'Click (or tap) the points the curve should pass through. Finish with a double-click, Enter or “Finish curve”. Dragging moves the view.'
+          : 'Drag on the table to paint — for example a walkway of 1×1 round plates. Each stroke is one Undo.'}
+      </p>
       <label className="field">
         <span>Draw with</span>
         <select
@@ -74,6 +79,7 @@ export function DrawPanel({ store }: { store: EditorStore }) {
               ['free', 'Freehand'],
               ['line', 'Straight'],
               ['box', 'Fill box'],
+              ['curve', 'Curve'],
             ] as const
           ).map(([k, label]) => (
             <button key={k} type="button" aria-pressed={draw.shape === k} onClick={() => set({ shape: k })}>
@@ -82,6 +88,23 @@ export function DrawPanel({ store }: { store: EditorStore }) {
           ))}
         </div>
       </div>
+      {draw.shape === 'curve' && (
+        <div className="design-box">
+          <span className="small">{draft?.length ? `${draft.length} point${draft.length === 1 ? '' : 's'} so far.` : 'No points yet.'}</span>
+          <div className="actions">
+            <button type="button" className="primary" disabled={(draft?.length ?? 0) < 2} onClick={() => finishCurve(store)}>
+              Finish curve
+            </button>
+            <button type="button" disabled={!draft?.length} onClick={() => store.getState().set({ curveDraft: draft && draft.length > 1 ? draft.slice(0, -1) : null })}>
+              Remove last point
+            </button>
+            <button type="button" disabled={!draft?.length} onClick={() => store.getState().set({ curveDraft: null })}>
+              Cancel
+            </button>
+          </div>
+          <span className="muted small">To change it later: Select it, then “Edit curve”.</span>
+        </div>
+      )}
       <div className="field">
         <span>Where something is already there</span>
         <div className="seg" role="group" aria-label="Where something is already there">

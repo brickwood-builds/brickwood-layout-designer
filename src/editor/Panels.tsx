@@ -13,6 +13,7 @@ import { groupOf, modulesUnder, renameGroup, resizeObject, saveShape } from '../
 import { markerKind } from '../domain/catalog';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { DrawPanel } from './DrawPanel';
+import { curveOfGroup, currentPoints } from '../domain/curves';
 import type { EditorStore } from './store';
 
 export const KIND_LABEL: Record<MilsKind, string> = { '32x32': '32×32', '32x16': '32×16', '16x16': '16×16', '16x8': '16×8', custom: 'Custom' };
@@ -299,6 +300,7 @@ function GroupFields({ store, groupId }: { store: EditorStore; groupId: string }
           )}
         </div>
       )}
+      <CurveBox store={store} groupId={group.id} />
       <Field label="Group name" value={group.name} onCommit={(v) => commit((p) => renameGroup(p, group.id, v))} />
       <span className="muted small">{members.length} items — pick one to edit it on its own:</span>
       <div className="chips">
@@ -309,6 +311,32 @@ function GroupFields({ store, groupId }: { store: EditorStore; groupId: string }
         ))}
       </div>
     </>
+  );
+}
+
+/** A drawn curve: show its handles so it can be reshaped. */
+function CurveBox({ store, groupId }: { store: EditorStore; groupId: string }) {
+  const project = useStore(store, (s) => s.project);
+  const editing = useStore(store, (s) => s.editingCurve);
+  const curve = curveOfGroup(project, groupId);
+  if (!curve) return null;
+  const points = currentPoints(project, curve);
+  const on = editing === curve.id;
+  return (
+    <div className="design-box">
+      {points ? (
+        <>
+          <span className="small">{on ? 'Drag the round handles to reshape the curve; the pieces are laid again along it.' : 'This is a curve you drew.'}</span>
+          <div className="actions">
+            <button type="button" className={on ? undefined : 'primary'} aria-pressed={on} onClick={() => store.getState().set({ editingCurve: on ? null : curve.id, mode: 'select' })}>
+              {on ? 'Done editing' : 'Edit curve'}
+            </button>
+          </div>
+        </>
+      ) : (
+        <span className="small muted">This curve was turned, so it can’t be reshaped as a curve any more — it’s an ordinary group of pieces.</span>
+      )}
+    </div>
   );
 }
 

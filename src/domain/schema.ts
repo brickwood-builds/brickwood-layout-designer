@@ -146,6 +146,33 @@ export const DesignSchema = z.object({
   objects: z.array(CanvasObjectSchema),
 });
 
+/**
+ * An editable curve (FR-03.04): the control points a curve was drawn through and how it
+ * was painted. Its pieces form a group; reshaping the curve re-lays them.
+ */
+export const CurveSchema = z.object({
+  id,
+  groupId: id,
+  levelId: id,
+  layerId: id,
+  points: z.array(z.object({ x: studs, y: studs })).min(2),
+  width: positive,
+  whenTaken: z.enum(['skip', 'stack']),
+  template: z.object({
+    type: z.enum(OBJECT_TYPES),
+    name: z.string(),
+    width: positive,
+    depth: positive,
+    color,
+    round: z.boolean().optional(),
+    smooth: z.boolean().optional(),
+    catalogKey: z.string().optional(),
+    markerKind: z.string().optional(),
+  }),
+  /** Where the pieces were when last laid (to follow the group if it is moved). */
+  bounds: z.object({ x: studs, y: studs, width: z.number().finite(), depth: z.number().finite() }),
+});
+
 /** A saved measurement on a level (FR-01.05), end points in studs. */
 export const DimensionSchema = z.object({
   id,
@@ -221,6 +248,7 @@ export const ProjectSchema = z.object({
   acknowledgements: z.array(AcknowledgementSchema).default([]),
   dimensions: z.array(DimensionSchema).default([]),
   designs: z.array(DesignSchema).default([]),
+  curves: z.array(CurveSchema).default([]),
 });
 
 export type Level = z.infer<typeof LevelSchema>;
@@ -234,6 +262,7 @@ export type Shape = z.infer<typeof ShapeSchema>;
 export type Acknowledgement = z.infer<typeof AcknowledgementSchema>;
 export type Dimension = z.infer<typeof DimensionSchema>;
 export type Design = z.infer<typeof DesignSchema>;
+export type Curve = z.infer<typeof CurveSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Features = z.infer<typeof FeaturesSchema>;
 export type Project = z.infer<typeof ProjectSchema>;

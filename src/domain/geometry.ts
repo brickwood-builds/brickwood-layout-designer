@@ -69,9 +69,13 @@ export function levelBounds(project: Project, levelId: string): Rect | null {
 
 /**
  * Two plates/features overlapping is a problem, unless one sits entirely on the other
- * (a mountain built on its castle base).
+ * (a mountain built on its castle base). Only features and ride/building outlines sit on
+ * things — two labelled MILS plates never nest.
  */
-export function solidsClash(a: Rect, b: Rect): boolean {
-  return rectsOverlap(a, b) && !rectContains(a, b) && !rectContains(b, a);
+export function solidsClash(a: Rect, b: Rect, aCanSit = true, bCanSit = true): boolean {
+  if (!rectsOverlap(a, b)) return false;
+  const same = a.x === b.x && a.y === b.y && a.width === b.width && a.depth === b.depth;
+  if (same) return true; // two things in exactly the same spot is a mistake, not building on
+  return !((aCanSit && rectContains(b, a)) || (bCanSit && rectContains(a, b)));
 }
 

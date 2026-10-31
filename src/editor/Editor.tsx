@@ -12,6 +12,7 @@ import {
   copySelection,
   deleteSelection,
   duplicateSelection,
+  finishCurve,
   fitToLevel,
   groupSelection,
   ungroupSelection,
@@ -576,7 +577,11 @@ function useKeyboard(store: EditorStore) {
         case 'ArrowDown': return handled(), nudgeSelection(store, 0, big);
         case 'Delete':
         case 'Backspace': return handled(), deleteSelection(store);
-        case 'Escape': return s.drag ? s.set({ drag: null }) : s.measure ? s.set({ measure: null }) : s.select([]);
+        case 'Enter': return s.curveDraft ? (handled(), finishCurve(store)) : undefined;
+        case 'Escape':
+          if (s.curveDraft) return s.set({ curveDraft: null });
+          if (s.editingCurve) return s.set({ editingCurve: null });
+          return s.drag ? s.set({ drag: null }) : s.measure ? s.set({ measure: null }) : s.select([]);
       }
       if (key === 'r') return handled(), rotateSelection(store, e.shiftKey ? -1 : 1);
       if (key === 'f') return handled(), fitToLevel(store);

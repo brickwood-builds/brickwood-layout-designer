@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { Ellipse, Group, Layer, Line, Rect, Shape, Stage, Text } from 'react-konva';
+import { Circle, Ellipse, Group, Layer, Line, Rect, Shape, Stage, Text } from 'react-konva';
 import type Konva from 'konva';
 import { useStore } from 'zustand';
 import { footprint, rectContains, snap, unionRect, type Rect as R } from '../domain/geometry';
@@ -15,7 +15,9 @@ import { hasZone, zoneRect } from '../domain/zones';
 import { STUDS_PER_INCH, formatLength, type DisplayUnit } from '../domain/units';
 import { dimensionLength } from '../domain/edits';
 import { expandToGroups, withCarriedItems } from '../domain/objects';
-import { finishStroke, fitToLevel, isEditable } from './actions';
+import { finishCurve, finishStroke, fitToLevel, isEditable, reshapeCurveTo } from './actions';
+import { currentPoints, splinePoints } from '../domain/curves';
+import type { EditorState } from './store';
 import { cellsForBox, cellsForLine, cellsForPath, type Cell } from '../domain/brush';
 import { paintTemplate } from './drawTool';
 import type { EditorStore } from './store';
@@ -31,7 +33,23 @@ type Gesture =
   | { type: 'move'; ids: string[]; sx: number; sy: number; anchor: { x: number; y: number }; moved: boolean; touch: boolean }
   | { type: 'marquee'; sx: number; sy: number; x: number; y: number; additive: boolean }
   | { type: 'measure'; x1: number; y1: number }
-  | { type: 'draw'; points: { x: number; y: number }[] };
+  | { type: 'draw'; points: { x: number; y: number }[] }
+  /** Draw › Curve: a tap/click adds a point; dragging pans instead. */
+  | { type: 'curvePoint'; sx: number; sy: number; startView: View; panning: boolean }
+  /** Dragging one of a curve's handles. */
+  | { type: 'handle'; curveId: string; index: number; points: { x: number; y: number }[]; moved: boolean };
+
+const HANDLE_PX = 14;
+
+/** The curve whose handles are showing: being edited, still on this level, and selected. */
+function editableCurve(s: EditorState) {
+  if (!s.editingCurve || s.mode !== 'select') return null;
+  const curve = s.project.curves.find((c) => c.id === s.editingCurve);
+  const group = curve && s.project.groups.find((g) => g.id === curve.groupId);
+  if (!curve || !group || curve.levelId !== s.levelId || !group.memberIds.every((id) => s.selection.includes(id))) return null;
+  const points = currentPoints(s.project, curve);
+  return points ? { curve, points } : null;
+}
 
 /** Font size (studs) that keeps a one-line label inside its rectangle. */
 function fitText(text: string, width: number, depth: number, max: number) {
@@ -49,6 +67,13 @@ export function Canvas({ store }: { store: EditorStore }) {
   const viewport = useStore(store, (s) => s.viewport);
   const measure = useStore(store, (s) => s.measure);
   const heightLimit = useStore(store, (s) => (s.project.features.heights ? s.heightLimit : null));
+  const curveDraft = useStore(store, (s) => s.curveDraft);
+  const drawShape = useStore(store, (s) => s.draw.shape);
+  const editing = useStore(store, editableCurveKey);
+  /** Draw › Curve: where the pointer is, to preview the next point. */
+  const [curveHover, setCurveHover] = useState<{ x: number; y: number } | null>(null);
+  /** A curve handle being dragged: the curve's points as they would be. */
+  const [handleDrag, setHandleDrag] = useState<{ x: number; y: number }[] | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
@@ -58,6 +83,10 @@ export function Canvas({ store }: { store: EditorStore }) {
   const [spaceDown, setSpaceDown] = useState(false);
   const [cursor, setCursor] = useState('default');
   const spaceDownRef = useRef(false);
+  // Leaving Draw › Curve drops an unfinished curve.
+  useEffect(() => {
+    if (mode !== 'draw' || drawShape !== 'curve') store.getState().set({ curveDraft: null });
+  }, [mode, drawShape, store]);
   useEffect(() => {
     spaceDownRef.current = spaceDown;
   }, [spaceDown]);
@@ -178,6 +207,27 @@ export function Canvas({ store }: { store: EditorStore }) {
       }
       if (pointers.current.size > 2) return;
       const touch = e.pointerType === 'touch';
+      const ec = e.button === 0 && !spaceDownRef.current ? editableCurve(s) : null;
+      if (ec) {
+        let best = -1;
+        let bestD = (touch ? HANDLE_PX * 1.6 : HANDLE_PX);
+        ec.points.forEach((q, i) => {
+          const sp = toScreen(s.view, q.x, q.y);
+          const d = Math.hypot(sp.x - p.x, sp.y - p.y);
+          if (d <= bestD) {
+            best = i;
+            bestD = d;
+          }
+        });
+        if (best >= 0) {
+          gesture.current = { type: 'handle', curveId: ec.curve.id, index: best, points: ec.points.map((q) => ({ ...q })), moved: false };
+          return;
+        }
+      }
+      if (s.mode === 'draw' && s.draw.shape === 'curve' && e.button === 0 && !spaceDownRef.current) {
+        gesture.current = { type: 'curvePoint', sx: p.x, sy: p.y, startView: s.view, panning: false };
+        return;
+      }
       if (s.mode === 'draw' && e.button === 0 && !spaceDownRef.current) {
         const w = toWorld(s.view, p.x, p.y);
         gesture.current = { type: 'draw', points: [w] };
@@ -228,6 +278,7 @@ export function Canvas({ store }: { store: EditorStore }) {
         s.set({ pointer: w });
       }
       const g = gesture.current;
+      if (!g && s.mode === 'draw' && s.draw.shape === 'curve' && s.curveDraft?.length) setCurveHover(toWorld(s.view, p.x, p.y));
       if (!g) {
         if (e.pointerType === 'mouse') setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' ? 'crosshair' : hitTest(p) ? 'move' : 'default');
         return;
@@ -252,6 +303,15 @@ export function Canvas({ store }: { store: EditorStore }) {
         const dx = snap(g.anchor.x + (p.x - g.sx) / s.view.scale, mode) - g.anchor.x;
         const dy = snap(g.anchor.y + (p.y - g.sy) / s.view.scale, mode) - g.anchor.y;
         if (!s.drag || s.drag.dx !== dx || s.drag.dy !== dy) s.set({ drag: { ids: g.ids, dx, dy } });
+      } else if (g.type === 'curvePoint') {
+        if (!g.panning && Math.hypot(p.x - g.sx, p.y - g.sy) > (e.pointerType === 'touch' ? DRAG_THRESHOLD.touch : DRAG_THRESHOLD.mouse * 2)) g.panning = true;
+        if (g.panning) s.setView({ ...g.startView, x: g.startView.x + p.x - g.sx, y: g.startView.y + p.y - g.sy });
+      } else if (g.type === 'handle') {
+        const w = toWorld(s.view, p.x, p.y);
+        const mode = s.project.settings.snap === 'free' ? 'free' : 'half';
+        g.points[g.index] = { x: snap(w.x, mode), y: snap(w.y, mode) };
+        g.moved = true;
+        setHandleDrag([...g.points]);
       } else if (g.type === 'draw') {
         g.points.push(toWorld(s.view, p.x, p.y));
         setStroke(strokeCells(store, g.points));
@@ -283,6 +343,19 @@ export function Canvas({ store }: { store: EditorStore }) {
         return;
       }
       gesture.current = null;
+      if (g.type === 'curvePoint') {
+        if (!cancelled && !g.panning) {
+          const w = toWorld(s.view, g.sx, g.sy);
+          s.set({ curveDraft: [...(s.curveDraft ?? []), w] });
+          setCurveHover(w);
+        }
+        return;
+      }
+      if (g.type === 'handle') {
+        setHandleDrag(null);
+        if (!cancelled && g.moved) reshapeCurveTo(store, g.curveId, g.points);
+        return;
+      }
       if (g.type === 'draw') {
         setStroke(null);
         if (!cancelled) finishStroke(store, strokeCells(store, g.points));
@@ -319,7 +392,14 @@ export function Canvas({ store }: { store: EditorStore }) {
       const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015));
       s.setView(zoomAt(s.view, p.x, p.y, factor));
     };
-    const onLeave = () => store.getState().set({ pointer: null });
+    const onLeave = () => {
+      store.getState().set({ pointer: null });
+      setCurveHover(null);
+    };
+    const onDbl = () => {
+      const s = store.getState();
+      if (s.mode === 'draw' && s.draw.shape === 'curve') finishCurve(store);
+    };
     const onUpEvt = (e: PointerEvent) => onUp(e);
     const onCancel = (e: PointerEvent) => onUp(e, true);
 
@@ -329,6 +409,7 @@ export function Canvas({ store }: { store: EditorStore }) {
     el.addEventListener('pointercancel', onCancel);
     el.addEventListener('pointerleave', onLeave);
     el.addEventListener('wheel', onWheel, { passive: false });
+    el.addEventListener('dblclick', onDbl);
     return () => {
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointermove', onMove);
@@ -336,6 +417,7 @@ export function Canvas({ store }: { store: EditorStore }) {
       el.removeEventListener('pointercancel', onCancel);
       el.removeEventListener('pointerleave', onLeave);
       el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('dblclick', onDbl);
     };
   }, [store]);
 
@@ -415,6 +497,8 @@ export function Canvas({ store }: { store: EditorStore }) {
                 ))}
               {measure && <DimensionLine d={measure} scale={view.scale} unit={project.settings.displayUnit} live />}
               {stroke && <StrokePreview cells={stroke} store={store} />}
+              {curveDraft && curveDraft.length > 0 && <CurveDraftPreview store={store} points={curveHover ? [...curveDraft, curveHover] : curveDraft} ctrl={curveDraft} scale={view.scale} />}
+              {editing && <CurveHandles store={store} points={handleDrag ?? editing.points} scale={view.scale} dragging={!!handleDrag} />}
             </Group>
             <Rulers view={view} viewport={viewport} unit={project.settings.displayUnit} />
             {marquee && <Rect x={marquee.x} y={marquee.y} width={marquee.w} height={marquee.h} fill="rgba(31,111,235,0.1)" stroke={ACCENT} strokeWidth={1} dash={[4, 3]} listening={false} />}
@@ -744,6 +828,75 @@ function strokeCells(store: EditorStore, points: { x: number; y: number }[]): Ce
   if (draw.shape === 'box') return cellsForBox(first, last, b);
   if (draw.shape === 'line') return cellsForLine(first, last, b);
   return cellsForPath(points, b);
+}
+
+/** Selector for the curve being edited; stable while nothing about it changes. */
+let lastEditing: { key: string; value: ReturnType<typeof editableCurve> } = { key: '', value: null };
+function editableCurveKey(s: EditorState) {
+  const ec = editableCurve(s);
+  const key = ec ? `${ec.curve.id}:${ec.points.map((q) => `${q.x},${q.y}`).join(';')}` : '';
+  if (key !== lastEditing.key) lastEditing = { key, value: ec };
+  return lastEditing.value;
+}
+
+function curveCells(points: { x: number; y: number }[], width: number, t: { width: number; depth: number }): Cell[] {
+  return points.length < 2 ? [] : cellsForPath(splinePoints(points), { cellW: t.width, cellD: t.depth, width });
+}
+
+const flat = (pts: { x: number; y: number }[]) => pts.flatMap((q) => [q.x, q.y]);
+
+/** Draw › Curve in progress: the pieces it will lay, the curve line, and the points so far. */
+function CurveDraftPreview({ store, points, ctrl, scale }: { store: EditorStore; points: { x: number; y: number }[]; ctrl: { x: number; y: number }[]; scale: number }) {
+  const { project, draw } = store.getState();
+  const t = paintTemplate(project, draw);
+  const cells = curveCells(points, draw.width, t);
+  return (
+    <>
+      {cells.length > 0 && <StrokePreview cells={cells} store={store} />}
+      {points.length > 1 && <Line points={flat(splinePoints(points))} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} listening={false} />}
+      {ctrl.map((q, i) => (
+        <Circle key={i} x={q.x} y={q.y} radius={4 / scale} fill={ACCENT} listening={false} />
+      ))}
+    </>
+  );
+}
+
+/** Edit curve: the curve line and a round handle on each of its points. */
+function CurveHandles({ store, points, scale, dragging }: { store: EditorStore; points: { x: number; y: number }[]; scale: number; dragging: boolean }) {
+  const s = store.getState();
+  const curve = s.project.curves.find((c) => c.id === s.editingCurve);
+  const cells = dragging && curve ? curveCells(points, curve.width, curve.template) : [];
+  return (
+    <>
+      {cells.length > 0 && <CellsPreview cells={cells} color={curve!.template.color} round={!!curve!.template.round} w={curve!.template.width} d={curve!.template.depth} />}
+      <Line points={flat(splinePoints(points))} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} dash={[6 / scale, 4 / scale]} listening={false} />
+      {points.map((q, i) => (
+        <Circle key={i} x={q.x} y={q.y} radius={7 / scale} fill="#fff" stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} listening={false} />
+      ))}
+    </>
+  );
+}
+
+function CellsPreview({ cells, color, round, w, d }: { cells: Cell[]; color: string; round: boolean; w: number; d: number }) {
+  return (
+    <Shape
+      listening={false}
+      sceneFunc={(ctx) => {
+        const c = ctx._context;
+        c.globalAlpha = 0.75;
+        c.fillStyle = color;
+        c.beginPath();
+        for (const cell of cells) {
+          if (round) {
+            c.moveTo(cell.x + w, cell.y + d / 2);
+            c.ellipse(cell.x + w / 2, cell.y + d / 2, w / 2, d / 2, 0, 0, Math.PI * 2);
+          } else c.rect(cell.x, cell.y, w, d);
+        }
+        c.fill();
+        c.globalAlpha = 1;
+      }}
+    />
+  );
 }
 
 /** What the stroke will paint (or, red, what it will erase). */

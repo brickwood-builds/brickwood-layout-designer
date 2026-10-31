@@ -72,6 +72,7 @@ export function createProject(opts: NewProjectOptions): Project {
     acknowledgements: [],
     dimensions: [],
     designs: [],
+    curves: [],
   };
 }
 

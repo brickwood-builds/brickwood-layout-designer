@@ -274,6 +274,7 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     acknowledgements: [],
     dimensions: [],
     designs: [],
+    curves: [],
   };
   return { project, notes };
 }

@@ -1,10 +1,12 @@
 import { footprint, rectContains, solidsClash } from '../domain/geometry';
 import { allItems, isModule, type Item } from '../domain/edits';
 import { warningKey } from '../domain/objects';
-import type { Project } from '../domain/schema';
+import { isBase, type Project } from '../domain/schema';
 import { SpatialIndex } from '../domain/spatial';
 
 const isSolid = (i: Item) => isModule(i) || i.type === 'footprint';
+/** Features and ride/building outlines may sit entirely on another plate. */
+const canSit = (i: Item) => (isModule(i) ? isBase(i) : i.type === 'footprint');
 /** Single pieces stack freely (a brick on a plate), so they never clash with small items. */
 const clashesAsSmall = (i: Item) => !isSolid(i) && !(!isModule(i) && i.type === 'piece');
 
@@ -17,7 +19,7 @@ export function makeDragChecker(project: Project, levelId: string, draggedIds: R
   const onLevel = allItems(project).filter((i) => i.levelId === levelId);
   const others = onLevel.filter((i) => !draggedIds.has(i.id));
   const solid = new SpatialIndex(others.filter(isSolid));
-  const solidRects = new Map(others.filter(isSolid).map((i) => [i.id, footprint(i)]));
+  const solidRects = new Map(others.filter(isSolid).map((i) => [i.id, { r: footprint(i), sit: canSit(i) }]));
   // Small items only clash with small items on the same layer.
   const smallByLayer = new Map<string, SpatialIndex>();
   for (const layerId of new Set(others.filter(clashesAsSmall).map((i) => i.layerId))) {
@@ -33,7 +35,8 @@ export function makeDragChecker(project: Project, levelId: string, draggedIds: R
       const r = footprint({ ...item, x: item.x + dx, y: item.y + dy });
       const index = isSolid(item) ? solid : clashesAsSmall(item) ? smallByLayer.get(item.layerId) : undefined;
       for (const other of index?.overlapping(r) ?? []) {
-        if (isSolid(item) && !solidsClash(r, solidRects.get(other)!)) continue; // sits entirely on it, or it on this
+        const o = solidRects.get(other);
+        if (isSolid(item) && o && !solidsClash(r, o.r, canSit(item), o.sit)) continue; // sits entirely on it, or it on this
         if (!acknowledged.has(warningKey({ kind: 'overlap', ids: [item.id, other] }))) problems.add(item.id);
       }
       if (tables.length && !tables.some((t) => rectContains(t, r)) && !acknowledged.has(warningKey({ kind: 'overhang', ids: [item.id] }))) {
