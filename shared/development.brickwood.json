@@ -1,0 +1,88 @@
+{
+  "format": "brickwood-layout-project",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-31T13:36:11.213Z",
+  "project": {
+    "schemaVersion": 1,
+    "id": "586c76b7-331e-8d16-830a-9f8acc331afa",
+    "name": "Development",
+    "description": "Blank layout for trying things out.",
+    "createdAt": "2026-10-31T00:00:00.000Z",
+    "updatedAt": "2026-10-31T00:00:00.000Z",
+    "revision": 0,
+    "revisionId": "01bf4ea7-5e4a-8427-8662-7e5187fc5f69",
+    "archived": false,
+    "origin": "starter:development",
+    "settings": {
+      "displayUnit": "in",
+      "snap": "full",
+      "showGrid": true,
+      "showLabels": true,
+      "moduleColors": "size"
+    },
+    "features": {
+      "heights": false,
+      "inventory": false,
+      "versions": false,
+      "exhibitions": false,
+      "transport": false,
+      "helpers": false
+    },
+    "levels": [
+      {
+        "id": "8fe6d63f-fa45-83fd-a609-082eae47b194",
+        "name": "Main table",
+        "elevationIn": 30,
+        "offsetX": 0,
+        "offsetY": 0,
+        "visible": true,
+        "order": 0
+      }
+    ],
+    "layers": [
+      {
+        "id": "966947bd-3943-892d-92a5-9ccd51ce1dea",
+        "name": "Table, modules & bases",
+        "visible": true,
+        "locked": false,
+        "order": 0
+      },
+      {
+        "id": "f721ae77-5461-81bb-bde9-60991b26bd24",
+        "name": "Surface details",
+        "visible": true,
+        "locked": false,
+        "order": 1
+      },
+      {
+        "id": "63543098-abf0-8aa5-a339-1e5d299af76e",
+        "name": "Markers & small items",
+        "visible": true,
+        "locked": false,
+        "order": 2
+      }
+    ],
+    "tables": [
+      {
+        "id": "ca93bad1-0cdf-82a3-8e75-e5a6a7336366",
+        "levelId": "8fe6d63f-fa45-83fd-a609-082eae47b194",
+        "layerId": "966947bd-3943-892d-92a5-9ccd51ce1dea",
+        "x": 0,
+        "y": 0,
+        "width": 304.79999999999995,
+        "depth": 133.35,
+        "rotation": 0,
+        "notes": "",
+        "name": "3.5 × 8 ft table"
+      }
+    ],
+    "modules": [],
+    "objects": [],
+    "groups": [],
+    "retiredLabels": [],
+    "storedLabels": [],
+    "shapes": [],
+    "acknowledgements": [],
+    "dimensions": []
+  }
+}
