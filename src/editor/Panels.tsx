@@ -6,7 +6,9 @@ import { storedNotPlaced, validateLabel } from '../domain/labels';
 import { computeStack, formatHeight, parseHeight, stackAt } from '../domain/heights';
 import { MILS_KINDS, MILS_SIZES, isBase, milsKindForSize, moduleDisplayName, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
 import { formatLength } from '../domain/units';
-import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, ungroupSelection } from './actions';
+import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, saveSelectionAsDesign, ungroupSelection } from './actions';
+import { designable, isOutdated, unlinkCopy, updateCopyToDesign, updateDesignFromCopy } from '../domain/designs';
+import { Modal } from '../ui/Modal';
 import { groupOf, modulesUnder, renameGroup, resizeObject, saveShape } from '../domain/objects';
 import { markerKind } from '../domain/catalog';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
@@ -264,9 +266,39 @@ function GroupFields({ store, groupId }: { store: EditorStore; groupId: string }
   if (!group) return null;
   const members = group.memberIds.map((id) => findItem(project, id)).filter((i): i is Item => !!i);
   const commit = store.getState().commit;
+  const design = group.designId ? project.designs.find((d) => d.id === group.designId) : undefined;
+  const outdated = isOutdated(project, group);
   return (
     <>
-      <h2>Group</h2>
+      <h2>{design ? 'Design copy' : 'Group'}</h2>
+      {design && (
+        <div className={outdated ? 'design-box outdated' : 'design-box'}>
+          <span className="small">
+            Copy of design <strong>{design.name}</strong>
+            {outdated ? ' — the design has changed since this copy was made.' : ' — up to date.'}
+          </span>
+          {outdated && (
+            <div className="actions">
+              <button type="button" className="primary" onClick={() => commit((p) => updateCopyToDesign(p, group.id))}>
+                Update this copy
+              </button>
+              <button type="button" onClick={() => commit((p) => unlinkCopy(p, group.id))} title="Keep this copy as it is; it won’t be linked to the design any more">
+                Keep as is
+              </button>
+            </div>
+          )}
+          {!outdated && (
+            <div className="actions">
+              <button type="button" onClick={() => commit((p) => updateDesignFromCopy(p, group.id))} title="Make this copy the new version of the design; other copies will offer to update">
+                Update the design from this copy
+              </button>
+              <button type="button" onClick={() => commit((p) => unlinkCopy(p, group.id))} title="Turn this copy into an ordinary group">
+                Unlink
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       <Field label="Group name" value={group.name} onCommit={(v) => commit((p) => renameGroup(p, group.id, v))} />
       <span className="muted small">{members.length} items — pick one to edit it on its own:</span>
       <div className="chips">
@@ -327,8 +359,29 @@ function SelectionActions({ store }: { store: EditorStore }) {
   const project = useStore(store, (s) => s.project);
   const selection = useStore(store, (s) => s.selection);
   const grouped = selection.some((id) => groupOf(project, id));
+  const [naming, setNaming] = useState(false);
+  const canDesign = selection.some((id) => {
+    const i = findItem(project, id);
+    return !!i && designable(i);
+  });
+  const isCopy = selection.some((id) => groupOf(project, id)?.designId);
   return (
     <div className="actions">
+      {canDesign && !isCopy && (
+        <button type="button" onClick={() => setNaming(true)} title="Keep this arrangement in the palette (Designs) and place copies of it">
+          Save as design…
+        </button>
+      )}
+      {naming && (
+        <DesignNameDialog
+          initial={groupOf(project, selection[0]!)?.name ?? ''}
+          onClose={() => setNaming(false)}
+          onSave={(name) => {
+            setNaming(false);
+            saveSelectionAsDesign(store, name);
+          }}
+        />
+      )}
       {selection.length > 1 && !grouped && (
         <button type="button" onClick={() => groupSelection(store)} title="Group (Ctrl+G): click any member to pick up the whole group">Group</button>
       )}
@@ -491,6 +544,34 @@ function ZoneFields({ store, item }: { store: EditorStore; item: Item }) {
         />
       )}
     </div>
+  );
+}
+
+function DesignNameDialog({ initial, onSave, onClose }: { initial: string; onSave: (name: string) => void; onClose: () => void }) {
+  const [name, setName] = useState(initial);
+  return (
+    <Modal title="Save as design" onClose={onClose}>
+      <form
+        className="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (name.trim()) onSave(name.trim());
+        }}
+      >
+        <label>
+          Design name
+          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Food stand with benches" maxLength={80} required />
+        </label>
+        <p className="muted small">
+          The selection and what sits on it are kept in the palette under Designs, and become the first copy. MILS plates aren’t included — they’re
+          physical plates with their own IDs.
+        </p>
+        <footer className="modal-actions">
+          <button type="button" onClick={onClose}>Cancel</button>
+          <button type="submit" className="primary" disabled={!name.trim()}>Save design</button>
+        </footer>
+      </form>
+    </Modal>
   );
 }
 

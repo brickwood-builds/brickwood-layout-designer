@@ -181,6 +181,17 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'designs',
+    title: 'Reusable designs',
+    body: [
+      'Arrange something once — a food stand with its benches, lamps and bushes — then reuse it. Select it (things sitting on it come along) and choose Save as design…. It appears in the palette under Designs and the selection becomes the first copy.',
+      'Tap a design to place a copy in free space, or drag it to an exact spot. Each copy is a group: click it to pick up the whole thing; Alt-click picks one piece.',
+      'To change the design, edit any copy and choose Update the design from this copy. The other copies are not changed by themselves: each shows “the design has changed” with Update this copy or Keep as is, and the palette shows how many haven’t been updated.',
+      'Unlink turns a copy into an ordinary group. Removing a design from the palette leaves its copies in place.',
+      'MILS plates aren’t saved in designs — they’re physical plates with their own IDs. Features, markers, items and pieces are.',
+    ],
+  },
+  {
     id: 'heights',
     title: 'Heights and stacking',
     body: [

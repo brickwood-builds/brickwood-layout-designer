@@ -8,7 +8,8 @@ import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { MILS_COLORS, MILS_SIZES, milsKindForSize, type MilsKind, type Shape } from '../domain/schema';
 import { formatLength } from '../domain/units';
 import { Modal } from '../ui/Modal';
-import { addModuleAt, addObjectAt, itemLayerId, type ObjectTemplate } from './actions';
+import { addModuleAt, addObjectAt, itemLayerId, placeDesignAt, type ObjectTemplate } from './actions';
+import { copiesOf, deleteDesign, isOutdated } from '../domain/designs';
 import type { EditorStore } from './store';
 import { toWorld } from './view';
 import { KIND_LABEL } from './Panels';
@@ -83,7 +84,9 @@ function Section({ title, open, children }: { title: string; open?: boolean; chi
 
 /** Left column: everything that can be added. Modules open; the rest folded away until needed. */
 export function Palette({ store }: { store: EditorStore }) {
-  const shapes = useStore(store, (s) => s.project.shapes);
+  const project = useStore(store, (s) => s.project);
+  const shapes = project.shapes;
+  const designs = project.designs;
   const [dialog, setDialog] = useState<'module' | 'ride' | 'marker' | 'item' | 'piece' | null>(null);
   const [partQuery, setPartQuery] = useState('');
   // Each project has its own markers, items and pieces (nothing carries over between projects).
@@ -135,6 +138,26 @@ export function Palette({ store }: { store: EditorStore }) {
           <Swatch color="#c05046" />
           New…
         </button>
+      </Section>
+
+      <Section title="Designs">
+        {designs.length === 0 && <span className="muted small">Select some things and choose “Save as design…” to reuse them here.</span>}
+        {designs.map((d) => {
+          const copies = copiesOf(project, d.id);
+          const old = copies.filter((g) => isOutdated(project, g)).length;
+          return (
+            <div className="shape-row" key={d.id}>
+              <PaletteItem store={store} title={`${d.name}: ${copies.length} cop${copies.length === 1 ? 'y' : 'ies'}${old ? `, ${old} not updated` : ''}`} place={(at) => placeDesignAt(store, d.id, at)}>
+                <Swatch color="#6639ba" />
+                {d.name}
+                {old > 0 && <span className="badge" title={`${old} cop${old === 1 ? 'y has' : 'ies have'} not been updated to the latest design`}>{old}</span>}
+              </PaletteItem>
+              <button type="button" className="icon" aria-label={`Remove design ${d.name}`} title="Remove the design (placed copies stay)" onClick={() => store.getState().commit((p) => deleteDesign(p, d.id))}>
+                ×
+              </button>
+            </div>
+          );
+        })}
       </Section>
 
       <Section title="Setup markers">

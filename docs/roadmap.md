@@ -7,7 +7,7 @@ that are committed to a later phase. See `docs/feedback-log.md` for every reques
 |---|---|---|
 | 1 | Core editor: projects, modules, objects, layers, measuring, print, help, offline | ✅ Done (1A–1D) |
 | 1E | Cloud sync | Part done: "Save to a file" in the OneDrive folder. **Later:** in-app OneDrive sign-in, which also works on iPad (needs the Microsoft app registration) |
-| 2 | Advanced design | 2A Heights ✅ · 2B Drawing ✅ · 2C Clearance zones (in progress) · 2D Reusable designs (next) · Terrain & stairs (after owner input on how mountains are built) · editable curves, pattern stamping |
+| 2 | Advanced design | 2A Heights ✅ · 2B Drawing ✅ · 2C Clearance zones ✅ · 2D Reusable designs ✅ · Terrain & stairs (after owner input on how mountains are built) · editable curves, pattern stamping |
 | 3 | Parts catalog, inventory, purchasing | Planned |
 | 4 | Physical assemblies, versions | Planned |
 | 5 | Exhibitions, transport, packing | Planned |

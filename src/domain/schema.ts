@@ -115,6 +115,9 @@ export const GroupSchema = z.object({
   id,
   name: z.string().min(1),
   memberIds: z.array(id),
+  /** A copy of a reusable design (linked), and the design version it was made from. */
+  designId: id.optional(),
+  designVersion: z.number().int().positive().optional(),
 });
 
 /** A reusable rectangle the user saved from the canvas ("My shapes"). */
@@ -127,6 +130,20 @@ export const ShapeSchema = z.object({
   color,
   round: z.boolean().optional(),
   smooth: z.boolean().optional(),
+});
+
+/**
+ * A reusable design (FR-05.01): things arranged once and placed as linked copies.
+ * Items are stored relative to the design's upper-left corner. MILS plates are not
+ * included (they are physical plates with their own IDs); features (bases) are.
+ */
+export const DesignSchema = z.object({
+  id,
+  name: z.string().min(1),
+  version: z.number().int().positive(),
+  updatedAt: timestamp,
+  modules: z.array(MilsModuleSchema),
+  objects: z.array(CanvasObjectSchema),
 });
 
 /** A saved measurement on a level (FR-01.05), end points in studs. */
@@ -201,6 +218,7 @@ export const ProjectSchema = z.object({
   shapes: z.array(ShapeSchema).default([]),
   acknowledgements: z.array(AcknowledgementSchema).default([]),
   dimensions: z.array(DimensionSchema).default([]),
+  designs: z.array(DesignSchema).default([]),
 });
 
 export type Level = z.infer<typeof LevelSchema>;
@@ -213,6 +231,7 @@ export type Group = z.infer<typeof GroupSchema>;
 export type Shape = z.infer<typeof ShapeSchema>;
 export type Acknowledgement = z.infer<typeof AcknowledgementSchema>;
 export type Dimension = z.infer<typeof DimensionSchema>;
+export type Design = z.infer<typeof DesignSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Features = z.infer<typeof FeaturesSchema>;
 export type Project = z.infer<typeof ProjectSchema>;

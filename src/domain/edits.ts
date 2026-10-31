@@ -186,7 +186,7 @@ export function addModule(p: Project, spec: NewModule, mode: SnapMode): { projec
  * Insert copies of `sources` shifted by dx/dy onto `levelId`. Copies get new IDs;
  * labelled modules get the next free MILS IDs (a copy is a different physical plate).
  */
-export function insertCopies(p: Project, sources: Item[], levelId: string, dx: number, dy: number): { project: Project; ids: string[] } {
+export function insertCopies(p: Project, sources: Item[], levelId: string, dx: number, dy: number, copyGroups = true): { project: Project; ids: string[] } {
   const taken = new Set<string>();
   const modules: MilsModule[] = [];
   const objects: CanvasObject[] = [];
@@ -205,7 +205,7 @@ export function insertCopies(p: Project, sources: Item[], levelId: string, dx: n
     }
   }
   // Groups copied whole come along as new groups.
-  const groups = p.groups
+  const groups = (copyGroups ? p.groups : [])
     .filter((g) => g.memberIds.every((id) => newIds.has(id)))
     .map((g) => ({ id: newId(), name: `${g.name} (copy)`, memberIds: g.memberIds.map((id) => newIds.get(id)!) }));
   return {

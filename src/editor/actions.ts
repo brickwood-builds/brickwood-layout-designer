@@ -1,6 +1,7 @@
 // Editor commands shared by the toolbar, keyboard shortcuts and panels.
 import { levelBounds, snap, unionRect, footprint } from '../domain/geometry';
 import {
+  findFreeSpot,
   addModule,
   allItems,
   deleteItems,
@@ -13,6 +14,7 @@ import {
 import type { MilsKind } from '../domain/schema';
 import { eraseCells, paintCells, type Cell } from '../domain/brush';
 import { paintTemplate } from './drawTool';
+import { designSize, placeDesign, saveDesign } from '../domain/designs';
 import { addObject, defaultItemLayerId, groupItems, ungroup, withCarriedItems, type NewObject } from '../domain/objects';
 import type { EditorStore } from './store';
 import { fitView, toWorld, zoomAt } from './view';
@@ -170,5 +172,36 @@ export function finishStroke(store: EditorStore, cells: Cell[]) {
     return r.project;
   });
   if (ids.length) s.select([]);
+}
+
+/** Save the selection (and what sits on it) as a design; returns false if nothing qualifies. */
+export function saveSelectionAsDesign(store: EditorStore, name: string): boolean {
+  const s = store.getState();
+  let ok = false;
+  s.commit((p) => {
+    const r = saveDesign(p, withCarriedItems(p, s.selection), name);
+    ok = !!r;
+    return r ? r.project : p;
+  });
+  return ok;
+}
+
+/** Place a copy of a design at `at` (dropped there) or centred in the view. */
+export function placeDesignAt(store: EditorStore, designId: string, at?: { x: number; y: number }) {
+  const s = store.getState();
+  const d = s.project.designs.find((x) => x.id === designId);
+  if (!d) return;
+  const size = designSize(d);
+  let ids: string[] = [];
+  s.commit((p) => {
+    // Dropped: exactly there. Tapped: the nearest free space to the middle of the view.
+    const corner = at
+      ? { x: at.x - size.width / 2, y: at.y - size.depth / 2 }
+      : findFreeSpot(p, s.levelId, Math.max(1, size.width), Math.max(1, size.depth), viewCenter(store), p.settings.snap);
+    const r = placeDesign(p, designId, s.levelId, corner, p.settings.snap);
+    ids = r?.ids ?? [];
+    return r ? r.project : p;
+  });
+  s.select(ids);
 }
 
