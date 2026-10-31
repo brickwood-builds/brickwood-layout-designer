@@ -3,8 +3,9 @@ import { footprint, rectContains, type Placed } from './geometry';
 import { moduleDisplayName, type Project } from './schema';
 import { SpatialIndex } from './spatial';
 import { clearanceProblems } from './heights';
+import { zoneProblems } from './zones';
 
-export type WarningKind = 'overhang' | 'overlap' | 'duplicateLabel' | 'retiredLabel' | 'clearance';
+export type WarningKind = 'overhang' | 'overlap' | 'duplicateLabel' | 'retiredLabel' | 'clearance' | 'zone';
 
 export interface LayoutWarning {
   kind: WarningKind;
@@ -74,6 +75,7 @@ export function checkLayout(project: Project): LayoutWarning[] {
       }
     }
   }
+  for (const z of zoneProblems(project)) warnings.push({ kind: 'zone', levelId: z.levelId, ids: [z.featureId, z.otherId], message: z.message });
   // Shelf clearance only matters once heights are in use.
   if (project.features.heights) {
     for (const c of clearanceProblems(project)) warnings.push({ kind: 'clearance', levelId: c.levelId, ids: [c.itemId], message: c.message });

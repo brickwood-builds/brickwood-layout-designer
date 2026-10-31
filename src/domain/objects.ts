@@ -139,7 +139,7 @@ export function renameGroup(p: Project, groupId: string, name: string): Project 
 export const warningKey = (w: Pick<LayoutWarning, 'kind' | 'ids'>) => `${w.kind}:${[...w.ids].sort().join(',')}`;
 
 /** Only physical warnings can be marked as intended; ID problems must be fixed. */
-export const canAcknowledge = (w: LayoutWarning) => w.kind === 'overlap' || w.kind === 'overhang' || w.kind === 'clearance';
+export const canAcknowledge = (w: LayoutWarning) => w.kind === 'overlap' || w.kind === 'overhang' || w.kind === 'clearance' || w.kind === 'zone';
 
 export function acknowledge(p: Project, w: LayoutWarning, note = ''): Project {
   const key = warningKey(w);

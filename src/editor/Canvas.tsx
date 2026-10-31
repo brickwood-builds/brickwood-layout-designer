@@ -11,6 +11,7 @@ import { SpatialIndex } from '../domain/spatial';
 import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
 import { DEFAULT_PLATE_COLOR } from '../domain/legoColors';
 import { partByKey } from '../domain/catalog';
+import { hasZone, zoneRect } from '../domain/zones';
 import { STUDS_PER_INCH, formatLength, type DisplayUnit } from '../domain/units';
 import { dimensionLength } from '../domain/edits';
 import { expandToGroups, withCarriedItems } from '../domain/objects';
@@ -373,6 +374,11 @@ export function Canvas({ store }: { store: EditorStore }) {
                   {showLabels && <Labels items={draggedItems} dx={drag.dx} dy={drag.dy} zoom={labelZoom} />}
                 </>
               )}
+              {levelItems.filter(hasZone).map((i) => {
+                const off = drag && draggedSet.has(i.id) ? drag : null;
+                const z = zoneRect(i, off?.dx ?? 0, off?.dy ?? 0);
+                return <Rect key={`zone-${i.id}`} x={z.x} y={z.y} width={z.width} height={z.depth} stroke="#d97706" strokeWidth={1.5} strokeScaleEnabled={false} dash={[8 / view.scale, 5 / view.scale]} fill="rgba(217,119,6,0.06)" listening={false} />;
+              })}
               {project.groups
                 .filter((g) => g.memberIds.length > 0 && g.memberIds.every((id) => selectedSet.has(id)))
                 .map((g) => {

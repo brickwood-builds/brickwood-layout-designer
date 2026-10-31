@@ -114,7 +114,7 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
           <h2>Features (left to right)</h2>
           <table className="print-table">
             <thead>
-              <tr><th>Name</th><th>Size</th><th>From left</th>{heights && <th>Height</th>}<th>Power</th><th>Notes</th></tr>
+              <tr><th>Name</th><th>Size</th><th>From left</th>{heights && <th>Height</th>}<th>Zone</th><th>Power</th><th>Notes</th></tr>
             </thead>
             <tbody>
               {rides.map((r) => (
@@ -123,6 +123,7 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
                   <td>{formatLength(r.rotation % 180 ? r.depth : r.width, unit)} × {formatLength(r.rotation % 180 ? r.width : r.depth, unit)}</td>
                   <td>{pos(r.x)}</td>
                   {heights && <td>{stack.get(r.id)?.top ? formatHeight(stack.get(r.id)!.top) : ''}</td>}
+                  <td>{r.clearanceStuds ? `${r.clearanceStuds} studs around` : ''}</td>
                   <td>{r.powerVolts ? `${r.powerVolts} V` : ''}</td>
                   <td>{r.notes}</td>
                 </tr>

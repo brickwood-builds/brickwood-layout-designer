@@ -87,6 +87,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     title: 'Features, markers, small items and pieces',
     body: [
       '• Features: rides, buildings and anything else built on its own base. New… asks for a name and size; it acts like a module with a name instead of an ID, and rides can have their power in volts.',
+      '• Operating zone: for a moving ride, set “Operating zone (studs all around)” in its details. A dashed orange outline shows the space it needs, and anything placed in it gets a warning (mark it Intended if it’s fine). With Heights on, low things such as tiles under swing seats can be allowed.',
       '• Setup markers: the coloured placeholder bricks that show helpers where things go. Each project has its own list: + New marker… adds one (name, size, round or square, LEGO colour) and keeps it in the list. The Adventure Park project comes with its nine markers.',
       '• Small items: your street lights, bushes, benches and so on. + New item… adds one to this project’s list.',
       '• Single pieces: actual LEGO pieces — bricks, plates, tiles. A few common ones are there; + New piece… adds any other size.',

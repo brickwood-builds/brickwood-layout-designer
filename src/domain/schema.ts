@@ -17,6 +17,14 @@ const rotation = z.union([z.literal(0), z.literal(90), z.literal(180), z.literal
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const timestamp = z.iso.datetime();
 
+/** Operating clearance around a moving ride (FR-04.05): no motion simulation, just space. */
+const clearance = {
+  /** Studs of free space needed all around the footprint. */
+  clearanceStuds: z.number().finite().nonnegative().optional(),
+  /** Things lower than this (plates) may sit in the zone, e.g. tiles under swing seats. */
+  clearAbovePlates: z.number().finite().nonnegative().optional(),
+};
+
 const placed = {
   id,
   levelId: id,
@@ -70,6 +78,7 @@ export const MilsModuleSchema = z.object({
   powerVolts: z.number().positive().optional(),
   /** Real LEGO colour of the baseplate, used by "Finished look". */
   plateColor: color.optional(),
+  ...clearance,
 });
 
 /** footprint = older ride/building outline; setupMarker; item = small item (street light, bush); piece = a single LEGO piece. */
@@ -91,6 +100,7 @@ export const CanvasObjectSchema = z.object({
   smooth: z.boolean().optional(),
   /** Ride power, kept for later power/packing planning. */
   powerVolts: z.number().positive().optional(),
+  ...clearance,
 });
 
 export const LayerSchema = z.object({

@@ -106,6 +106,7 @@ export function Properties({ store }: { store: EditorStore }) {
     <aside className="props" aria-label="Properties" key={item.id}>
       {isModule(item) ? <ModuleFields store={store} m={item} unit={unit} /> : <ObjectFields store={store} o={item} unit={unit} />}
       <PositionFields store={store} item={item} unit={unit} />
+      {((isModule(item) && isBase(item)) || (!isModule(item) && item.type === 'footprint')) && <ZoneFields store={store} item={item} />}
       {project.features.heights && <HeightFields store={store} item={item} />}
       <Notes
         value={item.notes}
@@ -460,6 +461,34 @@ function HeightFields({ store, item }: { store: EditorStore; item: Item }) {
             ))}
           </ol>
         </>
+      )}
+    </div>
+  );
+}
+
+/** Operating zone for a ride or other feature: free space needed around it. */
+function ZoneFields({ store, item }: { store: EditorStore; item: Item }) {
+  const heights = useStore(store, (s) => s.project.features.heights);
+  const set = (patch: { clearanceStuds?: number; clearAbovePlates?: number }) =>
+    store.getState().commit((p) => (isModule(item) ? updateModule(p, item.id, patch) : updateObject(p, item.id, patch)));
+  return (
+    <div className="zone-fields">
+      <Field
+        label="Operating zone (studs all around)"
+        type="number"
+        value={item.clearanceStuds ?? ''}
+        validate={(v) => (v.trim() === '' || (Number.isFinite(Number(v)) && Number(v) >= 0) ? null : 'Enter 0 or more.')}
+        onCommit={(v) => set({ clearanceStuds: v.trim() === '' || Number(v) === 0 ? undefined : Number(v) })}
+        hint="Space a moving ride needs; anything placed in it gets a warning"
+      />
+      {heights && (item.clearanceStuds ?? 0) > 0 && (
+        <Field
+          label="Things lower than this may sit in the zone"
+          value={item.clearAbovePlates ?? ''}
+          validate={(v) => (v.trim() === '' || parseHeight(v) !== null ? null : 'Try 3, 1 brick or 1 in.')}
+          onCommit={(v) => set({ clearAbovePlates: v.trim() === '' ? undefined : parseHeight(v)! })}
+          hint={item.clearAbovePlates !== undefined ? formatHeight(item.clearAbovePlates) : 'e.g. 1 brick, for tiles under swing seats'}
+        />
       )}
     </div>
   );
