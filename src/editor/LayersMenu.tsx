@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useKeepInView } from '../ui/useKeepInView';
 import { useStore } from 'zustand';
 import { addLayer, allItems, canDeleteLayer, deleteLayer, moveLayer, moveToLayer, updateLayer } from '../domain/edits';
 import { itemLayerId } from './actions';
@@ -14,6 +15,7 @@ export function LayersMenu({ store }: { store: EditorStore }) {
   const selection = useStore(store, (s) => s.selection);
   useStore(store, (s) => s.activeLayerId);
   const [open, setOpen] = useState(false);
+  const popRef = useKeepInView<HTMLDivElement>(open);
   const layers = [...project.layers].sort((a, b) => b.order - a.order); // top of the stack first
   const counts = new Map<string, number>();
   for (const i of allItems(project)) counts.set(i.layerId, (counts.get(i.layerId) ?? 0) + 1);
@@ -36,7 +38,7 @@ export function LayersMenu({ store }: { store: EditorStore }) {
         Layers
       </button>
       {open && (
-        <div className="popover layers-pop" role="dialog" aria-label="Layers">
+        <div ref={popRef} className="popover layers-pop" role="dialog" aria-label="Layers">
           <table className="layers">
             <thead>
               <tr>

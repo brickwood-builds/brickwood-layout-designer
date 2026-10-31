@@ -28,6 +28,8 @@ import { Canvas } from './Canvas';
 import { Properties } from './Panels';
 import { Palette } from './Palette';
 import { LayersMenu } from './LayersMenu';
+import { HeightFilter, OptionsMenu } from './OptionsMenu';
+import { computeStack } from '../domain/heights';
 import { HelpButton } from '../help/HelpDialog';
 import { createEditorStore, type EditorStore } from './store';
 import { toScreen } from './view';
@@ -175,7 +177,7 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
     <header className="topbar toolbar">
       <button type="button" onClick={onBack}>← Projects</button>
       <h1 title={project.name}>{project.name}</h1>
-      <span className="save-state" role="status" data-state={saveState} title="Every change saves automatically within a second">
+      <span className="save-state" role="status" data-state={saveState} title={`Every change saves automatically within a second. Last saved ${new Date(project.updatedAt).toLocaleString()}`}>
         {saveState === 'saved'
           ? `Saved ${savedWhen(project.updatedAt)}`
           : { pending: 'Saving…', saving: 'Saving…', error: 'Not saved', conflict: 'Not saved' }[saveState]}
@@ -195,19 +197,21 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
         <button type="button" onClick={() => zoomBy(store, 1.25)} title="Zoom in (+)" aria-label="Zoom in">+</button>
       </div>
       <label className="tool-select">
-        Snap
         <select
+          aria-label="Snap"
+          title="Snap: how positions line up"
           value={project.settings.snap}
           onChange={(e) => s.commit((p) => ({ ...p, settings: { ...p.settings, snap: e.target.value as Project['settings']['snap'] } }))}
         >
-          <option value="full">Stud</option>
-          <option value="half">Half stud</option>
-          <option value="free">Off</option>
+          <option value="full">Snap: stud</option>
+          <option value="half">Snap: ½ stud</option>
+          <option value="free">Snap: off</option>
         </select>
       </label>
       <LevelControls store={store} />
       <LayersMenu store={store} />
       <button type="button" onClick={onPrint} title="Printable plan, PDF and picture downloads">Print…</button>
+      <OptionsMenu store={store} />
       <HelpButton context={mode === 'measure' ? 'measure' : 'editor'} />
     </header>
   );
@@ -229,7 +233,7 @@ function LevelControls({ store }: { store: EditorStore }) {
       {levels.length > 1 && (
         <label className="tool-select">
           Level
-          <select value={levelId} onChange={(e) => switchTo(e.target.value)}>
+          <select aria-label="Level" value={levelId} onChange={(e) => switchTo(e.target.value)}>
             {levels.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.name}
@@ -442,6 +446,10 @@ function StatusBar({ store, file }: { store: EditorStore; file: ReactNode }) {
   const { open: warnings, acknowledged } = useMemo(() => splitWarnings(project, checkLayout(project).filter((w) => w.levelId === levelId)), [project, levelId]);
   const [showAck, setShowAck] = useState(false);
   const unit = project.settings.displayUnit;
+  const maxTop = useMemo(
+    () => (project.features.heights ? Math.max(0, ...[...computeStack(project, levelId).values()].map((i) => i.top)) : 0),
+    [project, levelId],
+  );
   const counts = useMemo(() => {
     const onLevel = project.modules.filter((m) => m.levelId === levelId);
     const mods = onLevel.filter((m) => !isBase(m)).length;
@@ -482,6 +490,7 @@ function StatusBar({ store, file }: { store: EditorStore; file: ReactNode }) {
         </select>
       </label>
       {file}
+      {project.features.heights && <HeightFilter store={store} maxTop={maxTop} />}
       <span className="spacer" />
       <div className="warnings">
         <button
@@ -599,9 +608,10 @@ function useFlushWhenHidden(autosave: Autosave) {
   }, []);
 }
 
-/** "2:41 PM" for today, otherwise "Oct 30, 2:41 PM", so an old save never looks fresh. */
+/** "2:41 PM" for today, otherwise "Oct 30", so an old save never looks fresh. */
 function savedWhen(iso: string): string {
   const d = new Date(iso);
-  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  return d.toDateString() === new Date().toDateString() ? time : `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${time}`;
+  return d.toDateString() === new Date().toDateString()
+    ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }

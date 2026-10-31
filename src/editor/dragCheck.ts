@@ -5,6 +5,8 @@ import type { Project } from '../domain/schema';
 import { SpatialIndex } from '../domain/spatial';
 
 const isSolid = (i: Item) => isModule(i) || i.type === 'footprint';
+/** Single pieces stack freely (a brick on a plate), so they never clash with small items. */
+const clashesAsSmall = (i: Item) => !isSolid(i) && !(!isModule(i) && i.type === 'piece');
 
 /**
  * Built once when a drag starts: indexes everything that isn't moving, so each drag step
@@ -17,8 +19,8 @@ export function makeDragChecker(project: Project, levelId: string, draggedIds: R
   const solid = new SpatialIndex(others.filter(isSolid));
   // Small items only clash with small items on the same layer.
   const smallByLayer = new Map<string, SpatialIndex>();
-  for (const layerId of new Set(others.filter((i) => !isSolid(i)).map((i) => i.layerId))) {
-    smallByLayer.set(layerId, new SpatialIndex(others.filter((i) => !isSolid(i) && i.layerId === layerId)));
+  for (const layerId of new Set(others.filter(clashesAsSmall).map((i) => i.layerId))) {
+    smallByLayer.set(layerId, new SpatialIndex(others.filter((i) => clashesAsSmall(i) && i.layerId === layerId)));
   }
   const tables = project.tables.filter((t) => t.levelId === levelId).map(footprint);
   const acknowledged = new Set(project.acknowledgements.map((a) => a.key));
@@ -28,7 +30,7 @@ export function makeDragChecker(project: Project, levelId: string, draggedIds: R
     const problems = new Set<string>();
     for (const item of dragged) {
       const r = footprint({ ...item, x: item.x + dx, y: item.y + dy });
-      const index = isSolid(item) ? solid : smallByLayer.get(item.layerId);
+      const index = isSolid(item) ? solid : clashesAsSmall(item) ? smallByLayer.get(item.layerId) : undefined;
       for (const other of index?.overlapping(r) ?? []) {
         if (!acknowledged.has(warningKey({ kind: 'overlap', ids: [item.id, other] }))) problems.add(item.id);
       }

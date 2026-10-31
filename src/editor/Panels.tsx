@@ -3,6 +3,7 @@ import { useStore } from 'zustand';
 import { footprint } from '../domain/geometry';
 import { addDimension, deleteDimension, dimensionLength, findItem, isModule, resizeModule, setItemPosition, updateModule, updateObject, type Item } from '../domain/edits';
 import { storedNotPlaced, validateLabel } from '../domain/labels';
+import { computeStack, formatHeight, parseHeight, stackAt } from '../domain/heights';
 import { MILS_KINDS, MILS_SIZES, isBase, milsKindForSize, moduleDisplayName, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
 import { formatLength } from '../domain/units';
 import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, ungroupSelection } from './actions';
@@ -49,6 +50,7 @@ function Field({
         type={type}
         step={step}
         value={shown}
+        aria-label={label}
         aria-invalid={!!error}
         onChange={(e) => {
           setDraft(e.target.value);
@@ -102,6 +104,7 @@ export function Properties({ store }: { store: EditorStore }) {
     <aside className="props" aria-label="Properties" key={item.id}>
       {isModule(item) ? <ModuleFields store={store} m={item} unit={unit} /> : <ObjectFields store={store} o={item} unit={unit} />}
       <PositionFields store={store} item={item} unit={unit} />
+      {project.features.heights && <HeightFields store={store} item={item} />}
       <Notes
         value={item.notes}
         onCommit={(notes) => store.getState().commit((p) => (isModule(item) ? updateModule(p, item.id, { notes }) : updateObject(p, item.id, { notes })))}
@@ -394,6 +397,69 @@ function MeasurePanel({ store }: { store: EditorStore }) {
         </>
       )}
     </aside>
+  );
+}
+
+/** Heights (when switched on): own height, where it sits, and what's stacked there. */
+function HeightFields({ store, item }: { store: EditorStore; item: Item }) {
+  const project = useStore(store, (s) => s.project);
+  const stack = computeStack(project, item.levelId);
+  const info = stack.get(item.id)!;
+  const set = (patch: { heightPlates?: number; baseHeightPlates?: number }) =>
+    store.getState().commit((p) => (isModule(item) ? updateModule(p, item.id, patch) : updateObject(p, item.id, patch)));
+  const restsOn = info.restsOn ? findItem(project, info.restsOn) : undefined;
+  const nameOf = (i: Item) => (isModule(i) ? moduleDisplayName(i) : i.name || 'Item');
+  const here = stackAt(project, item.levelId, footprint(item), stack);
+  const heightError = (v: string) => (v.trim() === '' || parseHeight(v) !== null ? null : 'Try 24, 8 bricks or 10 in.');
+  return (
+    <div className="heights">
+      <h2>Height</h2>
+      <Field
+        label="Height"
+        value={item.heightPlates ?? ''}
+        validate={heightError}
+        onCommit={(v) => set({ heightPlates: v.trim() === '' ? undefined : parseHeight(v)! })}
+        hint={`${formatHeight(info.height)}${item.heightPlates === undefined ? ' — usual height' : ''} · plates, or e.g. 8 bricks, 10 in`}
+      />
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={info.manual}
+          onChange={(e) => set({ baseHeightPlates: e.target.checked ? info.base : undefined })}
+        />
+        Set where it sits by hand
+      </label>
+      {info.manual ? (
+        <Field
+          label="Sits at (above the table)"
+          value={item.baseHeightPlates ?? 0}
+          validate={(v) => (parseHeight(v) === null ? 'Try 3, 1 brick or 2 in.' : null)}
+          onCommit={(v) => set({ baseHeightPlates: parseHeight(v)! })}
+          hint={formatHeight(info.base)}
+        />
+      ) : (
+        <p className="muted small">
+          Sits at {formatHeight(info.base)}
+          {restsOn ? `, on ${nameOf(restsOn)}` : ', on the table'} — stacked automatically.
+        </p>
+      )}
+      <p className="muted small">Top: {formatHeight(info.top)}</p>
+      {here.length > 1 && (
+        <>
+          <span className="muted small">Stacked here (bottom to top):</span>
+          <ol className="stack-list">
+            {here.map((e) => (
+              <li key={e.item.id}>
+                <button type="button" className={e.item.id === item.id ? 'link current' : 'link'} onClick={() => store.getState().select([e.item.id])}>
+                  {e.name}
+                </button>
+                <span className="muted"> {+e.info.base.toFixed(1)}–{+e.info.top.toFixed(1)}</span>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </div>
   );
 }
 

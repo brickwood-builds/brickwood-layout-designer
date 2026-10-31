@@ -12,11 +12,11 @@ export function drawOrder(project: Project, items: Item[]): Item[] {
 }
 
 /** The topmost selectable item at (x, y) studs on a level, skipping hidden and locked layers. */
-export function itemAt(project: Project, levelId: string, x: number, y: number): Item | null {
+export function itemAt(project: Project, levelId: string, x: number, y: number, hidden?: ReadonlySet<string>): Item | null {
   const editable = new Set(project.layers.filter((l) => l.visible && !l.locked).map((l) => l.id));
   const stack = drawOrder(
     project,
-    allItems(project).filter((i) => i.levelId === levelId && editable.has(i.layerId)),
+    allItems(project).filter((i) => i.levelId === levelId && editable.has(i.layerId) && !hidden?.has(i.id)),
   );
   for (let k = stack.length - 1; k >= 0; k--) {
     const i = stack[k]!;

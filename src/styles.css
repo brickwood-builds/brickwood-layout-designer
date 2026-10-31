@@ -256,3 +256,15 @@ input[type='color'] { width: 100%; height: 36px; padding: 2px; border: 1px solid
 .lego-grid button { min-height: 28px; padding: 0; border: 1px solid rgba(0, 0, 0, 0.35); border-radius: 4px; }
 .lego-grid button[aria-selected='true'] { outline: 3px solid var(--accent); outline-offset: 1px; }
 .lego-grid .lego-none { background: var(--surface); font-size: 0.9rem; }
+.heights { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border); padding-top: 8px; }
+.stack-list { margin: 0; padding-left: 20px; font-size: 0.85rem; }
+.stack-list .link { min-height: 26px; }
+.stack-list .link.current { font-weight: 700; }
+.options-pop { width: 320px; }
+.check.option { align-items: flex-start; }
+.check.option input { margin-top: 3px; }
+.height-filter input[type='range'] { width: 120px; }
+.toolbar { gap: 4px; }
+.toolbar h1 { max-width: 150px; }
+@media (max-width: 1300px) { .toolbar .save-state { min-width: 0; } .toolbar > button, .toolbar .popover-wrap > button { padding: 0 10px; } }
+.toolbar .tool-group button { padding: 0 9px; }

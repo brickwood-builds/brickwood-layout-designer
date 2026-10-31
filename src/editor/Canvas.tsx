@@ -6,6 +6,7 @@ import { footprint, snap, unionRect, type Rect as R } from '../domain/geometry';
 import { allItems, isModule, moveItems, type Item } from '../domain/edits';
 import { makeDragChecker } from './dragCheck';
 import { drawOrder, itemAt } from '../domain/hit';
+import { computeStack } from '../domain/heights';
 import { SpatialIndex } from '../domain/spatial';
 import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
 import { DEFAULT_PLATE_COLOR } from '../domain/legoColors';
@@ -42,6 +43,7 @@ export function Canvas({ store }: { store: EditorStore }) {
   const showOtherLevels = useStore(store, (s) => s.showOtherLevels);
   const viewport = useStore(store, (s) => s.viewport);
   const measure = useStore(store, (s) => s.measure);
+  const heightLimit = useStore(store, (s) => (s.project.features.heights ? s.heightLimit : null));
 
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
@@ -89,12 +91,14 @@ export function Canvas({ store }: { store: EditorStore }) {
   const level = project.levels.find((l) => l.id === levelId) ?? project.levels[0]!;
   const editable = useMemo(() => new Set(project.layers.filter((l) => l.visible && !l.locked).map((l) => l.id)), [project.layers]);
   const visibleLayers = useMemo(() => new Set(project.layers.filter((l) => l.visible).map((l) => l.id)), [project.layers]);
+  // Heights: things sitting at or above the chosen height are hidden, to see what's below.
+  const heightHidden = useMemo(() => hiddenByHeight(project, level.id, heightLimit), [project, level.id, heightLimit]);
   const levelItems = useMemo(() => {
     return drawOrder(
       project,
-      allItems(project).filter((i) => i.levelId === level.id && visibleLayers.has(i.layerId)),
+      allItems(project).filter((i) => i.levelId === level.id && visibleLayers.has(i.layerId) && !heightHidden.has(i.id)),
     );
-  }, [project, level.id, visibleLayers]);
+  }, [project, level.id, visibleLayers, heightHidden]);
   const selectedSet = useMemo(() => new Set(selection), [selection]);
 
   // While dragging, the moved items live on their own layer so the rest isn't redrawn.
@@ -124,7 +128,7 @@ export function Canvas({ store }: { store: EditorStore }) {
     const hitTest = (p: { x: number; y: number }): Item | null => {
       const s = store.getState();
       const w = toWorld(s.view, p.x, p.y);
-      return itemAt(s.project, s.levelId, w.x, w.y);
+      return itemAt(s.project, s.levelId, w.x, w.y, hiddenByHeight(s.project, s.levelId, s.project.features.heights ? s.heightLimit : null));
     };
     const endDrag = (commit: boolean) => {
       const s = store.getState();
@@ -671,5 +675,13 @@ function hasStuds(i: Item): boolean {
 function moduleFill(m: Extract<Item, { kind: unknown }>, plateColors: boolean): string {
   if (plateColors && !isBase(m)) return m.plateColor ?? DEFAULT_PLATE_COLOR;
   return m.color ?? MILS_COLORS[m.kind];
+}
+
+/** IDs that sit at or above the height filter (none when the filter is off). */
+function hiddenByHeight(project: Project, levelId: string, limit: number | null): ReadonlySet<string> {
+  if (limit === null) return EMPTY;
+  const hidden = new Set<string>();
+  for (const [id, info] of computeStack(project, levelId)) if (info.base >= limit && info.height > 0) hidden.add(id);
+  return hidden;
 }
 

@@ -24,6 +24,13 @@ export class SpatialIndex {
     this.tree.load(entries);
   }
 
+  /** Add one more item. */
+  insert(item: Placed & { id: string }): void {
+    const r = footprint(item);
+    this.rects.set(item.id, r);
+    this.tree.insert(toEntry(item.id, r));
+  }
+
   /** IDs whose footprint overlaps the rect's interior (touching edges excluded). */
   overlapping(rect: Rect, excludeIds?: ReadonlySet<string>): string[] {
     return this.tree

@@ -7,6 +7,7 @@ import type { ProjectRepository } from '../storage/repository';
 import { exportFileName } from '../domain/exchange';
 import { overheadSvg, svgToPng } from './overheadSvg';
 import { tableSize } from './format';
+import { computeStack, formatHeight, type StackInfo } from '../domain/heights';
 import { HelpButton } from '../help/HelpDialog';
 
 /** Printable overhead plan with module and ride lists. Print → "Save as PDF" makes a PDF. */
@@ -39,6 +40,8 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
   const rides = [...project.modules.filter((m) => m.levelId === levelId && isBase(m)), ...project.objects.filter((o) => o.levelId === levelId && o.type === 'footprint')].sort((a, b) => a.x - b.x);
   const small = project.objects.filter((o) => o.levelId === levelId && o.type !== 'footprint');
   const dims = project.dimensions.filter((d) => d.levelId === levelId);
+  const heights = project.features.heights;
+  const stack = heights ? computeStack(project, levelId) : new Map<string, StackInfo>();
   const base = exportFileName(project).replace('.brickwood.json', '');
 
   const download = async (kind: 'svg' | 'png') => {
@@ -107,7 +110,7 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
           <h2>Features (left to right)</h2>
           <table className="print-table">
             <thead>
-              <tr><th>Name</th><th>Size</th><th>From left</th><th>Power</th><th>Notes</th></tr>
+              <tr><th>Name</th><th>Size</th><th>From left</th>{heights && <th>Height</th>}<th>Power</th><th>Notes</th></tr>
             </thead>
             <tbody>
               {rides.map((r) => (
@@ -115,6 +118,7 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
                   <td>{r.name}</td>
                   <td>{formatLength(r.rotation % 180 ? r.depth : r.width, unit)} × {formatLength(r.rotation % 180 ? r.width : r.depth, unit)}</td>
                   <td>{pos(r.x)}</td>
+                  {heights && <td>{stack.get(r.id)?.top ? formatHeight(stack.get(r.id)!.top) : ''}</td>}
                   <td>{r.powerVolts ? `${r.powerVolts} V` : ''}</td>
                   <td>{r.notes}</td>
                 </tr>
@@ -129,7 +133,7 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
           <h2>Markers, small items & pieces</h2>
           <table className="print-table">
             <thead>
-              <tr><th>Item</th><th>On module</th><th>From left</th><th>From back</th></tr>
+              <tr><th>Item</th><th>On module</th><th>From left</th><th>From back</th>{heights && <th>Sits at → top</th>}</tr>
             </thead>
             <tbody>
               {small.map((o) => (
@@ -138,6 +142,7 @@ export function PrintView({ repo, id, onBack }: { repo: ProjectRepository; id: s
                   <td>{modulesUnder(project, o).join(', ') || '—'}</td>
                   <td>{pos(o.x)}</td>
                   <td>{pos(o.y)}</td>
+                  {heights && <td>{stack.get(o.id) ? `${stack.get(o.id)!.base} → ${stack.get(o.id)!.top} plates` : ''}</td>}
                 </tr>
               ))}
             </tbody>

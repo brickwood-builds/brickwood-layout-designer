@@ -167,6 +167,17 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'heights',
+    title: 'Heights and stacking',
+    body: [
+      'Heights are switched off until you need them: ⋯ (top right) → Heights.',
+      'Select anything and set its Height in the details panel. Type plates (24), bricks (8 bricks) or inches (10 in). Bricks, plates and tiles already know their height; modules count as 0, so heights are measured from the top of the plates.',
+      'Things stack by themselves: a brick placed on a plate sits on top of it. The panel shows where it sits and what it’s on, and lists everything stacked at that spot — click one to select it. Tick “Set where it sits by hand” to override.',
+      '“Show up to” in the bottom bar hides everything sitting at or above a height, so you can see and work on what’s underneath. Slide it all the way right to show everything.',
+      'With more than one level (a shelf above the table), something tall enough to reach the shelf above gets a warning. Set each level’s height above the floor in Table….',
+    ],
+  },
+  {
     id: 'units',
     title: 'Scale and units',
     body: [

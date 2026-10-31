@@ -33,6 +33,8 @@ export interface EditorState {
   pointer: { x: number; y: number } | null;
   /** Layer that new markers and items go on (null = the default; see itemLayerId). */
   activeLayerId: string | null;
+  /** Heights: hide things that sit at or above this many plates (null = show all). */
+  heightLimit: number | null;
 
   /** Apply one undoable change. */
   commit: (change: (p: Project) => Project, selection?: string[]) => void;
@@ -40,7 +42,7 @@ export interface EditorState {
   redo: () => void;
   select: (ids: string[]) => void;
   setView: (view: View) => void;
-  set: (patch: Partial<Pick<EditorState, 'mode' | 'measure' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer' | 'activeLayerId'>>) => void;
+  set: (patch: Partial<Pick<EditorState, 'mode' | 'measure' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer' | 'activeLayerId' | 'heightLimit'>>) => void;
   /** Called by autosave once a revision is stored. Not an undoable change. */
   markSaved: (saved: Pick<Project, 'revision' | 'revisionId' | 'updatedAt'>) => void;
   setSaveState: (state: SaveState, error?: string) => void;
@@ -83,6 +85,7 @@ export function createEditorStore(project: Project): EditorStore {
     viewport: { width: 0, height: 0 },
     pointer: null,
     activeLayerId: null,
+    heightLimit: null,
 
     commit: (change, selection) => {
       const { project: before, past, saveState } = get();

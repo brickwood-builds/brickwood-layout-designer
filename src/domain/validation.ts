@@ -2,8 +2,9 @@
 import { footprint, rectContains, type Placed } from './geometry';
 import { moduleDisplayName, type Project } from './schema';
 import { SpatialIndex } from './spatial';
+import { clearanceProblems } from './heights';
 
-export type WarningKind = 'overhang' | 'overlap' | 'duplicateLabel' | 'retiredLabel';
+export type WarningKind = 'overhang' | 'overlap' | 'duplicateLabel' | 'retiredLabel' | 'clearance';
 
 export interface LayoutWarning {
   kind: WarningKind;
@@ -63,14 +64,19 @@ export function checkLayout(project: Project): LayoutWarning[] {
       warnings.push({ kind: 'overlap', levelId: level.id, ids: [a, b], message: `${solid.get(a)!.name} overlaps ${solid.get(b)!.name}` });
     }
     // Small items sit on modules, and things on different layers stack (a lamp on a
-    // sidewalk); but two things on the same layer in the same spot is a mistake.
-    const small = project.objects.filter((o) => o.levelId === level.id && o.type !== 'footprint');
+    // sidewalk); but two markers or items on the same layer in the same spot is a mistake.
+    // Single pieces are exempt: a brick on a plate is how LEGO is built.
+    const small = project.objects.filter((o) => o.levelId === level.id && o.type !== 'footprint' && o.type !== 'piece');
     for (const layerId of new Set(small.map((o) => o.layerId))) {
       const onLayer = new Map(small.filter((o) => o.layerId === layerId).map((o) => [o.id, o]));
       for (const [a, b] of new SpatialIndex(onLayer.values()).overlapPairs()) {
         warnings.push({ kind: 'overlap', levelId: level.id, ids: [a, b], message: `${onLayer.get(a)!.name || 'Item'} overlaps ${onLayer.get(b)!.name || 'item'}` });
       }
     }
+  }
+  // Shelf clearance only matters once heights are in use.
+  if (project.features.heights) {
+    for (const c of clearanceProblems(project)) warnings.push({ kind: 'clearance', levelId: c.levelId, ids: [c.itemId], message: c.message });
   }
   return warnings;
 }
