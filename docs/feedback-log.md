@@ -47,3 +47,4 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 | # | Request / answer | What was done | Status |
 |---|---|---|---|
 | 1 | Mountains will be features built on their MILS plate; gradual slopes and elevation changes are stacked plates/parts | No separate terrain system. Draw tool "Stack on top" builds slopes layer by layer; "Shade by height" shows them like a relief map (needs Heights on) | Done |
+| 2 | A feature built on a MILS plate still needs its studs visible | Features (rides, buildings on their base) now show studs when zoomed in, like every plate | Done |

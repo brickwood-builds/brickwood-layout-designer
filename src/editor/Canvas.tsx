@@ -698,9 +698,9 @@ function studTile(px: number): HTMLCanvasElement {
   return tile;
 }
 
-/** Plates, single pieces (not tiles) and marker bricks show studs; features and small items don't. */
+/** Plates (features too: they're built on a MILS plate), single pieces (not tiles) and marker bricks show studs; small items don't. */
 function hasStuds(i: Item): boolean {
-  if (isModule(i)) return !isBase(i);
+  if (isModule(i)) return true;
   if (i.smooth) return false;
   const part = partByKey(i.catalogKey);
   if (part) return part.studs;
