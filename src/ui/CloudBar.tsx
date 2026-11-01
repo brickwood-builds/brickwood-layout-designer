@@ -100,10 +100,10 @@ function SetupDialog({ onClose }: { onClose: () => void }) {
         </p>
         <ol className="small">
           <li>
-            Open <strong>entra.microsoft.com</strong> (or portal.azure.com) and sign in with the Microsoft account you use for OneDrive. If it asks you to create a free Azure account first, do that — app registrations cost nothing.
+            Open a <strong>private (InPrivate) window</strong> and go to <strong>portal.azure.com</strong>. Sign in, then type <strong>App registrations</strong> in the search bar at the top. If Microsoft sends you to a company directory your account isn’t part of (an “AADSTS90072” error), use a work account in that directory instead, or create a free Azure account with your personal one at azure.microsoft.com/free (registering an app costs nothing). The directory it’s registered in doesn’t matter: you still sign in to Brickwood with your personal account.
           </li>
           <li>
-            Go to <strong>App registrations → New registration</strong>.
+            Choose <strong>+ New registration</strong>.
             <ul>
               <li>Name: Brickwood Layout Designer</li>
               <li>

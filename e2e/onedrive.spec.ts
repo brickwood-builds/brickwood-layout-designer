@@ -2,7 +2,8 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 // OneDrive sync between a computer and an iPad, against a stand-in for Microsoft's sign-in
 // and OneDrive (same requests and answers as the real services, kept in memory here).
-const CLIENT_ID = '11111111-2222-3333-4444-555555555555';
+// The owner's app registration, built into the app (.env.production).
+const CLIENT_ID = '3b1a85a4-0881-4ddb-ba16-cfc7c2d29170';
 const PARK = 'Brickwood Adventure Park';
 
 function fakeMicrosoft() {
@@ -67,9 +68,8 @@ function fakeMicrosoft() {
 
 async function connect(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Set up OneDrive sync…' }).click();
-  await page.getByLabel('Application (client) ID').fill(CLIENT_ID);
-  await page.getByRole('button', { name: 'Save' }).click();
+  // Built in: no setup step on any device, just sign in.
+  await expect(page.getByRole('button', { name: 'Set up OneDrive sync…' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Sign in to OneDrive' }).click();
   await expect(page.getByText(/OneDrive \(Jen\): Synced/)).toBeVisible();
 }
