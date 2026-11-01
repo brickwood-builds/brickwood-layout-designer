@@ -6,8 +6,10 @@ import type { BrickwoodDb, CheckpointRow, PhotoRow, VersionRow } from './db';
 
 export type VersionInfo = Pick<VersionRow, 'id' | 'projectId' | 'createdAt' | 'name' | 'note'>;
 import { InventorySchema, emptyInventory, type Inventory } from '../domain/inventory';
+import { BACKUP_KIND, fromBase64, toBase64, type Backup } from '../domain/backup';
 
 const INVENTORY = 'inventory';
+const LAST_BACKUP = 'lastBackupAt';
 
 /** A save was based on an out-of-date copy. Nothing was written. */
 export class RevisionConflictError extends Error {
@@ -230,6 +232,67 @@ export class ProjectRepository {
    * A starter the user archived or changed is never re-added. `legacyIds` are starters that
    * browsers seeded before seeding was tracked per starter.
    */
+  /** Everything on this device in one backup: projects, versions, photos, parts book. */
+  async exportAll(): Promise<Backup> {
+    const projects = await this.db.projects.toArray();
+    const versions = await this.db.versions.toArray();
+    const photos = await this.db.photos.toArray();
+    const inventory = await this.getInventory();
+    const backup: Backup = {
+      kind: BACKUP_KIND,
+      version: 1,
+      createdAt: nowIso(),
+      app: 'Brickwood Layout Designer',
+      projects: projects.map((r) => r.doc),
+      versions: versions.map((v) => ({ id: v.id, projectId: v.projectId, createdAt: v.createdAt, name: v.name, note: v.note, doc: v.doc })),
+      photos: await Promise.all(
+        photos.map(async (ph) => ({ id: ph.id, projectId: ph.projectId, createdAt: ph.createdAt, caption: ph.caption, thumb: ph.thumb, type: ph.blob.type || 'image/jpeg', data: toBase64(new Uint8Array(await ph.blob.arrayBuffer())) })),
+      ),
+      inventory,
+    };
+    await this.db.meta.put({ key: LAST_BACKUP, value: backup.createdAt });
+    return backup;
+  }
+
+  async lastBackupAt(): Promise<string | null> {
+    const row = await this.db.meta.get(LAST_BACKUP);
+    return typeof row?.value === 'string' ? row.value : null;
+  }
+
+  /**
+   * Restore the chosen projects from a backup (with their versions and photos). A project
+   * already here is replaced, and what was here is kept as a checkpoint. Optionally the parts
+   * book is replaced too.
+   */
+  async restoreBackup(backup: Backup, projectIds: string[], opts: { inventory?: boolean } = {}): Promise<{ restored: number }> {
+    const chosen = new Set(projectIds);
+    let restored = 0;
+    for (const raw of backup.projects) {
+      let p: Project;
+      try {
+        p = migrateProject(raw);
+      } catch {
+        continue;
+      }
+      if (!chosen.has(p.id)) continue;
+      if (await this.db.projects.get(p.id)) await this.replaceWithVersion(p, 'Before restoring from a backup', { keepRevisionId: true });
+      else await this.db.projects.put({ id: p.id, updatedAt: p.updatedAt, doc: p });
+      restored++;
+    }
+    await this.db.transaction('rw', this.db.versions, this.db.photos, async () => {
+      for (const v of backup.versions) if (chosen.has(v.projectId)) await this.db.versions.put(v);
+      for (const ph of backup.photos) {
+        if (!chosen.has(ph.projectId)) continue;
+        await this.db.photos.put({ id: ph.id, projectId: ph.projectId, createdAt: ph.createdAt, caption: ph.caption, thumb: ph.thumb, blob: new Blob([fromBase64(ph.data)], { type: ph.type }) });
+      }
+    });
+    if (opts.inventory && backup.inventory) {
+      const inv = InventorySchema.safeParse(backup.inventory);
+      if (inv.success) await this.saveInventory(inv.data);
+    }
+    return { restored };
+  }
+
   /** Save a named version of a project (a full copy, kept until deleted). */
   async saveVersion(project: Project, name: string, note = ''): Promise<VersionInfo> {
     const row: VersionRow = { id: newId(), projectId: project.id, createdAt: nowIso(), name: name.trim() || 'Version', note: note.trim(), doc: ProjectSchema.parse(project) };

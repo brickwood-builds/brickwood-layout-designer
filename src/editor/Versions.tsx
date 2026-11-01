@@ -182,7 +182,7 @@ function VersionsDialog({ store, repo, autosave, onClose }: { store: EditorStore
       {confirm && (
         <Modal title="Go back to this version?" onClose={() => setConfirm(null)}>
           <p>
-            The layout will be put back to <strong>{confirm.name}</strong>. What you have now is kept as a recovery checkpoint (Projects → Checkpoints…), so you can come back to it. Tip: save it as a version first.
+            The layout will be put back to <strong>{confirm.name}</strong>. What you have now is kept as a recovery checkpoint (Projects → More → Checkpoints…), so you can come back to it. Tip: save it as a version first.
           </p>
           <div className="actions">
             <button

@@ -340,7 +340,7 @@ function HelpersTab({ store, show, project, me }: { store: EditorStore; show: Sh
       <section>
         <h3>Helpers on their own phone or tablet</h3>
         <p className="small">
-          1. Send them this layout as a file (Projects → Export file) and they open it in the app. 2. They tick tasks — no internet needed — and use <strong>Send my progress</strong>. 3. You use <strong>Add a helper’s progress…</strong> here. If you both changed the same task differently, you choose.
+          1. Send them this layout as a file (Projects → More → Export file) and they open it in the app. 2. They tick tasks — no internet needed — and use <strong>Send my progress</strong>. 3. You use <strong>Add a helper’s progress…</strong> here. If you both changed the same task differently, you choose.
         </p>
         <div className="actions wrap">
           <button type="button" onClick={sendProgress}>

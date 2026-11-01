@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Dashboard } from './ui/Dashboard';
 import { Editor } from './editor/Editor';
 import { PrintView } from './ui/PrintView';
+import { ReportView } from './ui/ReportView';
 import { openDb } from './storage/db';
 import { ProjectRepository } from './storage/repository';
 import { FileLinks, dbLinkStore } from './storage/fileLink';
@@ -15,9 +16,9 @@ const links = new FileLinks(dbLinkStore(db));
  * Hash routing keeps the open project across a browser reload: #/project/<id>[/print].
  * #/project/<id>/box/<code> (a box label's QR code) opens that box's details — lookup only.
  */
-function readRoute(): { id: string; print: boolean; box?: string } | null {
-  const m = /^#\/project\/([0-9a-f-]{36})(\/print|\/box\/([\w-]+))?$/i.exec(window.location.hash);
-  return m ? { id: m[1]!, print: m[2] === '/print', ...(m[3] ? { box: decodeURIComponent(m[3]) } : {}) } : null;
+function readRoute(): { id: string; print: boolean; report: boolean; box?: string } | null {
+  const m = /^#\/project\/([0-9a-f-]{36})(\/print|\/report|\/box\/([\w-]+))?$/i.exec(window.location.hash);
+  return m ? { id: m[1]!, print: m[2] === '/print', report: m[2] === '/report', ...(m[3] ? { box: decodeURIComponent(m[3]) } : {}) } : null;
 }
 
 export function App() {
@@ -39,6 +40,7 @@ export function App() {
 
   if (error) return <p className="banner error" role="alert">{error}</p>;
   if (!ready) return null;
+  if (route?.report) return <ReportView key={route.id} repo={repo} id={route.id} onBack={() => (window.location.hash = `#/project/${route.id}`)} />;
   if (route?.print) return <PrintView key={route.id} repo={repo} id={route.id} onBack={() => (window.location.hash = `#/project/${route.id}`)} />;
   return route ? (
     <Editor key={route.id} repo={repo} links={links} id={route.id} box={route.box} onBack={() => (window.location.hash = '')} />

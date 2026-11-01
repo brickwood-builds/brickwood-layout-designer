@@ -261,7 +261,25 @@ export const HELP_TOPICS: HelpTopic[] = [
       'Type your name under I am (it’s remembered on this device). Tick a task when it’s done, or “I’ll do it” to claim it; Assign… gives it to a helper; untick to reopen. A task whose required step isn’t done asks why before you tick it — the reason is kept in the log. “Usually after” is only a hint.',
       'Start setup and Setup finished record the times (and how long it took). Helpers & log: add helpers, report issues or emergency changes; the log keeps who did what and when, with the show.',
       'Print setup guide gives a numbered tick list and a map of each module showing where its things go.',
-      'Helpers on their own phone or tablet: send them the layout as a file (Projects → Export file); they open it, tick tasks without internet, and use Send my progress. Add a helper’s progress… merges it. If you both changed the same task differently, you choose which to keep.',
+      'Helpers on their own phone or tablet: send them the layout as a file (Projects → More → Export file); they open it, tick tasks without internet, and use Send my progress. Add a helper’s progress… merges it. If you both changed the same task differently, you choose which to keep.',
+    ],
+  },
+  {
+    id: 'backup',
+    title: 'Backing up and restoring',
+    body: [
+      'On the Projects page, Back up everything saves one file with every project, its saved versions, build photos and your parts list (what you have, Brickwith parts, prices). Keep it somewhere safe — your OneDrive folder is ideal. A reminder appears when it has been two weeks since the last backup and you’ve changed something.',
+      'Restore from backup… shows what is in the file first: for each project, whether it isn’t on this device, is the same, or is newer or older than the copy here. Projects missing here or older here are ticked; change the ticks as you like. Nothing changes until you choose Restore. A project that is replaced is kept as a checkpoint (Projects → More → Checkpoints…).',
+      'The backup also moves everything to a new computer or iPad: back up on one, restore on the other.',
+    ],
+  },
+  {
+    id: 'report-share',
+    title: 'Display report and sharing a view',
+    body: [
+      '⋯ → Display report… is a printable summary of the display: what needs attention (builds that need repair or are damaged), every show with the version that went, setup and teardown times, helpers and issues, issues that came up at more than one show, physical builds, containers and money spent. Nothing on it can be changed.',
+      '⋯ → Share a read-only view… saves a single web page of the layout. Anyone can open it in a browser — pan, zoom, find a module, tap something for its details — but nothing can be changed.',
+      'To share it, put the file in your OneDrive folder and use OneDrive’s Share: send it to specific people, or make a link anyone can open. To stop sharing, remove the link in OneDrive (Manage access). Save a new view after changes — the shared page shows the layout as it was when you saved it.',
     ],
   },
   {

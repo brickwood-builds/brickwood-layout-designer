@@ -3,6 +3,7 @@ import { OverheadPreview } from './OverheadPreview';
 import { HelpButton } from '../help/HelpDialog';
 import { fileLinksSupported, pickOpenFile, type FileLinks } from '../storage/fileLink';
 import { CheckpointsDialog, NewProjectDialog, RenameDialog } from './dialogs';
+import { BackupControls } from './BackupDialogs';
 import { formatDate, summary, tableSize } from './format';
 import { exportFileName, exportProject, parseProjectFile } from '../domain/exchange';
 import { ProjectFormatError } from '../domain/migrations';
@@ -135,6 +136,8 @@ export function Dashboard({ repo, links, onOpen }: { repo: ProjectRepository; li
           </button>
         </div>
       )}
+
+      {projects && <BackupControls repo={repo} projects={projects} onDone={async (text, error) => (setMessage({ text, error }), await refresh())} />}
 
       {damaged.map((d) => (
         <div className="banner error" role="alert" key={d.id}>

@@ -4,6 +4,7 @@ import { useStore } from 'zustand';
 import type { Features } from '../domain/schema';
 import type { EditorStore } from './store';
 import { HEIGHT_RAMP_CSS } from '../domain/heights';
+import { viewerFileName, viewerHtml } from '../ui/viewer';
 
 /** Advanced areas stay hidden until switched on here (owner rule: the app must feel basic). */
 const OPTIONS: { key: keyof Features; label: string; hint: string }[] = [
@@ -28,6 +29,25 @@ export function OptionsMenu({ store }: { store: EditorStore }) {
       {open && (
         <div ref={popRef} className="popover options-pop" role="dialog" aria-label="More tools">
           <span className="muted small">Switch on extra tools for this project. They stay out of the way until you do.</span>
+          <div className="actions options-links">
+            <button type="button" onClick={() => (window.location.hash = `#/project/${store.getState().project.id}/report`)} title="Display report: builds and repairs, show history, issues, spending — printable">
+              Display report…
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const p = store.getState().project;
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([viewerHtml(p)], { type: 'text/html' }));
+                a.download = viewerFileName(p);
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+              }}
+              title="A read-only web page of this layout to share: anyone can look, pan, zoom and find modules, but not change anything"
+            >
+              Share a read-only view…
+            </button>
+          </div>
           {OPTIONS.map((o) => (
             <label key={o.key} className="check option">
               <input

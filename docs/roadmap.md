@@ -12,7 +12,7 @@ that are committed to a later phase. See `docs/feedback-log.md` for every reques
 | 4 | Physical assemblies, versions | 4A Physical builds ✅ (permanent IDs, storage, condition, repairs, history, photos on device, progress/steps, rebuild/take apart/replace) · 4B Versions ✅ (named versions on the device, preferred version, side-by-side comparison with marked changes, part differences and extra-parts list, open as new project, go back) |
 | 5 | Exhibitions, transport, packing | 5A Packing ✅ (containers with permanent IDs, nesting, sizes/weights, storage, handling, equipment, history, retire; labels with QR lookup) · 5B Shows ✅ (calendar with clash warnings, what goes / last-minute omissions, separate packed/loaded/unloaded/back-home checklist, trips with cargo space, printed lists, done record) · Later: scaled venue floor plans, sharing one build or box between projects' shows |
 | 6 | Setup, teardown, helpers | 6A Setup plan ✅ (tasks from the layout, left to right, put-out tasks from setup markers, own tasks, required/preferred order with logged overrides, assign/claim/done/reopen, timing, issues log, printed guide with module maps) · 6B Helpers on their own devices ✅ (progress files merged with conflict choice) · Later: live shared sessions once cloud sync exists |
-| 7 | Reporting, sharing, backups | Planned |
+| 7 | Reporting, sharing, backups | 7A Back up everything / restore with preview ✅ (projects, versions, photos, parts book; reminder) · 7B Display report ✅ (needs attention, show history with times/helpers/issues, recurring issues, builds, packing, spending) · 7C Read-only view ✅ (self-contained web page; share/revoke through OneDrive) · Later: central photo library, cross-project reports |
 
 ## Committed owner requests (later phases)
 

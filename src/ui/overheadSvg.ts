@@ -15,6 +15,8 @@ export interface SvgOptions {
   standalone?: boolean;
   /** Pixel width/height attributes for standalone files. */
   pixelsPerStud?: number;
+  /** Hover/tap details for each thing (read-only viewer): an id and a <title>. */
+  titles?: boolean;
   /** Name markers and small items (setup maps). */
   itemLabels?: boolean;
   /** Draw only this area (studs), e.g. one module for a setup map. */
@@ -62,6 +64,11 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
   );
   for (const i of items) {
     const r = footprint(i);
+    if (opts.titles) {
+      const what = isModule(i) ? [i.label, i.name].filter(Boolean).join(' — ') || 'Module' : i.name || 'Item';
+      const size = `${i.rotation % 180 ? i.depth : i.width}×${i.rotation % 180 ? i.width : i.depth} studs`;
+      out.push(`<g class="pv-thing" data-find="${esc(`${isModule(i) ? `${i.label} ${i.name}` : i.name}`.toLowerCase())}"><title>${esc(`${what} · ${size}${i.notes ? ` · ${i.notes}` : ''}`)}</title>`);
+    }
     if (isModule(i)) {
       out.push(`<rect class="pv-module" data-label="${esc(i.label)}" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" fill="${project.settings.moduleColors === 'plate' && (i.plateColor || !isBase(i)) ? (i.plateColor ?? DEFAULT_PLATE_COLOR) : (i.color ?? MILS_COLORS[i.kind])}"/>`);
       const text = moduleDisplayName(i);
@@ -77,6 +84,7 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
     if (opts.itemLabels && !isModule(i) && (i.type === 'setupMarker' || i.type === 'item') && i.name) {
       out.push(`<text class="pv-name" x="${n(r.x + r.width / 2)}" y="${n(r.y - 0.6)}" font-size="1.6">${esc(i.name)}</text>`);
     }
+    if (opts.titles) out.push('</g>');
   }
   if (opts.labels) {
     for (const d of project.dimensions.filter((d) => d.levelId === level.id)) {

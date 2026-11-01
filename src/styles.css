@@ -384,3 +384,13 @@ td.less { color: #16a34a; }
 .chip-static { padding: 2px 8px; border: 1px solid var(--border); border-radius: 14px; font-size: 0.85rem; }
 .conflict { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 4px 0; border-top: 1px solid var(--border); }
 .setup .field.me input { flex: none; min-height: 34px; }
+
+/* Backups (7A) */
+.backup-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 16px 0; padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; }
+.backup-bar > span { flex: 1 1 260px; }
+.backup-bar.remind { border-color: var(--warn); background: #fef3c7; color: #78350f; }
+
+/* Display report (7B) */
+.report .report-plan svg { max-height: 45vh; }
+.report .attention { border: 2px solid var(--warn); border-radius: 8px; padding: 8px 12px; }
+.report h3 { font-size: 1rem; margin: 12px 0 4px; }

@@ -92,3 +92,4 @@ Note: projects already in your browser keep the markers they had. Delete them fr
 |---|---|---|---|
 | 1 | Go ahead with Phase 5 (packing questions not answered, so built with flexible defaults) | 5A Packing and 5B Shows, both hidden until switched on in the ⋯ menu. See help topics "Packing" and "Shows" | Done |
 | 2 | Go ahead with Phase 6 | Setup & helpers (⋯ menu): setup/teardown plan per show from the layout, helpers, logged overrides, timing, issues, printed guide with module maps, helper progress files merged with conflict choice. See help topic "Setup, teardown and helpers" | Done |
+| 3 | Go ahead with Phase 7 | Back up everything / restore with a preview (Projects page); Display report and Share a read-only view (⋯ menu). See help topics "Backing up and restoring" and "Display report and sharing a view" | Done |
