@@ -253,6 +253,18 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'setup',
+    title: 'Setup, teardown and helpers',
+    body: [
+      'Switch on Setup & helpers in the ⋯ menu (Shows comes on too). Add a show, then Setup… at the bottom (or Setup plan… in the show) opens its plan.',
+      'The tasks come from the layout: place each MILS plate and feature, left to right on each level, then put out the setup-marker things on each (lamps, trees, benches…). Pieces built onto plates travel fixed, so they aren’t tasks; things left out of the show aren’t listed. Teardown is the same in reverse: pack up the loose things on a module before lifting it. Add your own tasks (e.g. “Plug in ride power”), after any task.',
+      'Type your name under I am (it’s remembered on this device). Tick a task when it’s done, or “I’ll do it” to claim it; Assign… gives it to a helper; untick to reopen. A task whose required step isn’t done asks why before you tick it — the reason is kept in the log. “Usually after” is only a hint.',
+      'Start setup and Setup finished record the times (and how long it took). Helpers & log: add helpers, report issues or emergency changes; the log keeps who did what and when, with the show.',
+      'Print setup guide gives a numbered tick list and a map of each module showing where its things go.',
+      'Helpers on their own phone or tablet: send them the layout as a file (Projects → Export file); they open it, tick tasks without internet, and use Send my progress. Add a helper’s progress… merges it. If you both changed the same task differently, you choose which to keep.',
+    ],
+  },
+  {
     id: 'stairs',
     title: 'Stairs',
     body: [

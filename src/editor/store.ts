@@ -48,6 +48,8 @@ export interface EditorState {
   packingDialog: 'list' | string | null;
   /** Shows window: the list, one show (its ID), or closed. */
   showsDialog: 'list' | string | null;
+  /** Setup plan window: the show's ID, or closed. */
+  setupDialog: string | null;
 
   /** Apply one undoable change. */
   commit: (change: (p: Project) => Project, selection?: string[]) => void;
@@ -55,7 +57,7 @@ export interface EditorState {
   redo: () => void;
   select: (ids: string[]) => void;
   setView: (view: View) => void;
-  set: (patch: Partial<Pick<EditorState, 'mode' | 'measure' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer' | 'activeLayerId' | 'heightLimit' | 'draw' | 'curveDraft' | 'editingPath' | 'buildDialog' | 'packingDialog' | 'showsDialog'>>) => void;
+  set: (patch: Partial<Pick<EditorState, 'mode' | 'measure' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer' | 'activeLayerId' | 'heightLimit' | 'draw' | 'curveDraft' | 'editingPath' | 'buildDialog' | 'packingDialog' | 'showsDialog' | 'setupDialog'>>) => void;
   /** Called by autosave once a revision is stored. Not an undoable change. */
   markSaved: (saved: Pick<Project, 'revision' | 'revisionId' | 'updatedAt'>) => void;
   setSaveState: (state: SaveState, error?: string) => void;
@@ -105,6 +107,7 @@ export function createEditorStore(project: Project): EditorStore {
     buildDialog: null,
     packingDialog: null,
     showsDialog: null,
+    setupDialog: null,
 
     commit: (change, selection) => {
       const { project: before, past, saveState } = get();

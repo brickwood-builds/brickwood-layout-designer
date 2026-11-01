@@ -291,6 +291,11 @@ function ShowRecord({ store, show: s, onClose }: { store: EditorStore; show: Sho
             </section>
 
             <div className="actions wrap">
+              {project.features.helpers && (
+                <button type="button" className="primary" onClick={() => store.getState().set({ showsDialog: null, setupDialog: s.id })}>
+                  Setup plan…
+                </button>
+              )}
               <button type="button" onClick={printList} disabled={!units.length}>
                 Print packing list
               </button>

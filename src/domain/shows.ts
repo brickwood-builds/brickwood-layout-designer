@@ -22,6 +22,7 @@ export function addShow(p: Project, spec: Pick<Show, 'name' | 'start' | 'end'> &
     checklist: {},
     trips: [],
     done: false,
+    setup: { helpers: [], states: {}, custom: [], log: [], times: {} },
     createdAt: nowIso(),
   };
   return { project: { ...p, shows: [...p.shows, show] }, id: show.id };

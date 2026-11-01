@@ -365,3 +365,22 @@ td.less { color: #16a34a; }
 .checklist td { vertical-align: top; }
 .checklist td input[type='checkbox'] { width: 20px; height: 20px; }
 @media (max-width: 600px) { .build-record .row.four { grid-template-columns: 1fr 1fr; } }
+
+/* Setup & helpers (6) */
+.setup { display: flex; flex-direction: column; gap: 10px; }
+.setup .field.me { flex: 0 1 220px; }
+.setup .timing progress { flex: 1 1 120px; height: 10px; }
+.tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 50vh; overflow: auto; }
+.task { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 6px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; }
+.task.done { opacity: 0.65; }
+.task.done strong { text-decoration: line-through; }
+.task .check input { width: 22px; height: 22px; flex: none; }
+.task-actions { display: inline-flex; gap: 6px; align-items: center; }
+.task-actions button, .task-actions select { min-height: 30px; font-size: 0.85rem; }
+.task .override { flex-basis: 100%; }
+.helpers { display: flex; flex-direction: column; gap: 10px; }
+.helpers section { display: flex; flex-direction: column; gap: 6px; }
+.helpers h3 { margin: 0; font-size: 0.95rem; }
+.chip-static { padding: 2px 8px; border: 1px solid var(--border); border-radius: 14px; font-size: 0.85rem; }
+.conflict { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 4px 0; border-top: 1px solid var(--border); }
+.setup .field.me input { flex: none; min-height: 34px; }

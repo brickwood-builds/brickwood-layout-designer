@@ -15,6 +15,10 @@ export interface SvgOptions {
   standalone?: boolean;
   /** Pixel width/height attributes for standalone files. */
   pixelsPerStud?: number;
+  /** Name markers and small items (setup maps). */
+  itemLabels?: boolean;
+  /** Draw only this area (studs), e.g. one module for a setup map. */
+  bounds?: { x: number; y: number; width: number; depth: number };
 }
 
 const MARGIN = 4;
@@ -40,7 +44,7 @@ export const STANDALONE_STYLE = `
 
 export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
   const level = project.levels.find((l) => l.id === opts.levelId) ?? project.levels.find((l) => l.visible) ?? project.levels[0]!;
-  const b = levelBounds(project, level.id) ?? { x: 0, y: 0, width: 64, depth: 32 };
+  const b = opts.bounds ?? levelBounds(project, level.id) ?? { x: 0, y: 0, width: 64, depth: 32 };
   const vb = { x: b.x - MARGIN, y: b.y - MARGIN, w: b.width + MARGIN * 2, h: b.depth + MARGIN * 2 };
   const visible = new Set(project.layers.filter((l) => l.visible).map((l) => l.id));
   const out: string[] = [];
@@ -69,6 +73,9 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
       if (opts.labels && i.type === 'footprint' && i.name) {
         out.push(`<text class="pv-name" x="${n(r.x + r.width / 2)}" y="${n(r.y + r.depth / 2)}" font-size="${n(fitText(i.name, r.width, r.depth, 6))}">${esc(i.name)}</text>`);
       }
+    }
+    if (opts.itemLabels && !isModule(i) && (i.type === 'setupMarker' || i.type === 'item') && i.name) {
+      out.push(`<text class="pv-name" x="${n(r.x + r.width / 2)}" y="${n(r.y - 0.6)}" font-size="1.6">${esc(i.name)}</text>`);
     }
   }
   if (opts.labels) {

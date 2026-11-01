@@ -12,6 +12,7 @@ const OPTIONS: { key: keyof Features; label: string; hint: string }[] = [
   { key: 'builds', label: 'Physical builds', hint: 'Give real builds (the castle, a ride) a permanent ID: storage, condition, repairs, photos and build progress' },
   { key: 'transport', label: 'Packing', hint: 'Boxes, totes and carrying boards with permanent IDs: what is in each, where it is stored, printable labels with QR codes' },
   { key: 'exhibitions', label: 'Shows', hint: 'Shows on a calendar: what goes, packing checklist (packed, loaded, unloaded, back home), vehicles and trips' },
+  { key: 'helpers', label: 'Setup & helpers', hint: 'A setup and teardown plan for each show: tasks from the layout, helpers, timing, a printed guide (switches on Shows too)' },
   { key: 'inventory', label: 'Parts & inventory', hint: 'A parts list for this layout: what it needs, what you have, and a shopping list to download' },
 ];
 
@@ -32,7 +33,13 @@ export function OptionsMenu({ store }: { store: EditorStore }) {
               <input
                 type="checkbox"
                 checked={features[o.key]}
-                onChange={(e) => store.getState().commit((p) => ({ ...p, features: { ...p.features, [o.key]: e.target.checked } }))}
+                onChange={(e) =>
+                  store.getState().commit((p) => ({
+                    ...p,
+                    // Setup plans belong to shows.
+                    features: { ...p.features, [o.key]: e.target.checked, ...(o.key === 'helpers' && e.target.checked ? { exhibitions: true } : {}) },
+                  }))
+                }
               />
               <span>
                 <strong>{o.label}</strong>

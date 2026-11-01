@@ -35,6 +35,7 @@ import { BuildsButton, BuildsDialog } from './Builds';
 import { VersionsButton } from './Versions';
 import { PackingButton, PackingDialog } from './Packing';
 import { ShowsButton, ShowsDialog } from './Shows';
+import { SetupButton, SetupDialog } from './Setup';
 import { computeStack } from '../domain/heights';
 import { HelpButton } from '../help/HelpDialog';
 import { createEditorStore, type EditorStore } from './store';
@@ -175,7 +176,8 @@ function EditorScreen({
         <Canvas store={store} />
         <Properties store={store} />
       </div>
-      <StatusBar store={store} file={<FileStatus file={file} />} parts={<PartsListButton store={store} repo={repo} />} builds={<BuildsButton store={store} />} versions={<VersionsButton store={store} repo={repo} autosave={autosave} />} packing={<PackingButton store={store} />} shows={<ShowsButton store={store} />} />
+      <StatusBar store={store} file={<FileStatus file={file} />} parts={<PartsListButton store={store} repo={repo} />} builds={<BuildsButton store={store} />} versions={<VersionsButton store={store} repo={repo} autosave={autosave} />} packing={<PackingButton store={store} />} shows={<ShowsButton store={store} />} setup={<SetupButton store={store} />} />
+      <SetupDialog store={store} />
       <PackingDialog store={store} />
       <ShowsDialog store={store} />
       <BuildsDialog store={store} repo={repo} />
@@ -455,7 +457,7 @@ function FileStatus({ file }: { file: ReturnType<typeof useFileSync> }) {
   }
 }
 
-function StatusBar({ store, file, parts, builds, versions, packing, shows }: { store: EditorStore; file: ReactNode; parts: ReactNode; builds: ReactNode; versions: ReactNode; packing: ReactNode; shows: ReactNode }) {
+function StatusBar({ store, file, parts, builds, versions, packing, shows, setup }: { store: EditorStore; file: ReactNode; parts: ReactNode; builds: ReactNode; versions: ReactNode; packing: ReactNode; shows: ReactNode; setup: ReactNode }) {
   const project = useStore(store, (s) => s.project);
   const levelId = useStore(store, (s) => s.levelId);
   const pointer = useStore(store, (s) => s.pointer);
@@ -509,6 +511,7 @@ function StatusBar({ store, file, parts, builds, versions, packing, shows }: { s
       </label>
       {file}
       {project.features.exhibitions && shows}
+      {project.features.helpers && setup}
       {project.features.transport && packing}
       {project.features.versions && versions}
       {project.features.builds && builds}

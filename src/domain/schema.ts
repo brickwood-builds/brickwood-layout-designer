@@ -291,6 +291,34 @@ export const ShowSchema = z.object({
   checklist: z.record(z.string(), z.object({ packed: timestamp.optional(), loaded: timestamp.optional(), unloaded: timestamp.optional(), home: timestamp.optional() })).default({}),
   trips: z.array(z.object({ id, name: z.string().min(1), capacityCuFt: z.number().finite().positive().optional(), containerIds: z.array(id).default([]) })).default([]),
   done: z.boolean().default(false),
+  /**
+   * Setup and teardown at this show (Phase 6). The task list is worked out from the layout
+   * (so it follows layout changes); only task progress, helpers, own tasks and the log are kept.
+   */
+  setup: z
+    .object({
+      helpers: z.array(z.string().min(1)).default([]),
+      /** Progress by task key, e.g. "setup:module:<id>". */
+      states: z
+        .record(
+          z.string(),
+          z.object({
+            status: z.enum(['open', 'assigned', 'claimed', 'done']),
+            helper: z.string().optional(),
+            by: z.string().optional(),
+            at: timestamp.optional(),
+            overridden: z.boolean().optional(),
+          }),
+        )
+        .default({}),
+      /** Your own tasks, e.g. "Plug in ride power", after another task. */
+      custom: z
+        .array(z.object({ id, title: z.string().min(1), phase: z.enum(['setup', 'teardown']), after: z.string().optional(), required: z.boolean().default(false) }))
+        .default([]),
+      log: z.array(z.object({ id, at: timestamp, who: z.string(), text: z.string(), kind: z.enum(['task', 'override', 'issue', 'timing', 'note', 'sync']), key: z.string().optional() })).default([]),
+      times: z.object({ setupStart: timestamp.optional(), setupEnd: timestamp.optional(), teardownStart: timestamp.optional(), teardownEnd: timestamp.optional() }).default({}),
+    })
+    .default({ helpers: [], states: {}, custom: [], log: [], times: {} }),
   snapshot: z
     .object({
       at: timestamp,
