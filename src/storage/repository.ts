@@ -232,6 +232,43 @@ export class ProjectRepository {
    * A starter the user archived or changed is never re-added. `legacyIds` are starters that
    * browsers seeded before seeding was tracked per starter.
    */
+  // ---- Small helpers for cloud sync ----
+
+  async getMeta<T>(key: string): Promise<T | undefined> {
+    return (await this.db.meta.get(key))?.value as T | undefined;
+  }
+
+  async setMeta(key: string, value: unknown): Promise<void> {
+    if (value === undefined) await this.db.meta.delete(key);
+    else await this.db.meta.put({ key, value });
+  }
+
+  async deleteMetaPrefix(prefix: string): Promise<void> {
+    await this.db.meta.where('key').startsWith(prefix).delete();
+  }
+
+  /** Store a project exactly as it came from another device (same ID and revision). */
+  async putProjectAsIs(project: Project): Promise<void> {
+    const p = ProjectSchema.parse(project);
+    await this.db.projects.put({ id: p.id, updatedAt: p.updatedAt, doc: p });
+  }
+
+  async allVersionRows(): Promise<VersionRow[]> {
+    return this.db.versions.toArray();
+  }
+
+  async putVersionRow(row: VersionRow): Promise<void> {
+    await this.db.versions.put(row);
+  }
+
+  async allPhotoRows(): Promise<PhotoRow[]> {
+    return this.db.photos.toArray();
+  }
+
+  async putPhotoRow(row: PhotoRow): Promise<void> {
+    await this.db.photos.put(row);
+  }
+
   /** Everything on this device in one backup: projects, versions, photos, parts book. */
   async exportAll(): Promise<Backup> {
     const projects = await this.db.projects.toArray();

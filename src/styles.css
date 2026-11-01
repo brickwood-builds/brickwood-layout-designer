@@ -394,3 +394,13 @@ td.less { color: #16a34a; }
 .report .report-plan svg { max-height: 45vh; }
 .report .attention { border: 2px solid var(--warn); border-radius: 8px; padding: 8px 12px; }
 .report h3 { font-size: 1rem; margin: 12px 0 4px; }
+
+/* OneDrive (8) */
+.cloud-chip.error, .cloud-chip.offline { color: var(--warn); border-color: var(--warn); }
+.cloud-setup ol { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.cloud-setup code { background: var(--bg); padding: 1px 4px; border-radius: 4px; user-select: all; }
+
+/* The toolbar must not change rows while working: a save message changing length
+   ("Saving…" / "Saved 5:49 PM") used to flip it between one and two rows, moving the canvas. */
+.toolbar h1 { flex: 1 1 60px; }
+.save-state { display: inline-block; width: 6.6em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }

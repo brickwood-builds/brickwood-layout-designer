@@ -31,6 +31,8 @@ import { Palette } from './Palette';
 import { LayersMenu } from './LayersMenu';
 import { HeightFilter, HeightShadingToggle, OptionsMenu } from './OptionsMenu';
 import { PartsListButton } from './PartsList';
+import { cloud } from '../cloud/service';
+import { CloudChip } from '../ui/CloudBar';
 import { BuildsButton, BuildsDialog } from './Builds';
 import { VersionsButton } from './Versions';
 import { PackingButton, PackingDialog } from './Packing';
@@ -56,7 +58,10 @@ export function Editor({ repo, links, id, box, onBack }: { repo: ProjectReposito
         const store = createEditorStore(p);
         // Lets the linked-file sync hear about each successful save.
         let onSaved: OnSaved | undefined;
-        autosave = startAutosave(store, repo, 600, (saved) => onSaved?.(saved));
+        autosave = startAutosave(store, repo, 600, (saved) => {
+          onSaved?.(saved);
+          cloud()?.syncSoon(); // OneDrive: send it shortly after
+        });
         setLoaded({ store, autosave, registerOnSaved: (fn) => (onSaved = fn) });
       },
       (e: Error) => setError(e.message),
@@ -115,6 +120,19 @@ function EditorScreen({
     onBack();
   };
 
+  // OneDrive: save before each sync; notice when the other device's newer copy was taken.
+  const [updatedElsewhere, setUpdatedElsewhere] = useState(false);
+  useEffect(() => {
+    const c = cloud();
+    if (!c) return;
+    const offBefore = c.addBeforeSync(() => autosave.flush());
+    const offTaken = c.onTaken((ids) => ids.includes(store.getState().project.id) && setUpdatedElsewhere(true));
+    return () => {
+      offBefore();
+      offTaken();
+    };
+  }, [autosave, store]);
+
   return (
     <div className="editor">
       <Toolbar
@@ -125,6 +143,14 @@ function EditorScreen({
           window.location.hash = `#/project/${project.id}/print`;
         }}
       />
+      {updatedElsewhere && (
+        <div className="banner" role="alert">
+          <span>This layout was updated from your other device (OneDrive). Your copy from before is kept as a checkpoint.</span>
+          <button type="button" className="primary" onClick={() => window.location.reload()}>
+            Load the update
+          </button>
+        </div>
+      )}
       {saveState === 'conflict' && (
         <div className="banner error" role="alert">
           <span>This project was changed in another tab or window, so your latest changes here were not saved.</span>
@@ -510,6 +536,7 @@ function StatusBar({ store, file, parts, builds, versions, packing, shows, setup
         </select>
       </label>
       {file}
+      <CloudChip />
       {project.features.exhibitions && shows}
       {project.features.helpers && setup}
       {project.features.transport && packing}

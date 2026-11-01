@@ -4,6 +4,8 @@ import { HelpButton } from '../help/HelpDialog';
 import { fileLinksSupported, pickOpenFile, type FileLinks } from '../storage/fileLink';
 import { CheckpointsDialog, NewProjectDialog, RenameDialog } from './dialogs';
 import { BackupControls } from './BackupDialogs';
+import { CloudBar } from './CloudBar';
+import { cloud } from '../cloud/service';
 import { formatDate, summary, tableSize } from './format';
 import { exportFileName, exportProject, parseProjectFile } from '../domain/exchange';
 import { ProjectFormatError } from '../domain/migrations';
@@ -35,10 +37,13 @@ export function Dashboard({ repo, links, onOpen }: { repo: ProjectRepository; li
     // eslint-disable-next-line react-hooks/set-state-in-effect -- loading from IndexedDB on mount
     refresh();
   }, [refresh]);
+  // Projects arriving from another device (OneDrive) show up straight away.
+  useEffect(() => cloud()?.onTaken(() => void refresh()), [refresh]);
 
   const run = async (action: () => Promise<unknown>, success?: string) => {
     try {
       await action();
+      cloud()?.syncSoon();
       if (success) setMessage({ text: success });
     } catch (e) {
       setMessage({ text: e instanceof Error ? e.message : String(e), error: true });
@@ -137,6 +142,7 @@ export function Dashboard({ repo, links, onOpen }: { repo: ProjectRepository; li
         </div>
       )}
 
+      <CloudBar onChanged={() => void refresh()} />
       {projects && <BackupControls repo={repo} projects={projects} onDone={async (text, error) => (setMessage({ text, error }), await refresh())} />}
 
       {damaged.map((d) => (

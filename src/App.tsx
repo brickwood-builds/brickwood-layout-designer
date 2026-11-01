@@ -5,6 +5,7 @@ import { PrintView } from './ui/PrintView';
 import { ReportView } from './ui/ReportView';
 import { openDb } from './storage/db';
 import { ProjectRepository } from './storage/repository';
+import { initCloud } from './cloud/service';
 import { FileLinks, dbLinkStore } from './storage/fileLink';
 import { LEGACY_STARTER_IDS, starterProjects } from './starters';
 
@@ -31,7 +32,12 @@ export function App() {
     navigator.storage?.persist?.().catch(() => undefined);
     repo
       .seedStarters(starterProjects().map((s) => s.project), LEGACY_STARTER_IDS)
-      .then(() => setReady(true))
+      // OneDrive: finish a sign-in if Microsoft just sent the user back, and start syncing.
+      .then(() => initCloud(repo).init().catch(() => undefined))
+      .then(() => {
+        setRoute(readRoute());
+        setReady(true);
+      })
       .catch((e: Error) => setError(`Browser storage is not available: ${e.message}`));
     const onHash = () => setRoute(readRoute());
     window.addEventListener('hashchange', onHash);

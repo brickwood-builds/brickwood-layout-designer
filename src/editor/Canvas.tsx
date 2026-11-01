@@ -189,6 +189,18 @@ export function Canvas({ store }: { store: EditorStore }) {
       const w = toWorld(s.view, p.x, p.y);
       return itemAt(s.project, s.levelId, w.x, w.y, hiddenByHeight(s.project, s.levelId, s.project.features.heights ? s.heightLimit : null));
     };
+    /** Put a curve or stairs handle under the pointer (snapped). */
+    const moveHandle = (g: Extract<Gesture, { type: 'handle' }>, p: { x: number; y: number }) => {
+      const s = store.getState();
+      const w = toWorld(s.view, p.x, p.y);
+      // Stairs straighten onto whole studs anyway; curves may be finer.
+      const mode = s.project.stairs.some((x) => x.id === g.pathId) ? 'full' : s.project.settings.snap === 'free' ? 'free' : 'half';
+      const next = { x: snap(w.x, mode), y: snap(w.y, mode) };
+      const cur = g.points[g.index]!;
+      if (next.x === cur.x && next.y === cur.y) return;
+      g.points[g.index] = next;
+      g.moved = true;
+    };
     const endDrag = (commit: boolean) => {
       const s = store.getState();
       const d = s.drag;
@@ -315,11 +327,7 @@ export function Canvas({ store }: { store: EditorStore }) {
         if (!g.panning && Math.hypot(p.x - g.sx, p.y - g.sy) > (e.pointerType === 'touch' ? DRAG_THRESHOLD.touch : DRAG_THRESHOLD.mouse * 2)) g.panning = true;
         if (g.panning) s.setView({ ...g.startView, x: g.startView.x + p.x - g.sx, y: g.startView.y + p.y - g.sy });
       } else if (g.type === 'handle') {
-        const w = toWorld(s.view, p.x, p.y);
-        // Stairs straighten onto whole studs anyway; curves may be finer.
-        const mode = s.project.stairs.some((x) => x.id === g.pathId) ? 'full' : s.project.settings.snap === 'free' ? 'free' : 'half';
-        g.points[g.index] = { x: snap(w.x, mode), y: snap(w.y, mode) };
-        g.moved = true;
+        moveHandle(g, p);
         setHandleDrag([...g.points]);
       } else if (g.type === 'draw') {
         g.points.push(toWorld(s.view, p.x, p.y));
@@ -363,6 +371,8 @@ export function Canvas({ store }: { store: EditorStore }) {
       }
       if (g.type === 'handle') {
         setHandleDrag(null);
+        // The last moves can be merged away on a busy device: finish where the pointer was let go.
+        if (!cancelled) moveHandle(g, local(e));
         if (!cancelled && g.moved) reshapePathTo(store, g.pathId, g.points);
         return;
       }

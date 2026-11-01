@@ -158,8 +158,20 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'onedrive-sync',
+    title: 'OneDrive sync (computer and iPad)',
+    body: [
+      'With OneDrive sync, your layouts, parts list, saved versions and build photos follow you between devices — the computer and the iPad — through your own OneDrive. The app only uses its own folder (OneDrive → Apps → Brickwood Layout Designer).',
+      'Set up once: on the Projects page choose Set up OneDrive sync… and follow the steps (a free app registration with Microsoft), then paste the Application (client) ID. Then choose Sign in to OneDrive on each device.',
+      'After that it syncs by itself: a few seconds after you change something, when the app opens or comes back online, and every few minutes. ☁ Synced at the bottom of the editor shows it; click it (or Sync now on the Projects page) to sync straight away. It works offline and catches up later.',
+      'If the same layout was changed on two devices before they synced, nothing is overwritten: the Projects page asks whether to keep this device’s copy or take the other device’s, and the one you don’t keep is saved as a checkpoint. If a newer copy arrives while you have that layout open, a bar offers Load the update.',
+      'The parts list follows the most recent change. Versions and photos are copied both ways.',
+      'Sign out stops syncing on this device; nothing is deleted.',
+    ],
+  },
+  {
     id: 'onedrive',
-    title: 'Saving to OneDrive (or any folder)',
+    title: 'Saving to a file (OneDrive folder, any computer)',
     body: [
       'In Chrome or Edge on a computer, Save to a file… (bottom of the editor) lets you pick a file — put it in your OneDrive folder. From then on every save also goes to that file, and the OneDrive app copies it to the cloud. The bottom bar shows ✓ and the file name while it’s working.',
       'On another computer, choose Open file… on the project list and pick the same file in the OneDrive folder. It opens there and keeps saving to the same file.',
