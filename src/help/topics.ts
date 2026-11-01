@@ -231,6 +231,28 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'packing',
+    title: 'Packing: boxes, totes and labels',
+    body: [
+      'Switch on Packing in the ⋯ menu. Packing… at the bottom lists your containers — totes, boxes, crates, carrying boards, bags, cases — each with a permanent ID (BX-001, BX-002…) that is never given out again, even after a container is retired.',
+      'To pack: select modules or features on the plan and choose a container under Put in (or + A new tote). Or open a container and tick things under Add from the plan. A thing is only ever in one container.',
+      'A container can sit inside another (Inside). Add sizes and weight (weights add up for boxes inside boxes), where it is stored, handling notes for the label, and non-LEGO equipment — folding tables, shelf brackets, power strips, table skirts.',
+      'Print label (or Print all labels) prints the ID, name, contents, handling notes and a QR code. Scanning the code opens that box’s details in the app — it only looks it up; it never ticks anything off.',
+      'Each container keeps a history: when it was packed, where it was stored, notes. Retire… keeps its ID reserved and its history.',
+    ],
+  },
+  {
+    id: 'shows',
+    title: 'Shows',
+    body: [
+      'Switch on Shows in the ⋯ menu, then Shows… at the bottom. Add each show with its dates and venue. Shows that overlap are flagged — the display can’t be at both.',
+      'In a show: note the version going, venue rules, tables provided, travel and costs. Under Going this time, untick anything staying home or swapped at the last minute — the layout itself is never changed.',
+      'The checklist lists each outer container (with what’s inside) and anything travelling unboxed. Packed, Loaded, Unloaded and Back home are ticked separately — packing something doesn’t mark it unloaded.',
+      'Vehicles and trips: add a trip (e.g. “Van — Friday”) with its cargo space in cubic feet if you like, then choose the trip for each line. Too much for the space, or anything not on a trip yet, is flagged. Print packing list and Print load plan give checklists to take along.',
+      'Show done — keep the record saves what actually went; later changes to the layout or packing don’t change it.',
+    ],
+  },
+  {
     id: 'stairs',
     title: 'Stairs',
     body: [

@@ -239,6 +239,69 @@ export const BuildSchema = z.object({
   createdAt: timestamp,
 });
 
+export const CONTAINER_KINDS = ['tote', 'box', 'crate', 'board', 'bag', 'case', 'other'] as const;
+const inches = z.number().finite().positive().optional();
+const historyEntry = z.object({ id, at: timestamp, text: z.string() });
+
+/**
+ * A box, tote, crate or carrying board (FR-10): a permanent ID (BX-001…) that is never
+ * reused, even after it is retired. It can sit inside another container, and holds things
+ * from the plan (modules, features) and non-LEGO equipment (tables, shelves, power strips).
+ */
+export const ContainerSchema = z.object({
+  id,
+  code: z.string().min(1),
+  name: z.string().default(''),
+  kind: z.enum(CONTAINER_KINDS),
+  widthIn: inches,
+  depthIn: inches,
+  heightIn: inches,
+  weightLb: z.number().finite().nonnegative().optional(),
+  storage: z.string().default(''),
+  handling: z.string().default(''),
+  parentId: id.optional(),
+  itemIds: z.array(id).default([]),
+  equipment: z.array(z.object({ id, name: z.string().min(1), qty: z.number().int().positive() })).default([]),
+  retired: z.boolean().default(false),
+  history: z.array(historyEntry).default([]),
+  createdAt: timestamp,
+});
+
+const CHECK_STEPS = ['packed', 'loaded', 'unloaded', 'home'] as const;
+export const CheckStepSchema = z.enum(CHECK_STEPS);
+
+/**
+ * A show this display goes to (FR-09): dates, venue, notes, what is left out this time
+ * (never changes the layout itself), a checklist per container or loose thing with separate
+ * packed / loaded / unloaded / back-home ticks, and vehicles or trips. When it is done, a
+ * snapshot keeps what actually went.
+ */
+export const ShowSchema = z.object({
+  id,
+  name: z.string().min(1),
+  venue: z.string().default(''),
+  /** yyyy-mm-dd */
+  start: z.string(),
+  end: z.string(),
+  notes: z.string().default(''),
+  /** Which saved version is going (name only; versions live on the device). */
+  versionName: z.string().default(''),
+  /** Things on the plan not going to this show. */
+  omittedIds: z.array(id).default([]),
+  checklist: z.record(z.string(), z.object({ packed: timestamp.optional(), loaded: timestamp.optional(), unloaded: timestamp.optional(), home: timestamp.optional() })).default({}),
+  trips: z.array(z.object({ id, name: z.string().min(1), capacityCuFt: z.number().finite().positive().optional(), containerIds: z.array(id).default([]) })).default([]),
+  done: z.boolean().default(false),
+  snapshot: z
+    .object({
+      at: timestamp,
+      containers: z.array(z.object({ code: z.string(), name: z.string(), contents: z.array(z.string()) })),
+      loose: z.array(z.string()),
+      omitted: z.array(z.string()),
+    })
+    .optional(),
+  createdAt: timestamp,
+});
+
 /** Money spent on this layout (FR-08: cost tracking). */
 export const SpendingSchema = z.object({
   id,
@@ -333,6 +396,8 @@ export const ProjectSchema = z.object({
   stairs: z.array(StairSchema).default([]),
   spending: z.array(SpendingSchema).default([]),
   builds: z.array(BuildSchema).default([]),
+  containers: z.array(ContainerSchema).default([]),
+  shows: z.array(ShowSchema).default([]),
   /** The named version chosen as the one to use (FR-06.02); versions are kept on the device. */
   preferredVersion: z.object({ id, name: z.string() }).optional(),
 });
@@ -352,6 +417,9 @@ export type Curve = z.infer<typeof CurveSchema>;
 export type Stair = z.infer<typeof StairSchema>;
 export type Spending = z.infer<typeof SpendingSchema>;
 export type Build = z.infer<typeof BuildSchema>;
+export type Container = z.infer<typeof ContainerSchema>;
+export type Show = z.infer<typeof ShowSchema>;
+export type CheckStep = z.infer<typeof CheckStepSchema>;
 export type BuildStatus = Build['status'];
 export type BuildCondition = Build['condition'];
 export type Settings = z.infer<typeof SettingsSchema>;

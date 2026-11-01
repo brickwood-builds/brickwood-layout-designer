@@ -17,6 +17,7 @@
   "dependencies": {
     "dexie": "^4.4.7",
     "konva": "^10.9.0",
+    "qrcode-generator": "2.0.4",
     "rbush": "^4.0.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

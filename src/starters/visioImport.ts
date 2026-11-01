@@ -278,6 +278,8 @@ export function buildStarterProject(spec: StarterSpec, allRows: VisioRow[], crea
     stairs: [],
     spending: [],
     builds: [],
+    containers: [],
+    shows: [],
   };
   return { project, notes };
 }

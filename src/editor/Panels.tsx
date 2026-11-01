@@ -14,6 +14,7 @@ import { groupOf, modulesUnder, withCarriedItems, renameGroup, resizeObject, sav
 import { markerKind } from '../domain/catalog';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { DrawPanel } from './DrawPanel';
+import { PackBox } from './Packing';
 import { CONDITION_LABEL, STATUS_LABEL, buildOfItem, createBuild, suggestedName } from '../domain/builds';
 import { useLibraryPart } from './partPrefs';
 import { PARTS_SOURCE } from '../domain/partsLibrary';
@@ -104,6 +105,7 @@ export function Properties({ store }: { store: EditorStore }) {
       <aside className="props" aria-label="Properties" key={group?.id ?? 'multi'}>
         {group ? <GroupFields store={store} groupId={group.id} /> : <h2>{selection.length} selected</h2>}
         <BuildBox store={store} />
+        <PackBox store={store} />
         <SelectionActions store={store} />
       </aside>
     );
@@ -122,6 +124,7 @@ export function Properties({ store }: { store: EditorStore }) {
         onCommit={(notes) => store.getState().commit((p) => (isModule(item) ? updateModule(p, item.id, { notes }) : updateObject(p, item.id, { notes })))}
       />
       <BuildBox store={store} />
+      <PackBox store={store} />
       <SelectionActions store={store} />
     </aside>
   );

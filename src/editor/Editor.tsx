@@ -33,6 +33,8 @@ import { HeightFilter, HeightShadingToggle, OptionsMenu } from './OptionsMenu';
 import { PartsListButton } from './PartsList';
 import { BuildsButton, BuildsDialog } from './Builds';
 import { VersionsButton } from './Versions';
+import { PackingButton, PackingDialog } from './Packing';
+import { ShowsButton, ShowsDialog } from './Shows';
 import { computeStack } from '../domain/heights';
 import { HelpButton } from '../help/HelpDialog';
 import { createEditorStore, type EditorStore } from './store';
@@ -40,7 +42,7 @@ import { toScreen } from './view';
 
 type OnSaved = (p: Project) => void;
 
-export function Editor({ repo, links, id, onBack }: { repo: ProjectRepository; links: FileLinks; id: string; onBack: () => void }) {
+export function Editor({ repo, links, id, box, onBack }: { repo: ProjectRepository; links: FileLinks; id: string; box?: string; onBack: () => void }) {
   const [loaded, setLoaded] = useState<{ store: EditorStore; autosave: Autosave; registerOnSaved: (fn: OnSaved) => void } | null>(null);
   const [error, setError] = useState('');
 
@@ -65,6 +67,14 @@ export function Editor({ repo, links, id, onBack }: { repo: ProjectRepository; l
       }
     };
   }, [repo, id]);
+
+  // A box label's QR code: show that box (lookup only — nothing is ticked off).
+  useEffect(() => {
+    if (!loaded || !box) return;
+    const s = loaded.store.getState();
+    const c = s.project.containers.find((x) => x.code.toLowerCase() === box.toLowerCase());
+    s.set({ packingDialog: c ? c.id : 'list' });
+  }, [loaded, box]);
 
   if (error)
     return (
@@ -165,7 +175,9 @@ function EditorScreen({
         <Canvas store={store} />
         <Properties store={store} />
       </div>
-      <StatusBar store={store} file={<FileStatus file={file} />} parts={<PartsListButton store={store} repo={repo} />} builds={<BuildsButton store={store} />} versions={<VersionsButton store={store} repo={repo} autosave={autosave} />} />
+      <StatusBar store={store} file={<FileStatus file={file} />} parts={<PartsListButton store={store} repo={repo} />} builds={<BuildsButton store={store} />} versions={<VersionsButton store={store} repo={repo} autosave={autosave} />} packing={<PackingButton store={store} />} shows={<ShowsButton store={store} />} />
+      <PackingDialog store={store} />
+      <ShowsDialog store={store} />
       <BuildsDialog store={store} repo={repo} />
     </div>
   );
@@ -443,7 +455,7 @@ function FileStatus({ file }: { file: ReturnType<typeof useFileSync> }) {
   }
 }
 
-function StatusBar({ store, file, parts, builds, versions }: { store: EditorStore; file: ReactNode; parts: ReactNode; builds: ReactNode; versions: ReactNode }) {
+function StatusBar({ store, file, parts, builds, versions, packing, shows }: { store: EditorStore; file: ReactNode; parts: ReactNode; builds: ReactNode; versions: ReactNode; packing: ReactNode; shows: ReactNode }) {
   const project = useStore(store, (s) => s.project);
   const levelId = useStore(store, (s) => s.levelId);
   const pointer = useStore(store, (s) => s.pointer);
@@ -496,6 +508,8 @@ function StatusBar({ store, file, parts, builds, versions }: { store: EditorStor
         </select>
       </label>
       {file}
+      {project.features.exhibitions && shows}
+      {project.features.transport && packing}
       {project.features.versions && versions}
       {project.features.builds && builds}
       {project.features.inventory && parts}

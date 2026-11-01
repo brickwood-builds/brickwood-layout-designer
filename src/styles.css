@@ -349,3 +349,19 @@ td.less { color: #16a34a; }
 @media (max-width: 600px) { .compare .row, .compare-pics { grid-template-columns: 1fr; } }
 .build-record > .actions:first-child button, .compare > .actions:first-child button { flex: none; }
 .version-list .actions button { flex: 0 1 auto; }
+
+/* Packing and shows (5) */
+.packing { display: flex; flex-direction: column; gap: 10px; }
+.packing h3, .build-record h3 select { font-size: 0.95rem; margin: 0; }
+.banner.warn { margin: 0; background: #fef3c7; color: #78350f; }
+.small-num { flex: 0 0 64px !important; width: 64px; }
+.new-container input:not(.small-num) { flex: 1 1 160px; }
+.build-record .row.four { grid-template-columns: repeat(4, 1fr); }
+.contents-list { margin: 0; padding-left: 18px; }
+.contents-list li { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.actions-inline { display: inline-flex; gap: 8px; }
+.pick-chips { max-height: 160px; overflow: auto; }
+.check.chip { padding: 2px 8px; border: 1px solid var(--border); border-radius: 14px; font-size: 0.85rem; }
+.checklist td { vertical-align: top; }
+.checklist td input[type='checkbox'] { width: 20px; height: 20px; }
+@media (max-width: 600px) { .build-record .row.four { grid-template-columns: 1fr 1fr; } }

@@ -77,6 +77,8 @@ export function createProject(opts: NewProjectOptions): Project {
     stairs: [],
     spending: [],
     builds: [],
+    containers: [],
+    shows: [],
   };
 }
 

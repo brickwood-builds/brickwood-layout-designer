@@ -10,6 +10,8 @@ const OPTIONS: { key: keyof Features; label: string; hint: string }[] = [
   { key: 'heights', label: 'Heights', hint: 'Building heights, automatic stacking, a height filter and shelf clearance warnings' },
   { key: 'versions', label: 'Versions', hint: 'Save named versions of this layout (e.g. 2026 show, 12 ft), compare them, and see which parts changed' },
   { key: 'builds', label: 'Physical builds', hint: 'Give real builds (the castle, a ride) a permanent ID: storage, condition, repairs, photos and build progress' },
+  { key: 'transport', label: 'Packing', hint: 'Boxes, totes and carrying boards with permanent IDs: what is in each, where it is stored, printable labels with QR codes' },
+  { key: 'exhibitions', label: 'Shows', hint: 'Shows on a calendar: what goes, packing checklist (packed, loaded, unloaded, back home), vehicles and trips' },
   { key: 'inventory', label: 'Parts & inventory', hint: 'A parts list for this layout: what it needs, what you have, and a shopping list to download' },
 ];
 
