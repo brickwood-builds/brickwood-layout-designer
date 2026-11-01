@@ -30,7 +30,7 @@ const fileDoc = (page: Page, name = FILE) => page.evaluate((n) => JSON.parse(ses
 async function openPark(page: Page) {
   await page.goto('/');
   await page.getByRole('article', { name: PARK, exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
-  await expect(page.getByText('92 modules')).toBeVisible();
+  await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
 }
 
 async function nudgeC05(page: Page) {

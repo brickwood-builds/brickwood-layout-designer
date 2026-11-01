@@ -133,7 +133,7 @@ test.describe('mouse (desktop Chrome)', () => {
     await expect(page.getByText('93 modules')).toBeVisible();
     await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
     await page.getByRole('button', { name: 'Undo' }).click();
-    await expect(page.getByText('92 modules')).toBeVisible();
+    await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
   });
 
   test('marquee selects several; delete and undo as one step', async ({ page }) => {
@@ -147,7 +147,7 @@ test.describe('mouse (desktop Chrome)', () => {
     expect(left).toBeLessThan(92);
     await expect(page.getByText(`${left} modules`)).toBeVisible();
     await page.keyboard.press('Control+z');
-    await expect(page.getByText('92 modules')).toBeVisible();
+    await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
     // Clicking empty space clears the selection.
     await page.mouse.click(...xy(await toPage(page, -3, -3)));
     expect((await editorState(page)).selection).toEqual([]);
@@ -191,7 +191,7 @@ test.describe('mouse (desktop Chrome)', () => {
     await expect(page.getByText('1 module', { exact: true })).toBeVisible();
     await page.getByLabel('Others').check();
     await page.getByLabel('Level').selectOption({ label: 'Main table' });
-    await expect(page.getByText('92 modules')).toBeVisible();
+    await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
     await saved(page);
     await page.reload();
     await expect(page.getByLabel('Level').locator('option')).toHaveText(['Main table', 'Upper shelf']);

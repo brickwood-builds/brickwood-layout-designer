@@ -19,7 +19,7 @@ async function openPark(page: Page) {
   await page.goto('/');
   await page.getByRole('article', { name: PARK, exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
-  await expect(page.getByText('92 modules')).toBeVisible();
+  await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
 }
 
 test.describe('refinement (desktop)', () => {
@@ -78,7 +78,7 @@ test.describe('refinement (desktop)', () => {
       expect((await file.createReadStream()).readable).toBe(true);
     }
     await page.getByRole('button', { name: '← Back to editor' }).click();
-    await expect(page.getByText('92 modules')).toBeVisible();
+    await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
   });
 
   test('help opens on the right topic, searches, and closes', async ({ page }) => {
@@ -107,7 +107,7 @@ test('works offline after the first visit', async ({ page, context }, info) => {
   await page.reload();
   await expect(page.getByRole('article', { name: PARK, exact: true })).toBeVisible();
   await page.getByRole('article', { name: PARK, exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
-  await expect(page.getByText('92 modules')).toBeVisible();
+  await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
   await page.keyboard.press('?');
   await expect(page.getByRole('dialog', { name: 'Help' })).toBeVisible();
   await context.setOffline(false);

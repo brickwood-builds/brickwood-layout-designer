@@ -19,7 +19,7 @@ for (const [label, build] of fixtures) {
     await page.getByTestId('import-input').setInputFiles(file);
     const t0 = Date.now();
     await page.getByRole('article', { name: 'Large exhibition fixture' }).getByRole('button', { name: 'Open', exact: true }).click();
-    await expect(page.getByText(/\d+ modules/)).toBeVisible();
+    await expect(page.locator('footer.statusbar').getByText(/\d+ modules/)).toBeVisible(); // the editor's, not a dashboard card's
     const openMs = Date.now() - t0;
 
     const frame = () => page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => r())));
