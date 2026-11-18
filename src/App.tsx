@@ -6,6 +6,7 @@ import { ReportView } from './ui/ReportView';
 import { openDb } from './storage/db';
 import { ProjectRepository } from './storage/repository';
 import { initCloud } from './cloud/service';
+import { initPartLookup } from './editor/partLookup';
 import { FileLinks, dbLinkStore } from './storage/fileLink';
 import { LEGACY_STARTER_IDS, starterProjects } from './starters';
 
@@ -34,6 +35,8 @@ export function App() {
       .seedStarters(starterProjects().map((s) => s.project), LEGACY_STARTER_IDS)
       // OneDrive: finish a sign-in if Microsoft just sent the user back, and start syncing.
       .then(() => initCloud(repo).init().catch(() => undefined))
+      // Rebrickable lookup: the key and the parts looked up before (for offline use).
+      .then(() => initPartLookup(repo).init().catch(() => undefined))
       .then(() => {
         setRoute(readRoute());
         setReady(true);

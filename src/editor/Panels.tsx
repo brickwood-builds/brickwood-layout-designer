@@ -215,7 +215,15 @@ function ObjectFields({ store, o, unit }: { store: EditorStore; o: CanvasObject;
       <Field label="Name" value={o.name} onCommit={(v) => commit((p) => updateObject(p, o.id, { name: v.trim() }))} />
       {part && (
         <p className="muted small">
-          LEGO part <strong>{part.partNo}</strong> ({part.category}) — {PARTS_SOURCE} number, usually the same on BrickLink.
+          {part.blNo ? (
+            <>
+              LEGO part <strong>{part.blNo}</strong> on BrickLink ({part.category}){part.blNo !== part.partNo ? ` — ${part.partNo} on ${PARTS_SOURCE}` : ''}.
+            </>
+          ) : (
+            <>
+              LEGO part <strong>{part.partNo}</strong> ({part.category}) — {PARTS_SOURCE} number, usually the same on BrickLink.
+            </>
+          )}
           {!part.sizeKnown && ' The parts list doesn’t give its size: set Width and Depth below.'}
         </p>
       )}

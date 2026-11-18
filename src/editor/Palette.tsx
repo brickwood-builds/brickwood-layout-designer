@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type PointerEvent as React
 import { createPortal } from 'react-dom';
 import { useStore } from 'zustand';
 import { searchParts } from '../domain/catalog';
-import { PARTS_SOURCE, PARTS_SOURCE_URL, libraryIfLoaded, libraryTemplate, loadLibrary, searchLibrary, sizeText, type LibraryPart, type PartsLibrary } from '../domain/partsLibrary';
+import { PARTS_SOURCE, PARTS_SOURCE_URL, libraryIfLoaded, libraryTemplate, loadLibrary, searchLibrary, shownPartNo, sizeText, type LibraryPart, type PartsLibrary } from '../domain/partsLibrary';
 import { noteUsed, toggleFavourite, usePartPrefs } from './partPrefs';
 import { addShape, defaultItemLayerId, deleteShape } from '../domain/objects';
 import { lego, legoColorName } from '../domain/legoColors';
@@ -15,6 +15,7 @@ import { copiesOf, deleteDesign, isOutdated } from '../domain/designs';
 import type { EditorStore } from './store';
 import { toWorld } from './view';
 import { KIND_LABEL } from './Panels';
+import { OnlineLookup } from './OnlineLookup';
 
 type Place = (at?: { x: number; y: number }) => void;
 
@@ -93,7 +94,7 @@ function LibraryEntry({ store, part }: { store: EditorStore; part: LibraryPart }
     <div className="part-row">
       <PaletteItem
         store={store}
-        title={`${part.name} — part ${part.partNo}, ${sizeText(part)}${part.sizeKnown ? '' : ': placed as 1×1, set its size after'}`}
+        title={`${part.name} — part ${shownPartNo(part)}, ${sizeText(part)}${part.sizeKnown ? '' : ': placed as 1×1, set its size after'}`}
         place={(at) => {
           addObjectAt(store, t, at);
           noteUsed(part);
@@ -102,7 +103,7 @@ function LibraryEntry({ store, part }: { store: EditorStore; part: LibraryPart }
         <Swatch color={t.color} ratio={part.width / part.depth} round={part.round} />
         <span className="part-name">
           {part.name}
-          <small className="muted"> {part.partNo}</small>
+          <small className="muted"> {shownPartNo(part)}</small>
         </span>
       </PaletteItem>
       <button type="button" className="star" aria-pressed={fav} aria-label={fav ? `Remove ${part.name} from favourites` : `Add ${part.name} to favourites`} title={fav ? 'Favourite — click to remove' : 'Add to favourites'} onClick={() => toggleFavourite(part)}>
@@ -139,18 +140,23 @@ function LibraryResults({ store, query, skip }: { store: EditorStore; query: str
       live = false;
     };
   }, [lib]);
-  if (failed) return <span className="muted small">The full parts list couldn’t be loaded.</span>;
-  if (!lib) return <span className="muted small">Loading all LEGO parts…</span>;
+  const render = (p: LibraryPart) => <LibraryEntry key={p.key} store={store} part={p} />;
+  if (failed || !lib)
+    return (
+      <>
+        <span className="muted small">{failed ? 'The full parts list couldn’t be loaded.' : 'Loading all LEGO parts…'}</span>
+        <OnlineLookup query={query} skip={skip} render={render} />
+      </>
+    );
   const { parts, total } = searchLibrary(lib, query, 40);
   const shown = parts.filter((p) => !skip.includes(p.partNo));
   return (
     <>
       <span className="palette-sub">All LEGO parts</span>
-      {shown.map((p) => (
-        <LibraryEntry key={p.key} store={store} part={p} />
-      ))}
+      {shown.map(render)}
       {total === 0 && <span className="muted small">No match. Try “plate 1x6”, “bush” or a part number.</span>}
       {total > parts.length && <span className="muted small">Showing {parts.length} of {total} — type more to narrow it down.</span>}
+      <OnlineLookup query={query} skip={[...skip, ...shown.map((p) => p.partNo)]} render={render} />
     </>
   );
 }

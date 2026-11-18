@@ -13,6 +13,8 @@ export interface LibraryPart {
   key: string;
   /** Rebrickable part number (usually the same as BrickLink's). */
   partNo: string;
+  /** BrickLink number, when known (parts looked up live carry it from Rebrickable). */
+  blNo?: string;
   name: string;
   category: string;
   width: number;
@@ -90,20 +92,21 @@ const norm = (s: string) => s.toLowerCase().replace(/×/g, 'x').replace(/(\d)\s*
  * Search by name, size, category or part number: "tile 2x2", "3024", "bush", "slope 45".
  * Part-number matches come first, then the most common parts.
  */
-export function searchLibrary(lib: PartsLibrary, query: string, limit = 40): { parts: LibraryPart[]; total: number } {
+export function searchLibrary(lib: Pick<PartsLibrary, 'parts'>, query: string, limit = 40): { parts: LibraryPart[]; total: number } {
   const words = norm(query).split(/\s+/).filter(Boolean);
   if (!words.length) return { parts: [], total: 0 };
   const exact: LibraryPart[] = [];
   const rest: LibraryPart[] = [];
   for (const p of lib.parts) {
     const no = p.partNo.toLowerCase();
-    if (words.length === 1 && no === words[0]) {
+    const bl = p.blNo?.toLowerCase() ?? '';
+    if (words.length === 1 && (no === words[0] || bl === words[0])) {
       exact.unshift(p);
       continue;
     }
-    const text = `${norm(p.name)} ${p.category.toLowerCase()} ${no}`;
+    const text = `${norm(p.name)} ${p.category.toLowerCase()} ${no} ${bl}`;
     if (!words.every((w) => text.includes(w))) continue;
-    if (words.some((w) => no.startsWith(w))) exact.push(p);
+    if (words.some((w) => no.startsWith(w) || (bl && bl.startsWith(w)))) exact.push(p);
     else rest.push(p);
   }
   const all = [...exact, ...rest];
@@ -133,3 +136,6 @@ export function libraryTemplate(p: LibraryPart, colorName = defaultColorName(p))
 
 /** Short size text: "2×4", "1×1 (size not known)". */
 export const sizeText = (p: Pick<LibraryPart, 'width' | 'depth' | 'sizeKnown'>) => (p.sizeKnown ? `${p.depth}×${p.width}` : 'size not known');
+
+/** The number to show for a part: BrickLink's when known (decision 18 Nov 2026), else Rebrickable's. */
+export const shownPartNo = (p: Pick<LibraryPart, 'partNo' | 'blNo'>) => p.blNo ?? p.partNo;

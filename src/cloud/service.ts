@@ -4,6 +4,7 @@ import { useSyncExternalStore } from 'react';
 import type { ProjectRepository } from '../storage/repository';
 import { SignInNeededError } from './drive';
 import { OneDrive, accessToken, completeSignIn, startSignIn, type CloudConfig, type TokenStore, type Tokens } from './onedrive';
+import { syncAppSettings } from './appSettings';
 import { SyncEngine, type Conflict, type SyncReport } from './sync';
 
 export interface CloudState {
@@ -26,6 +27,7 @@ export class CloudService {
   state: CloudState = { configured: false, signedIn: false, account: '', status: 'idle', error: '', lastSync: null, conflicts: [], last: null };
   private listeners = new Set<() => void>();
   private takenListeners = new Set<(ids: string[]) => void>();
+  private settingsListeners = new Set<() => void>();
   private beforeSync = new Set<() => Promise<void>>();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private running: Promise<void> | null = null;
@@ -58,6 +60,14 @@ export class CloudService {
     this.takenListeners.add(l);
     return () => {
       this.takenListeners.delete(l);
+    };
+  }
+
+  /** Called when sync took app settings (the Rebrickable key) from another device. */
+  onSettingsTaken(l: () => void) {
+    this.settingsListeners.add(l);
+    return () => {
+      this.settingsListeners.delete(l);
     };
   }
 
@@ -142,6 +152,8 @@ export class CloudService {
           this.set({ account });
         }
         const report = await engine.syncAll();
+        // App settings live in their own small file, apart from the projects.
+        if ((await syncAppSettings(this.repo, drive)) === 'taken') this.settingsListeners.forEach((l) => l());
         this.set({ status: 'idle', lastSync: new Date().toISOString(), conflicts: report.conflicts, last: report });
         const taken = [...report.taken, ...report.added];
         if (taken.length) this.takenListeners.forEach((l) => l(taken));

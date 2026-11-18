@@ -1,6 +1,7 @@
 // Favourite and recently used parts (FR-07.07), kept on this device across projects.
 // Whole part entries are stored, so they show at once (before the parts list loads).
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import { partLookup } from './partLookup';
 import { libraryIfLoaded, loadLibrary, type LibraryPart, type PartsLibrary } from '../domain/partsLibrary';
 
 const FAV = 'brickwood.favouriteParts';
@@ -80,5 +81,5 @@ export function useLibraryPart(catalogKey: string | undefined): LibraryPart | nu
     };
   }, [partNo, lib]);
   if (!partNo) return null;
-  return lib?.byNo.get(partNo) ?? [...state.favourites, ...state.recent].find((p) => p.partNo === partNo) ?? null;
+  return partLookup()?.byPartNo(partNo) ?? lib?.byNo.get(partNo) ?? [...state.favourites, ...state.recent].find((p) => p.partNo === partNo) ?? null;
 }
