@@ -50,7 +50,7 @@ Scaffold Vite+React+TS, Vitest, Playwright, CI; Zod domain model (project, table
 
 ## Parts lookup source (18 Nov 2026)
 - **Rebrickable is the parts source**, for both the offline catalog and live lookup. BrickLink's API was ruled out: its access tokens are tied to registered static IP addresses and need secrets kept server-side, which doesn't fit a free browser app used from home and show Wi-Fi/iPad.
-- Live lookup: Rebrickable API v3 called directly from the app with the owner's own free Rebrickable key (entered once, stored locally, never committed). Respect ~1 request/sec; batch with `part_nums` + `inc_part_details=1`; cache every looked-up part so it works offline afterwards.
+- Live lookup: Rebrickable API v3 called directly from the app with the owner's own free Rebrickable key. Entered once, kept locally, and **synced between devices via a small app-settings file in the owner's OneDrive** (separate from project files). Never stored inside project files, exports, backups or read-only shares, and never committed. Works without OneDrive by entering the key per device. Respect ~1 request/sec; batch with `part_nums` + `inc_part_details=1`; cache every looked-up part so it works offline afterwards.
 - Offline/full catalog: Rebrickable's downloadable parts/colors CSVs (not bulk API calls). The current bundled ~2,400-part catalog stays as the built-in default.
 - **BrickLink numbers remain the part IDs shown and stored** (from Rebrickable `external_ids`), so BrickLink/Brickwith sourcing keeps working.
 - Owner to review https://rebrickable.com/terms for data-use terms.
