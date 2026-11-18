@@ -47,3 +47,10 @@ Scaffold Vite+React+TS, Vitest, Playwright, CI; Zod domain model (project, table
 - Cloud sync (1E): OneDrive first.
 - AA–EE are placeholder IDs for new 16×16 plates. The 32×32 off the v7 page is a leftover in the drawing.
 
+
+## Parts lookup source (18 Nov 2026)
+- **Rebrickable is the parts source**, for both the offline catalog and live lookup. BrickLink's API was ruled out: its access tokens are tied to registered static IP addresses and need secrets kept server-side, which doesn't fit a free browser app used from home and show Wi-Fi/iPad.
+- Live lookup: Rebrickable API v3 called directly from the app with the owner's own free Rebrickable key (entered once, stored locally, never committed). Respect ~1 request/sec; batch with `part_nums` + `inc_part_details=1`; cache every looked-up part so it works offline afterwards.
+- Offline/full catalog: Rebrickable's downloadable parts/colors CSVs (not bulk API calls). The current bundled ~2,400-part catalog stays as the built-in default.
+- **BrickLink numbers remain the part IDs shown and stored** (from Rebrickable `external_ids`), so BrickLink/Brickwith sourcing keeps working.
+- Owner to review https://rebrickable.com/terms for data-use terms.
