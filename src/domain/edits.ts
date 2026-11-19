@@ -5,7 +5,8 @@ import { nextLabel } from './labels';
 import { footprint, rectContains, snap, unionRect, type Rect } from './geometry';
 import { SpatialIndex } from './spatial';
 import { inchesToStuds } from './units';
-import { MILS_SIZES, type CanvasObject, type Dimension, type Level, type MilsKind, type MilsModule, type Project, type Rotation, type Table } from './schema';
+import { cleanOutline, outlineBox, scaleOutline, type Pt } from './outline';
+import { MILS_SIZES, milsKindForSize, type CanvasObject, type Dimension, type Level, type MilsKind, type MilsModule, type Project, type Rotation, type Table } from './schema';
 
 export type Item = MilsModule | CanvasObject;
 export type SnapMode = Project['settings']['snap'];
@@ -104,7 +105,37 @@ export function resizeModule(p: Project, id: string, kind: MilsKind, width: numb
   const nf = footprint({ ...m, width, depth });
   const x = snap(f.x + f.width / 2 - nf.width / 2, mode);
   const y = snap(f.y + f.depth / 2 - nf.depth / 2, mode);
-  return updateModule(p, id, { kind, width, depth, x, y });
+  return updateModule(p, id, { kind, width, depth, x, y, ...(m.outline ? { outline: scaleOutline(m.outline, m, { width, depth }) } : {}) });
+}
+
+/**
+ * A shaped feature — a building or ride base that isn't a rectangle — from the corners
+ * clicked on the table. Like Features › New…, it is a named base (no plate ID). Null when
+ * the corners don't make a shape.
+ */
+export function addShapedFeature(p: Project, spec: { levelId: string; name: string; color: string; points: Pt[] }, mode: SnapMode): { project: Project; id: string } | null {
+  const pts = cleanOutline(spec.points, mode);
+  if (!pts) return null;
+  const box = outlineBox(pts);
+  const plainBox = pts.length === 4 && box.outline.every((q) => (q.x === 0 || q.x === box.width) && (q.y === 0 || q.y === box.depth));
+  const module: MilsModule = {
+    id: newId(),
+    levelId: spec.levelId,
+    layerId: moduleLayerId(p, spec.levelId),
+    kind: milsKindForSize(box.width, box.depth),
+    label: '',
+    name: spec.name,
+    x: box.x,
+    y: box.y,
+    width: box.width,
+    depth: box.depth,
+    rotation: 0,
+    notes: '',
+    color: spec.color,
+    // Four corners of a plain rectangle: just a rectangle.
+    ...(plainBox ? {} : { outline: box.outline }),
+  };
+  return { project: { ...p, modules: [...p.modules, module] }, id: module.id };
 }
 
 /** Layer that new modules on a level go on: the one most of its modules use. */

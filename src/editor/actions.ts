@@ -1,6 +1,7 @@
 // Editor commands shared by the toolbar, keyboard shortcuts and panels.
 import { levelBounds, snap, unionRect, footprint } from '../domain/geometry';
 import {
+  addShapedFeature,
   findFreeSpot,
   addModule,
   allItems,
@@ -212,6 +213,7 @@ export function stairSpec(store: EditorStore, points: Pt[]): StairSpec {
 /** Draw › Curve or Stairs finished: lay the pieces as one editable group (one undo). */
 export function finishCurve(store: EditorStore) {
   const s = store.getState();
+  if (s.draw.shape === 'outline') return finishOutline(store);
   const points = cleanCurvePoints(s.curveDraft ?? []);
   s.set({ curveDraft: null });
   if (points.length < 2) return;
@@ -232,6 +234,29 @@ export function finishCurve(store: EditorStore) {
   }
   const spacing = isStamping(s.draw) ? { spacing: stampSpacing(s.project, s.draw), turn: s.draw.turn } : {};
   s.commit((p) => drawCurve(p, { levelId: s.levelId, layerId: itemLayerId(store), points, width: s.draw.width, template: paintTemplate(p, s.draw), whenTaken: s.draw.whenTaken, ...spacing })?.project ?? p, []);
+}
+
+/**
+ * Finish a shaped feature: the corners clicked become one named base, selected so it can be
+ * renamed or moved. Fewer than three corners (or no area) leaves the drawing as it is.
+ */
+export function finishOutline(store: EditorStore): boolean {
+  const s = store.getState();
+  const points = s.curveDraft ?? [];
+  let id = '';
+  const { name, color } = s.draw.feature;
+  const made = addShapedFeature(s.project, { levelId: s.levelId, name: name.trim() || 'Building', color, points }, s.project.settings.snap);
+  if (!made) return false;
+  s.set({ curveDraft: null });
+  s.commit((p) => {
+    const r = addShapedFeature(p, { levelId: s.levelId, name: name.trim() || 'Building', color, points }, p.settings.snap)!;
+    id = r.id;
+    return r.project;
+  });
+  // Done drawing: back to Select with the new feature picked.
+  s.set({ mode: 'select' });
+  s.select([id]);
+  return true;
 }
 
 /** A stamping stroke: one piece or design copy at each spot (one undo). */

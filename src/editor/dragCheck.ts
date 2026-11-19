@@ -1,4 +1,5 @@
-import { footprint, rectContains, solidsClash } from '../domain/geometry';
+import { footprint, rectContains } from '../domain/geometry';
+import { outlineOnTable, shapesClash } from '../domain/outline';
 import { allItems, isModule, type Item } from '../domain/edits';
 import { warningKey } from '../domain/objects';
 import { isBase, type Project } from '../domain/schema';
@@ -19,7 +20,7 @@ export function makeDragChecker(project: Project, levelId: string, draggedIds: R
   const onLevel = allItems(project).filter((i) => i.levelId === levelId);
   const others = onLevel.filter((i) => !draggedIds.has(i.id));
   const solid = new SpatialIndex(others.filter(isSolid));
-  const solidRects = new Map(others.filter(isSolid).map((i) => [i.id, { r: footprint(i), sit: canSit(i) }]));
+  const solidRects = new Map(others.filter(isSolid).map((i) => [i.id, { r: { ...footprint(i), pts: outlineOnTable(i) }, sit: canSit(i) }]));
   // Small items only clash with small items on the same layer.
   const smallByLayer = new Map<string, SpatialIndex>();
   for (const layerId of new Set(others.filter(clashesAsSmall).map((i) => i.layerId))) {
@@ -32,11 +33,12 @@ export function makeDragChecker(project: Project, levelId: string, draggedIds: R
   return (dx: number, dy: number): Set<string> => {
     const problems = new Set<string>();
     for (const item of dragged) {
-      const r = footprint({ ...item, x: item.x + dx, y: item.y + dy });
+      const moved = { ...item, x: item.x + dx, y: item.y + dy };
+      const r = footprint(moved);
       const index = isSolid(item) ? solid : clashesAsSmall(item) ? smallByLayer.get(item.layerId) : undefined;
       for (const other of index?.overlapping(r) ?? []) {
         const o = solidRects.get(other);
-        if (isSolid(item) && o && !solidsClash(r, o.r, canSit(item), o.sit)) continue; // sits entirely on it, or it on this
+        if (isSolid(item) && o && !shapesClash({ ...r, pts: outlineOnTable(moved) }, o.r, canSit(item), o.sit)) continue; // sits entirely on it, or it on this
         if (!acknowledged.has(warningKey({ kind: 'overlap', ids: [item.id, other] }))) problems.add(item.id);
       }
       if (tables.length && !tables.some((t) => rectContains(t, r)) && !acknowledged.has(warningKey({ kind: 'overhang', ids: [item.id] }))) {

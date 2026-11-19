@@ -63,6 +63,12 @@ export const TableSchema = z.object({
 export const MILS_KINDS = ['16x8', '16x16', '32x16', '32x32', 'custom'] as const;
 export const MilsKindSchema = z.enum(MILS_KINDS);
 
+/**
+ * A shaped feature's outline (domain/outline.ts): corners in studs, relative to the unturned
+ * upper-left corner, within width × depth. Absent: an ordinary rectangle.
+ */
+const outline = z.array(z.object({ x: z.number().finite(), y: z.number().finite() })).min(3).optional();
+
 export const MilsModuleSchema = z.object({
   ...placed,
   kind: MilsKindSchema,
@@ -78,6 +84,7 @@ export const MilsModuleSchema = z.object({
   powerVolts: z.number().positive().optional(),
   /** Real LEGO colour of the baseplate, used by "Finished look". */
   plateColor: color.optional(),
+  outline,
   ...clearance,
 });
 
@@ -100,6 +107,7 @@ export const CanvasObjectSchema = z.object({
   smooth: z.boolean().optional(),
   /** Ride power, kept for later power/packing planning. */
   powerVolts: z.number().positive().optional(),
+  outline,
   ...clearance,
 });
 

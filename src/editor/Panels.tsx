@@ -144,6 +144,7 @@ function ModuleFields({ store, m, unit }: { store: EditorStore; m: MilsModule; u
         hint={m.label ? undefined : 'No ID (e.g. a building built on its plate)'}
       />
       <Field label="Name" value={m.name} onCommit={(v) => commit((p) => updateModule(p, m.id, { name: v.trim() }))} />
+      {m.outline && <p className="muted small">Shaped feature: {m.outline.length} corners. Width and Depth stretch the whole shape.</p>}
       {(isBase(m) || m.powerVolts !== undefined) && (
         <Field
           label="Power (volts)"
@@ -171,7 +172,7 @@ function ModuleFields({ store, m, unit }: { store: EditorStore; m: MilsModule; u
           ))}
         </select>
       </label>
-      {m.kind === 'custom' && (
+      {(m.kind === 'custom' || m.outline) && (
         <div className="row">
           <Field
             label="Width (studs)"

@@ -6,6 +6,7 @@ import { footprint, rectContains, snap, unionRect, type Rect as R } from '../dom
 import { allItems, isModule, moveItems, type Item } from '../domain/edits';
 import { makeDragChecker } from './dragCheck';
 import { drawOrder, itemAt } from '../domain/hit';
+import { labelSpot, outlineOnTable } from '../domain/outline';
 import { computeStack, heightColor, type StackInfo } from '../domain/heights';
 import { SpatialIndex } from '../domain/spatial';
 import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
@@ -21,7 +22,7 @@ import { planStamps, spotsAlongPath, spotsInBox, type StampPlan, type StampSpot 
 import { currentPoints, splinePoints } from '../domain/curves';
 import type { EditorState } from './store';
 import { cellsForBox, cellsForLine, cellsForPath, type Cell } from '../domain/brush';
-import { isStamping, paintTemplate, stampSource, stampSpacing } from './drawTool';
+import { isPointByPoint, isStamping, paintTemplate, stampSource, stampSpacing } from './drawTool';
 import type { EditorStore } from './store';
 import { gridStep, toScreen, toWorld, zoomAt, type View } from './view';
 
@@ -91,7 +92,7 @@ export function Canvas({ store }: { store: EditorStore }) {
   const spaceDownRef = useRef(false);
   // Leaving Draw › Curve drops an unfinished curve.
   useEffect(() => {
-    if (mode !== 'draw' || (drawShape !== 'curve' && drawShape !== 'stairs')) store.getState().set({ curveDraft: null });
+    if (mode !== 'draw' || !isPointByPoint({ shape: drawShape })) store.getState().set({ curveDraft: null });
   }, [mode, drawShape, store]);
   useEffect(() => {
     spaceDownRef.current = spaceDown;
@@ -243,7 +244,7 @@ export function Canvas({ store }: { store: EditorStore }) {
           return;
         }
       }
-      if (s.mode === 'draw' && (s.draw.shape === 'curve' || s.draw.shape === 'stairs') && e.button === 0 && !spaceDownRef.current) {
+      if (s.mode === 'draw' && isPointByPoint(s.draw) && e.button === 0 && !spaceDownRef.current) {
         gesture.current = { type: 'curvePoint', sx: p.x, sy: p.y, startView: s.view, panning: false };
         return;
       }
@@ -298,7 +299,7 @@ export function Canvas({ store }: { store: EditorStore }) {
         s.set({ pointer: w });
       }
       const g = gesture.current;
-      if (!g && s.mode === 'draw' && (s.draw.shape === 'curve' || s.draw.shape === 'stairs') && s.curveDraft?.length) setCurveHover(toWorld(s.view, p.x, p.y));
+      if (!g && s.mode === 'draw' && isPointByPoint(s.draw) && s.curveDraft?.length) setCurveHover(toWorld(s.view, p.x, p.y));
       if (!g) {
         if (e.pointerType === 'mouse') setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' ? 'crosshair' : hitTest(p) ? 'move' : 'default');
         return;
@@ -421,7 +422,7 @@ export function Canvas({ store }: { store: EditorStore }) {
     };
     const onDbl = () => {
       const s = store.getState();
-      if (s.mode === 'draw' && (s.draw.shape === 'curve' || s.draw.shape === 'stairs')) finishCurve(store);
+      if (s.mode === 'draw' && isPointByPoint(s.draw)) finishCurve(store);
     };
     const onUpEvt = (e: PointerEvent) => onUp(e);
     const onCancel = (e: PointerEvent) => onUp(e, true);
@@ -599,6 +600,8 @@ const ItemShape = memo(function ItemShape({
     perfectDrawEnabled: false,
     listening: !locked,
   };
+  const pts = outlineOnTable({ ...item, x: item.x + dx, y: item.y + dy });
+  if (pts) return <Line {...common} points={pts.flatMap((q) => [q.x, q.y])} closed opacity={!module && item.type === 'footprint' ? 0.85 : 1} />;
   return !module && item.round ? (
     <Ellipse {...common} x={r.x + r.width / 2} y={r.y + r.depth / 2} radiusX={r.width / 2} radiusY={r.depth / 2} />
   ) : (
@@ -615,8 +618,15 @@ const Labels = memo(function Labels({ items, dx, dy, zoom, builtOn }: { items: I
         if (!module && item.type !== 'footprint') return null;
         const text = module ? moduleDisplayName(item) : item.name;
         const full = footprint({ ...item, x: item.x + dx, y: item.y + dy });
-        // Something built on it: label in a band along the top edge instead of the middle.
-        const r = builtOn.has(item.id) ? { ...full, y: full.y + 0.5, depth: Math.min(full.depth / 4, 6) } : full;
+        const pts = outlineOnTable({ ...item, x: item.x + dx, y: item.y + dy });
+        const spot = pts && labelSpot(pts);
+        // A shaped feature: around a spot inside it. Something built on it: a band along the
+        // top edge instead of the middle.
+        const r = spot
+          ? { x: spot.x - full.width * 0.3, y: spot.y - full.depth * 0.15, width: full.width * 0.6, depth: full.depth * 0.3 }
+          : builtOn.has(item.id)
+            ? { ...full, y: full.y + 0.5, depth: Math.min(full.depth / 4, 6) }
+            : full;
         const fontSize = fitText(text, r.width, r.depth, module ? 5 : 6);
         if (!text || fontSize * zoom < 7) return null;
         return (
@@ -657,7 +667,10 @@ function LevelContent({ project, levelId, visibleLayers }: { project: Project; l
         .filter((i) => i.levelId === levelId && visibleLayers.has(i.layerId))
         .map((i) => {
           const r: R = footprint(i);
-          return <Rect key={i.id} x={r.x} y={r.y} width={r.width} height={r.depth} fill={isModule(i) ? (i.color ?? MILS_COLORS[i.kind]) : i.color} />;
+          const fill = isModule(i) ? (i.color ?? MILS_COLORS[i.kind]) : i.color;
+          const pts = outlineOnTable(i);
+          if (pts) return <Line key={i.id} points={pts.flatMap((q) => [q.x, q.y])} closed fill={fill} />;
+          return <Rect key={i.id} x={r.x} y={r.y} width={r.width} height={r.depth} fill={fill} />;
         })}
     </>
   );
@@ -791,12 +804,22 @@ const Studs = memo(function Studs({ items, view, viewport }: { items: Item[]; vi
           const r = footprint(i);
           pattern.setTransform(new DOMMatrix().translate(r.x, r.y).scale(1 / px));
           c.fillStyle = pattern;
-          c.fillRect(r.x, r.y, r.width, r.depth);
+          fillShape(c, i, r);
         }
       }}
     />
   );
 });
+
+/** Fill an item's box, or its outline when it is a shaped feature. */
+function fillShape(c: CanvasRenderingContext2D, i: Item, r: R) {
+  const pts = outlineOnTable(i);
+  if (!pts) return c.fillRect(r.x, r.y, r.width, r.depth);
+  c.beginPath();
+  pts.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y)));
+  c.closePath();
+  c.fill();
+}
 
 const studTiles = new Map<number, HTMLCanvasElement>();
 
@@ -889,6 +912,18 @@ const flat = (pts: { x: number; y: number }[]) => pts.flatMap((q) => [q.x, q.y])
 /** Draw › Curve in progress: the pieces it will lay, the curve line, and the points so far. */
 function CurveDraftPreview({ store, points, ctrl, scale }: { store: EditorStore; points: { x: number; y: number }[]; ctrl: { x: number; y: number }[]; scale: number }) {
   const { project, draw } = store.getState();
+  if (draw.shape === 'outline') {
+    // Corners land on the grid; the shape closes back to the first corner.
+    const snapped = points.map((q) => ({ x: snap(q.x, project.settings.snap), y: snap(q.y, project.settings.snap) }));
+    return (
+      <>
+        {snapped.length > 1 && <Line points={flat(snapped)} closed={snapped.length > 2} fill={snapped.length > 2 ? draw.feature.color : undefined} opacity={0.6} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} listening={false} />}
+        {snapped.slice(0, ctrl.length).map((q, i) => (
+          <Circle key={i} x={q.x} y={q.y} radius={(i === 0 ? 6 : 4) / scale} fill={i === 0 ? '#fff' : ACCENT} stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} listening={false} />
+        ))}
+      </>
+    );
+  }
   if (draw.shape === 'stairs') {
     const units = points.length > 1 ? stairUnits(points, stairSpec(store, points)) : [];
     return (
@@ -1055,7 +1090,7 @@ const HeightShading = memo(function HeightShading({ items, stack, max }: { items
             c.beginPath();
             c.ellipse(r.x + r.width / 2, r.y + r.depth / 2, r.width / 2, r.depth / 2, 0, 0, Math.PI * 2);
             c.fill();
-          } else c.fillRect(r.x, r.y, r.width, r.depth);
+          } else fillShape(c, i, r);
         }
         c.globalAlpha = 1;
       }}

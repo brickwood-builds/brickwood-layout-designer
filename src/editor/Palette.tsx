@@ -218,6 +218,17 @@ export function Palette({ store }: { store: EditorStore }) {
           <Swatch color="#c05046" />
           New…
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            const s = store.getState();
+            s.set({ mode: 'draw', measure: null, curveDraft: null, draw: { ...s.draw, shape: 'outline', feature: { ...s.draw.feature, name: '' } } });
+          }}
+          title="A building or base that isn’t a rectangle (an L, a T, a cut corner): click its corners on the table"
+        >
+          <Swatch color="#c05046" />
+          Draw a shape…
+        </button>
       </Section>
 
       <Section title="Designs">

@@ -3,6 +3,7 @@
 import { footprint, levelBounds } from '../domain/geometry';
 import { allItems, dimensionLength, isModule } from '../domain/edits';
 import { drawOrder } from '../domain/hit';
+import { labelSpot, outlineOnTable } from '../domain/outline';
 import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
 import { DEFAULT_PLATE_COLOR } from '../domain/legoColors';
 import { formatLength } from '../domain/units';
@@ -69,7 +70,15 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
       const size = `${i.rotation % 180 ? i.depth : i.width}×${i.rotation % 180 ? i.width : i.depth} studs`;
       out.push(`<g class="pv-thing" data-find="${esc(`${isModule(i) ? `${i.label} ${i.name}` : i.name}`.toLowerCase())}"><title>${esc(`${what} · ${size}${i.notes ? ` · ${i.notes}` : ''}`)}</title>`);
     }
-    if (isModule(i)) {
+    const pts = outlineOnTable(i);
+    if (pts) {
+      // A shaped feature: its outline, and its name at a spot inside it.
+      const fill = isModule(i) ? (i.color ?? MILS_COLORS[i.kind]) : i.color;
+      out.push(`<polygon class="${isModule(i) ? 'pv-module' : 'pv-footprint'}" data-label="${esc(isModule(i) ? i.label : '')}" points="${pts.map((q) => `${n(q.x)},${n(q.y)}`).join(' ')}" fill="${fill}"/>`);
+      const text = isModule(i) ? moduleDisplayName(i) : i.name;
+      const at = labelSpot(pts);
+      if (opts.labels && text) out.push(`<text class="${isModule(i) ? 'pv-label' : 'pv-name'}" x="${n(at.x)}" y="${n(at.y)}" font-size="${n(fitText(text, r.width * 0.6, r.depth * 0.3, 5))}">${esc(text)}</text>`);
+    } else if (isModule(i)) {
       out.push(`<rect class="pv-module" data-label="${esc(i.label)}" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" fill="${project.settings.moduleColors === 'plate' && (i.plateColor || !isBase(i)) ? (i.plateColor ?? DEFAULT_PLATE_COLOR) : (i.color ?? MILS_COLORS[i.kind])}"/>`);
       const text = moduleDisplayName(i);
       if (opts.labels && text) out.push(`<text class="pv-label" x="${n(r.x + r.width / 2)}" y="${n(r.y + r.depth / 2)}" font-size="${n(fitText(text, r.width, r.depth, 5))}">${esc(text)}</text>`);

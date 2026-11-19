@@ -1,7 +1,7 @@
 import { useStore } from 'zustand';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { finishCurve, itemLayerId } from './actions';
-import { designIdOf, drawSources, isStamping, type DrawSettings, type StairDraft } from './drawTool';
+import { designIdOf, drawSources, isPointByPoint, isStamping, type DrawSettings, type StairDraft } from './drawTool';
 import { partByKey, type PartKind } from '../domain/catalog';
 import type { Turn } from '../domain/stamps';
 import type { EditorStore } from './store';
@@ -51,9 +51,12 @@ export function DrawPanel({ store }: { store: EditorStore }) {
   const stairs = draw.shape === 'stairs';
   const design = designIdOf(draw) ? project.designs.find((d) => d.id === designIdOf(draw)) : undefined;
   const stamping = isStamping(draw);
-  const pointByPoint = draw.shape === 'curve' || stairs;
+  const outline = draw.shape === 'outline';
+  const pointByPoint = isPointByPoint(draw);
 
-  const intro = stairs
+  const intro = outline
+    ? 'Click (or tap) each corner of the building, all the way round. Corners snap to the stud grid. Finish with a double-click, Enter or “Finish shape” — it becomes one feature you can move, turn and copy. Dragging moves the view.'
+    : stairs
     ? 'Click (or tap) where the stairs start, then where they turn and end — they go up from the first point. Finish with a double-click, Enter or “Finish stairs”.'
     : draw.shape === 'curve'
       ? 'Click (or tap) the points the curve should pass through. Finish with a double-click, Enter or “Finish curve”. Dragging moves the view.'
@@ -74,10 +77,16 @@ export function DrawPanel({ store }: { store: EditorStore }) {
           ['box', 'Fill box'],
           ['curve', 'Curve'],
           ['stairs', 'Stairs'],
+          ['outline', 'Building shape'],
         ]}
         onChange={(shape) => set({ shape })}
       />
-      {stairs ? (
+      {outline ? (
+        <label className="field">
+          <span>Name</span>
+          <input aria-label="Building name" placeholder="e.g. Town hall" value={draw.feature.name} onChange={(e) => set({ feature: { ...draw.feature, name: e.target.value } })} />
+        </label>
+      ) : stairs ? (
         <>
           <LegoColorPicker label="Colour" value={draw.color} onChange={(hex) => hex && set({ color: hex })} />
           <Seg label="Stairs width (studs)" value={draw.stair.width} options={[2, 3, 4, 6, 8].map((w) => [w, String(w)])} onChange={(width) => setStair({ width })} />
@@ -192,8 +201,8 @@ export function DrawPanel({ store }: { store: EditorStore }) {
         <div className="design-box">
           <span className="small">{draft?.length ? `${draft.length} point${draft.length === 1 ? '' : 's'} so far.` : 'No points yet.'}</span>
           <div className="actions">
-            <button type="button" className="primary" disabled={(draft?.length ?? 0) < 2} onClick={() => finishCurve(store)}>
-              {stairs ? 'Finish stairs' : 'Finish curve'}
+            <button type="button" className="primary" disabled={(draft?.length ?? 0) < (outline ? 3 : 2)} onClick={() => finishCurve(store)}>
+              {outline ? 'Finish shape' : stairs ? 'Finish stairs' : 'Finish curve'}
             </button>
             <button type="button" disabled={!draft?.length} onClick={() => store.getState().set({ curveDraft: draft && draft.length > 1 ? draft.slice(0, -1) : null })}>
               Remove last point
@@ -202,10 +211,12 @@ export function DrawPanel({ store }: { store: EditorStore }) {
               Cancel
             </button>
           </div>
-          <span className="muted small">To change it later: Select it, then “{stairs ? 'Edit path' : 'Edit curve'}”.</span>
+          <span className="muted small">
+            {outline ? 'Width and Depth in its panel stretch the whole shape.' : `To change it later: Select it, then “${stairs ? 'Edit path' : 'Edit curve'}”.`}
+          </span>
         </div>
       )}
-      {!stairs && (
+      {!stairs && !outline && (
         <>
           <div className="field">
             <span>Where something is already there</span>
@@ -224,10 +235,10 @@ export function DrawPanel({ store }: { store: EditorStore }) {
           </label>
         </>
       )}
-      <p className="muted small">
+      {!outline && <p className="muted small">
         Draws on layer <strong>{layer?.name}</strong> — change it in Layers (“New items”).{' '}
         {stairs ? '' : stamping ? 'Red spots are already taken and are skipped.' : draw.whenTaken === 'stack' ? 'Painting over what’s there adds a layer on top.' : 'Painting over what’s already there doesn’t double it up.'}
-      </p>
+      </p>}
     </aside>
   );
 }

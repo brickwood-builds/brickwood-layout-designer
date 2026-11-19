@@ -1,5 +1,6 @@
 // Advisory layout checks. Warnings never modify or delete anything.
-import { footprint, rectContains, solidsClash, type Placed } from './geometry';
+import { footprint, rectContains, type Placed } from './geometry';
+import { outlineOnTable, shapesClash } from './outline';
 import { isBase, moduleDisplayName, type Project } from './schema';
 import { SpatialIndex } from './spatial';
 import { clearanceProblems } from './heights';
@@ -63,7 +64,7 @@ export function checkLayout(project: Project): LayoutWarning[] {
     for (const o of project.objects) if (o.levelId === level.id && o.type === 'footprint') solid.set(o.id, { ...o, canSit: true });
     for (const [a, b] of new SpatialIndex(solid.values()).overlapPairs()) {
       const [sa, sb] = [solid.get(a)!, solid.get(b)!];
-      if (!solidsClash(footprint(sa), footprint(sb), sa.canSit, sb.canSit)) continue; // built on it
+      if (!shapesClash({ ...footprint(sa), pts: outlineOnTable(sa) }, { ...footprint(sb), pts: outlineOnTable(sb) }, sa.canSit, sb.canSit)) continue; // built on it, or beside it
       warnings.push({ kind: 'overlap', levelId: level.id, ids: [a, b], message: `${solid.get(a)!.name} overlaps ${solid.get(b)!.name}` });
     }
     // Small items sit on modules, and things on different layers stack (a lamp on a

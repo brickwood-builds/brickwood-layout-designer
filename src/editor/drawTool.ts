@@ -22,7 +22,8 @@ export interface DrawSettings {
   color: string;
   /** Brush width across, in studs. */
   width: number;
-  shape: 'free' | 'line' | 'box' | 'curve' | 'stairs';
+  /** outline: click the corners of a shaped feature (a building that isn't a rectangle). */
+  shape: 'free' | 'line' | 'box' | 'curve' | 'stairs' | 'outline';
   erase: boolean;
   /** Over existing pieces: skip (walkways) or stack on top (slopes, hills). */
   whenTaken: WhenTaken;
@@ -32,6 +33,8 @@ export interface DrawSettings {
   turn: Turn;
   /** Settings for new stairs. */
   stair: StairDraft;
+  /** Name and colour for a new shaped feature. */
+  feature: { name: string; color: string };
 }
 
 export const DEFAULT_DRAW: DrawSettings = {
@@ -44,12 +47,16 @@ export const DEFAULT_DRAW: DrawSettings = {
   spacing: 0,
   turn: 0,
   stair: { width: 4, stepDepth: 2, risePlates: 1, startPlates: 0, landingEvery: 0, smooth: true },
+  feature: { name: '', color: '#c05046' },
 };
+
+/** Drawn point by point: a click adds a point, dragging pans. */
+export const isPointByPoint = (d: Pick<DrawSettings, 'shape'>) => d.shape === 'curve' || d.shape === 'stairs' || d.shape === 'outline';
 
 export const designIdOf = (d: DrawSettings) => (d.source.startsWith('design:') ? d.source.slice(7) : null);
 
 /** Stamping (one every N studs, or a design) rather than painting solid. Not for erasing. */
-export const isStamping = (d: DrawSettings) => !d.erase && d.shape !== 'stairs' && (d.spacing > 0 || !!designIdOf(d));
+export const isStamping = (d: DrawSettings) => !d.erase && d.shape !== 'stairs' && d.shape !== 'outline' && (d.spacing > 0 || !!designIdOf(d));
 
 export function stampSource(project: Project, d: DrawSettings): StampSource {
   const designId = designIdOf(d);

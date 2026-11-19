@@ -1,6 +1,7 @@
 // Stacking order and "what is under this point", computed from the layout itself
 // (not from rendered pixels), so a click always matches what was last drawn.
 import { footprint } from './geometry';
+import { insideOutline, outlineOnTable } from './outline';
 import { allItems, isModule, type Item } from './edits';
 import type { Project } from './schema';
 
@@ -22,6 +23,8 @@ export function itemAt(project: Project, levelId: string, x: number, y: number, 
     const i = stack[k]!;
     const r = footprint(i);
     if (x < r.x || y < r.y || x > r.x + r.width || y > r.y + r.depth) continue;
+    const pts = outlineOnTable(i);
+    if (pts && !insideOutline(pts, x, y)) continue;
     if (!isModule(i) && i.round) {
       const dx = (x - (r.x + r.width / 2)) / (r.width / 2);
       const dy = (y - (r.y + r.depth / 2)) / (r.depth / 2);
