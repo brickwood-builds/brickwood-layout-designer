@@ -47,7 +47,7 @@ test('enter a Rebrickable key, look a part up, place it; it is still found offli
   await expect(row).toContainText('77777b');
   await row.getByRole('button', { name: /^Zipline Plate 3×5/ }).click();
   const s = await st(page);
-  expect(s.project.objects.find((o) => o.id === s.selection[0])).toMatchObject({ catalogKey: 'rb:77777', width: 5, depth: 3 });
+  expect(s.project.objects.find((o) => o.id === s.selection[0])).toMatchObject({ catalogKey: 'bl:77777b', width: 5, depth: 3 }); // stored by its BrickLink number
   await expect(page.getByText(/LEGO part 77777b on BrickLink/)).toBeVisible();
 
   // Later, with no internet: the looked-up part is still found.

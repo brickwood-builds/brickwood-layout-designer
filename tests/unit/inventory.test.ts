@@ -28,7 +28,7 @@ describe('parts needed, have, to buy', () => {
   it('counts real parts by number and colour; made-up pieces and stairs are set aside', () => {
     const n = partsNeeded(layout());
     expect(n.parts.map((r) => [r.partNo, r.colorName, r.needed])).toEqual([
-      ['6141', 'Tan', 12],
+      ['4073', 'Tan', 12], // BrickLink's number (Rebrickable calls it 6141)
       ['3020', 'Light Bluish Gray', 2],
     ]);
     expect(n.unnumbered).toBe(1);
@@ -36,17 +36,18 @@ describe('parts needed, have, to buy', () => {
   });
 
   it('to buy is what is needed beyond what you have; Rebrickable CSV uses colour ids', () => {
-    let inv = setHave(emptyInventory(), '6141', 'Tan', 5);
+    let inv = setHave(emptyInventory(), '4073', 'Tan', 5);
     inv = setHave(inv, '3020', 'Light Bluish Gray', 10);
     const rows = shoppingList(partsNeeded(layout()).parts, inv);
     expect(rows.map((r) => [r.partNo, r.have, r.toBuy])).toEqual([
-      ['6141', 5, 7],
+      ['4073', 5, 7],
       ['3020', 10, 0],
     ]);
-    const { csv, skipped } = rebrickableCsv(rows, lib.colorIds);
+    const { csv, skipped } = rebrickableCsv(rows, lib.colorIds, (no) => lib.byNo.has(no));
     expect(skipped).toEqual([]);
+    // Rebrickable's file gets Rebrickable's number back.
     expect(csv).toBe(`Part,Color,Quantity\n6141,${lib.colorIds.get('Tan')},7\n`);
-    expect(partsListCsv(rows).split('\n')[1]).toBe('6141,Plate Round 1×1,Tan,12,5,7,BrickLink,,');
+    expect(partsListCsv(rows).split('\n')[1]).toBe('4073,Plate Round 1×1,Tan,12,5,7,BrickLink,,');
   });
 
   it('imports Rebrickable (colour ids) and our own export (colour names); round trip', () => {
@@ -54,7 +55,7 @@ describe('parts needed, have, to buy', () => {
     expect(rb.rows.get('3024|White')).toBe(24);
     expect(rb.problems).toHaveLength(1);
     let inv = applyImport(emptyInventory(), rb);
-    inv = setHave(inv, '6141', 'Tan', 300);
+    inv = setHave(inv, '4073', 'Tan', 300);
     const back = readInventoryCsv(inventoryCsv(inv), lib.colorNames);
     expect(applyImport(emptyInventory(), back).have).toEqual(inv.have);
     expect(readInventoryCsv('a,b\n1,2', lib.colorNames).problems[0]).toMatch(/Part, Colour/);
@@ -66,16 +67,16 @@ describe('parts needed, have, to buy', () => {
     expect(shoppingList(needed, inv, false).map((r) => r.supplier)).toEqual(['bricklink', 'bricklink']); // genuine only
     const rows = shoppingList(needed, inv, true);
     expect(rows.map((r) => [r.partNo, r.supplier])).toEqual([
-      ['6141', 'bricklink'],
+      ['4073', 'bricklink'],
       ['3020', 'brickwith'],
     ]);
     expect(rebrickableCsv(rows.filter((r) => r.supplier === 'bricklink'), lib.colorIds).csv).not.toContain('3020');
     inv = setPrice(inv, 'brickwith', '3020', 'Light Bluish Gray', 0.12);
-    expect(brickwithCsv(shoppingList(needed, inv, true), inv)).toBe('Part,Brickwith part,Name,Colour,Quantity,Price each\n3020,3020,Plate 2×4,Light Bluish Gray,2,0.12\n');
+    expect(brickwithCsv(shoppingList(needed, inv, true), inv)).toBe('BrickLink part,Brickwith part,Name,Colour,Quantity,Price each\n3020,3020,Plate 2×4,Light Bluish Gray,2,0.12\n');
   });
 
   it('costs: own prices, usual prices as estimates, unpriced pieces counted', () => {
-    let inv = setPrice(emptyInventory(), 'bricklink', '6141', 'Tan', 0.05);
+    let inv = setPrice(emptyInventory(), 'bricklink', '4073', 'Tan', 0.05);
     let c = costSummary(shoppingList(partsNeeded(layout()).parts, inv));
     expect(c).toMatchObject({ total: 0.6, unpriced: 2, estimated: false });
     inv = setUsualPrice(inv, 'bricklink', 0.25);

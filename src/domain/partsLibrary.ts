@@ -3,17 +3,18 @@
 // the app, so it works offline. Each part keeps its source part number (FR-07.01).
 import { LEGO_COLORS, lego } from './legoColors';
 import type { PaintTemplate } from './brush';
+import { blFor, blKey } from './partNumbers';
 
 export const PARTS_SOURCE = 'Rebrickable';
 export const PARTS_SOURCE_URL = 'https://rebrickable.com/';
 
 /** One part from the library. */
 export interface LibraryPart {
-  /** "rb:<part number>", stored on placed pieces as catalogKey. */
+  /** "rb:<Rebrickable no>": identifies the entry in lists (placed pieces store "bl:<BrickLink no>"). */
   key: string;
   /** Rebrickable part number (usually the same as BrickLink's). */
   partNo: string;
-  /** BrickLink number, when known (parts looked up live carry it from Rebrickable). */
+  /** BrickLink number: the one shown and stored (absent when BrickLink has none). */
   blNo?: string;
   name: string;
   category: string;
@@ -34,6 +35,8 @@ export interface PartsLibrary {
   generated: string;
   parts: LibraryPart[];
   byNo: Map<string, LibraryPart>;
+  /** By BrickLink number (when two Rebrickable parts share one, the one numbered the same wins). */
+  byBl: Map<string, LibraryPart>;
   /** Rebrickable colour id by colour name (for parts-list exports), and back. */
   colorIds: Map<string, number>;
   colorNames: Map<number, string>;
@@ -54,6 +57,7 @@ export function buildLibrary(doc: RawDoc): PartsLibrary {
   const parts = doc.parts.map(([partNo, name, category, width, depth, height, flags, colorIds]): LibraryPart => ({
     key: `rb:${partNo}`,
     partNo,
+    blNo: blFor(partNo),
     name,
     category,
     width,
@@ -69,9 +73,19 @@ export function buildLibrary(doc: RawDoc): PartsLibrary {
     generated: doc.generated,
     parts,
     byNo: new Map(parts.map((p) => [p.partNo, p])),
+    byBl: byBrickLink(parts),
     colorIds: new Map(doc.colors.map(([id, name]) => [name, id])),
     colorNames: new Map(doc.colors.map(([id, name]) => [id, name])),
   };
+}
+
+function byBrickLink(parts: LibraryPart[]) {
+  const m = new Map<string, LibraryPart>();
+  for (const p of parts) {
+    const bl = shownPartNo(p);
+    if (!m.has(bl) || p.partNo === bl) m.set(bl, p);
+  }
+  return m;
 }
 
 let loading: Promise<PartsLibrary> | null = null;
@@ -127,7 +141,7 @@ export function libraryTemplate(p: LibraryPart, colorName = defaultColorName(p))
     width: p.width,
     depth: p.depth,
     color: lego(colorName),
-    catalogKey: p.key,
+    catalogKey: blKey(shownPartNo(p)),
     ...(p.round ? { round: true } : {}),
     ...(p.smooth ? { smooth: true } : {}),
     ...(p.height !== null ? { heightPlates: p.height } : {}),

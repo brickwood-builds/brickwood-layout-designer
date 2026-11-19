@@ -1,8 +1,10 @@
 // Phase 3B: what a layout needs, what you have, and what to buy (FR-08).
 // "What you have" is one list for all projects (your parts bin), kept on this device and
-// in CSV files. Parts are identified by Rebrickable part number + LEGO colour name.
+// in CSV files. Parts are identified by BrickLink part number + LEGO colour name (decision
+// 18 Nov 2026; parts books saved before then used Rebrickable numbers and are converted).
 import { z } from 'zod';
 import { partNumberOf } from './brush';
+import { blFor, rbFor } from './partNumbers';
 import { legoColorName } from './legoColors';
 import type { Project } from './schema';
 
@@ -27,10 +29,35 @@ export const InventorySchema = z.object({
   /** Usual price per piece when a part has no price of its own (for an estimate). */
   usualPrice: z.object({ bricklink: money.optional(), brickwith: money.optional() }).default({}),
   updatedAt: z.string(),
+  /** Which part numbers the keys use. Absent: Rebrickable's (a parts book from before 19 Nov 2026). */
+  numbers: z.literal('bricklink').optional(),
 });
 export type Inventory = z.infer<typeof InventorySchema>;
 
-export const emptyInventory = (): Inventory => ({ have: {}, brickwith: {}, prices: {}, usualPrice: {}, updatedAt: new Date(0).toISOString() });
+export const emptyInventory = (): Inventory => ({ have: {}, brickwith: {}, prices: {}, usualPrice: {}, updatedAt: new Date(0).toISOString(), numbers: 'bricklink' });
+
+/**
+ * Read a stored parts book (this device, OneDrive, a backup), converting an older one from
+ * Rebrickable numbers to BrickLink numbers. Null when it isn't a parts book.
+ */
+export function parseInventory(raw: unknown): Inventory | null {
+  const r = InventorySchema.safeParse(raw);
+  if (!r.success) return null;
+  const inv = r.data;
+  if (inv.numbers === 'bricklink') return inv;
+  // "<part>|<colour>" and "<supplier>|<part>|<colour>": convert the part.
+  const conv = (k: string, at: number) => {
+    const bits = k.split('|');
+    bits[at] = blFor(bits[at] ?? '');
+    return bits.join('|');
+  };
+  const have: Record<string, number> = {};
+  for (const [k, q] of Object.entries(inv.have)) have[conv(k, 0)] = (have[conv(k, 0)] ?? 0) + q;
+  const brickwith = Object.fromEntries(Object.entries(inv.brickwith).map(([k, v]) => [conv(k, 0), v]));
+  const prices = Object.fromEntries(Object.entries(inv.prices).map(([k, v]) => [conv(k, 1), v]));
+  // updatedAt is kept: the conversion isn't a change the user made.
+  return { ...inv, have, brickwith, prices, numbers: 'bricklink' };
+}
 const touched = (inv: Inventory, change: Partial<Inventory>): Inventory => ({ ...inv, ...change, updatedAt: new Date().toISOString() });
 const priceKey = (supplier: Supplier, partNo: string, colorName: string) => `${supplier}|${partNo}|${colorName}`;
 
@@ -172,16 +199,17 @@ const csvLine = (cells: (string | number)[]) => cells.map(cell).join(',');
 /**
  * Shopping list in Rebrickable's parts-list format (Part, Color id, Quantity). Import it on
  * rebrickable.com to see prices or turn it into a BrickLink wanted list. Colours without a
- * Rebrickable id are listed in `skipped`.
+ * Rebrickable id are listed in `skipped`. Part numbers are turned back into Rebrickable's;
+ * `isRb` says whether Rebrickable has a part with a given number (from the parts list).
  */
-export function rebrickableCsv(rows: ShoppingRow[], colorIds: Map<string, number>): { csv: string; skipped: ShoppingRow[] } {
+export function rebrickableCsv(rows: ShoppingRow[], colorIds: Map<string, number>, isRb?: (no: string) => boolean): { csv: string; skipped: ShoppingRow[] } {
   const skipped: ShoppingRow[] = [];
   const lines = ['Part,Color,Quantity'];
   for (const r of rows) {
     if (r.toBuy <= 0) continue;
     const id = colorIds.get(r.colorName);
     if (id === undefined) skipped.push(r);
-    else lines.push(csvLine([r.partNo, id, r.toBuy]));
+    else lines.push(csvLine([rbFor(r.partNo, isRb), id, r.toBuy]));
   }
   return { csv: lines.join('\n') + '\n', skipped };
 }
@@ -190,7 +218,7 @@ export function rebrickableCsv(rows: ShoppingRow[], colorIds: Map<string, number
 export function partsListCsv(rows: ShoppingRow[]): string {
   return (
     [
-      csvLine(['Part', 'Name', 'Colour', 'Needed', 'Have', 'To buy', 'Buy from', 'Price each', 'Cost']),
+      csvLine(['BrickLink part', 'Name', 'Colour', 'Needed', 'Have', 'To buy', 'Buy from', 'Price each', 'Cost']),
       ...rows.map((r) => csvLine([r.partNo, r.name, r.colorName, r.needed, r.have, r.toBuy, SUPPLIER_NAME[r.supplier], r.each ?? '', r.cost ?? ''])),
     ].join('\n') + '\n'
   );
@@ -198,7 +226,7 @@ export function partsListCsv(rows: ShoppingRow[]): string {
 
 /** What to order from Brickwith: their part number (usually the LEGO one), colour, quantity. */
 export function brickwithCsv(rows: ShoppingRow[], inv: Inventory): string {
-  const lines = [csvLine(['Part', 'Brickwith part', 'Name', 'Colour', 'Quantity', 'Price each'])];
+  const lines = [csvLine(['BrickLink part', 'Brickwith part', 'Name', 'Colour', 'Quantity', 'Price each'])];
   for (const r of rows) {
     if (r.supplier !== 'brickwith' || r.toBuy <= 0) continue;
     lines.push(csvLine([r.partNo, inv.brickwith[partKey(r.partNo, r.colorName)]?.no ?? r.partNo, r.name, r.colorName, r.toBuy, r.each ?? '']));
@@ -214,7 +242,7 @@ export function inventoryCsv(inv: Inventory): string {
       return [partNo, colorName, q] as const;
     })
     .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }) || a[1].localeCompare(b[1]));
-  return [csvLine(['Part', 'Colour', 'Quantity']), ...rows.map((r) => csvLine([...r]))].join('\n') + '\n';
+  return [csvLine(['BrickLink part', 'Colour', 'Quantity']), ...rows.map((r) => csvLine([...r]))].join('\n') + '\n';
 }
 
 function parseCsv(text: string): string[][] {
@@ -255,6 +283,14 @@ export interface InventoryImport {
 }
 
 /**
+ * Which numbering a CSV's part column uses: BrickLink's when its heading says so ("BrickLink
+ * part", BrickLink's "ItemID"/"Item No"), else Rebrickable's (Rebrickable's own files, and
+ * our exports from before 19 Nov 2026) — those are converted to BrickLink numbers.
+ */
+const BRICKLINK_HEADINGS = ['bricklink part', 'bricklink', 'bricklink no', 'itemid', 'item no'];
+const partReader = (heading: string) => (BRICKLINK_HEADINGS.includes(heading) ? (no: string) => no : blFor);
+
+/**
  * Read a parts CSV: our own export, Rebrickable's (Part, Color id, Quantity) or a similar
  * file with Part / Colour / Quantity columns. Colours may be names or Rebrickable ids.
  */
@@ -265,13 +301,14 @@ export function readInventoryCsv(text: string, colorNameById: Map<number, string
   if (!head) return { rows, problems: ['The file is empty.'] };
   const h = head.map((x) => x.trim().toLowerCase());
   const col = (...names: string[]) => h.findIndex((x) => names.includes(x));
-  const iPart = col('part', 'part no', 'part number', 'partno', 'itemid', 'item no', 'design id');
+  const iPart = col('bricklink part', 'bricklink', 'bricklink no', 'part', 'part no', 'part number', 'partno', 'itemid', 'item no', 'design id');
   const iColor = col('color', 'colour', 'color name', 'colour name', 'colorname', 'color id');
   const iQty = col('quantity', 'qty', 'count', 'have', 'minqty');
   if (iPart < 0 || iColor < 0 || iQty < 0) return { rows, problems: ['The first line needs columns named Part, Colour (or Color) and Quantity.'] };
+  const toBl = partReader(h[iPart]!);
   body.forEach((r, n) => {
     const line = n + 2;
-    const partNo = (r[iPart] ?? '').trim();
+    const partNo = toBl((r[iPart] ?? '').trim());
     const rawColor = (r[iColor] ?? '').trim();
     const qty = Number((r[iQty] ?? '').trim());
     if (!partNo) return;
@@ -304,13 +341,14 @@ export function readBrickwithCsv(text: string, colorNameById: Map<number, string
   const found: { partNo: string; colorName: string; no?: string; price?: number }[] = [];
   const h = (head ?? []).map((x) => x.trim().toLowerCase());
   const col = (...names: string[]) => h.findIndex((x) => names.includes(x));
-  const iPart = col('part', 'part no', 'part number', 'lego part', 'design id');
+  const iPart = col('bricklink part', 'bricklink', 'bricklink no', 'part', 'part no', 'part number', 'lego part', 'design id');
   const iColor = col('color', 'colour', 'color name', 'colour name', 'color id');
   const iNo = col('brickwith part', 'brickwith no', 'brickwith', 'supplier part');
   const iPrice = col('price', 'price each', 'each', 'unit price');
   if (iPart < 0 || iColor < 0) return { apply: (i) => i, count: 0, problems: ['The first line needs columns named Part and Colour (and Price, Brickwith part if you have them).'] };
+  const toBl = partReader(h[iPart]!);
   body.forEach((r, n) => {
-    const partNo = (r[iPart] ?? '').trim();
+    const partNo = toBl((r[iPart] ?? '').trim());
     if (!partNo) return;
     const raw = (r[iColor] ?? '').trim();
     const colorName = /^-?\d+$/.test(raw) ? colorNameById.get(Number(raw)) : raw;

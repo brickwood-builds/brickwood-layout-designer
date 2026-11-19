@@ -1,9 +1,10 @@
 // Built-in parts list: common LEGO plates, tiles and bricks, so they don't have to be
-// recreated in each project. Sizes in studs, heights in plates. Part numbers are the usual
-// BrickLink numbers, for reference; the full parts catalog (any part, verified numbers,
+// recreated in each project. Sizes in studs, heights in plates. Part numbers are BrickLink's
+// (decision 18 Nov 2026); the full parts catalog (any part, verified numbers,
 // real colours per part) is Phase 3.
 import { MARKER_KINDS } from './markers';
 import { lego } from './legoColors';
+import { blFor } from './partNumbers';
 
 export type PartKind = 'plate' | 'tile' | 'brick' | 'round plate' | 'round tile' | 'round brick';
 
@@ -19,13 +20,13 @@ export interface CatalogPart {
   studs: boolean;
   /** Height in plates (brick = 3). */
   height: number;
-  /** BrickLink part number, for reference. */
+  /** BrickLink part number (shown and stored). */
   partNo?: string;
   /** Rebrickable part number (the parts library); differs from BrickLink for a few parts. */
   rbNo?: string;
 }
 
-/** Where Rebrickable numbers a part differently from BrickLink. */
+/** Rebrickable's number for these starter parts, where it isn't the number in SIZES. */
 const RB_NO: Record<string, string> = { '4073': '6141', '4032': '4032b' };
 
 const KIND: Record<PartKind, { prefix: string; label: string; studs: boolean; height: number; round?: boolean; color: string }> = {
@@ -37,7 +38,7 @@ const KIND: Record<PartKind, { prefix: string; label: string; studs: boolean; he
   'round brick': { prefix: 'roundbrick', label: 'Brick Round', studs: true, height: 3, round: true, color: lego('Reddish Brown') },
 };
 
-// [width, depth, BrickLink no.] — width is the longer side, as in "Plate 2×4".
+// [width, depth, part no. (Rebrickable's, unless in RB_NO; BrickLink's comes from blFor)] — width is the longer side, as in "Plate 2×4".
 const SIZES: Record<PartKind, [number, number, string][]> = {
   plate: [
     [1, 1, '3024'], [2, 1, '3023'], [3, 1, '3623'], [4, 1, '3710'], [6, 1, '3666'], [8, 1, '3460'], [10, 1, '4477'], [12, 1, '60479'],
@@ -71,7 +72,7 @@ export const STARTER_PARTS: CatalogPart[] = (Object.keys(SIZES) as PartKind[]).f
       color: k.color,
       studs: k.studs,
       height: k.height,
-      partNo,
+      partNo: blFor(RB_NO[partNo] ?? partNo),
       rbNo: RB_NO[partNo] ?? partNo,
       ...(k.round ? { round: true } : {}),
     };
@@ -88,7 +89,7 @@ export function searchParts(query: string): CatalogPart[] {
   const words = query.toLowerCase().replace(/×/g, 'x').split(/\s+/).filter(Boolean);
   if (!words.length) return STARTER_PARTS.filter((p) => COMMON_PART_KEYS.includes(p.key));
   return STARTER_PARTS.filter((p) => {
-    const text = `${p.name.replace(/×/g, 'x')} ${p.kind} ${p.partNo ?? ''}`.toLowerCase();
+    const text = `${p.name.replace(/×/g, 'x')} ${p.kind} ${p.partNo ?? ''} ${p.rbNo ?? ''}`.toLowerCase();
     return words.every((w) => text.includes(w));
   });
 }

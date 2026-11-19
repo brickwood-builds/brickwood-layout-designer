@@ -6,7 +6,7 @@ import { useSyncExternalStore } from 'react';
 import { getAppSettings, setRebrickableKey } from '../cloud/appSettings';
 import { RebrickableClient } from '../cloud/rebrickable';
 import { cloud } from '../cloud/service';
-import { searchLibrary, type LibraryPart } from '../domain/partsLibrary';
+import { searchLibrary, shownPartNo, type LibraryPart } from '../domain/partsLibrary';
 import type { ProjectRepository } from '../storage/repository';
 
 const CACHE = 'rebrickable:cache';
@@ -86,8 +86,9 @@ export class PartLookup {
     return searchLibrary({ parts: this.state.cached }, query, limit);
   }
 
-  byPartNo(partNo: string) {
-    return this.state.cached.find((p) => p.partNo === partNo) ?? null;
+  /** A part looked up before, by the BrickLink number placed pieces store. */
+  byBrickLinkNo(blNo: string) {
+    return this.state.cached.find((p) => shownPartNo(p) === blNo) ?? null;
   }
 }
 

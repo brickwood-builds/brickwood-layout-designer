@@ -8,7 +8,7 @@ import { z } from 'zod';
  * width/depth are the unrotated size. Decimal studs are allowed and never rounded to inches.
  * Heights (future) are in plates, Z up.
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 const id = z.uuid();
 const studs = z.number().finite();

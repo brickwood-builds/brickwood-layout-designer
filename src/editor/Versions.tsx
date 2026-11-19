@@ -348,7 +348,7 @@ function CompareView({
                       onClick={() =>
                         void loadLibrary().then((lib) => {
                           const rows = cmp.parts.filter((p) => p.change > 0).map((p) => ({ ...p, needed: p.change, toBuy: p.change }) as unknown as ShoppingRow);
-                          download(`${safe(now.name)} - extra parts for ${safe(label(sel.b))}.csv`, rebrickableCsv(rows, lib.colorIds).csv, 'text/csv');
+                          download(`${safe(now.name)} - extra parts for ${safe(label(sel.b))}.csv`, rebrickableCsv(rows, lib.colorIds, (no) => lib.byNo.has(no)).csv, 'text/csv');
                         })
                       }
                       title="Only the extra parts the After version needs (Rebrickable format)"

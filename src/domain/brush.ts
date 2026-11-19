@@ -6,6 +6,7 @@ import { isModule } from './edits';
 import type { CanvasObject, Project } from './schema';
 import { SpatialIndex } from './spatial';
 import { partByKey } from './catalog';
+import { blFor } from './partNumbers';
 
 export interface Pt {
   x: number;
@@ -148,10 +149,12 @@ export function eraseCells(project: Project, levelId: string, layerId: string, c
   };
 }
 
-/** The LEGO part number of a placed piece (Rebrickable numbering), when it is a real part. */
+/** The BrickLink part number of a placed piece, when it is a real part. */
 export function partNumberOf(o: Pick<CanvasObject, 'catalogKey'>): string | undefined {
-  if (o.catalogKey?.startsWith('rb:')) return o.catalogKey.slice(3);
-  return partByKey(o.catalogKey)?.rbNo;
+  if (o.catalogKey?.startsWith('bl:')) return o.catalogKey.slice(3);
+  // Older pieces (from before a project was upgraded) kept Rebrickable's number.
+  if (o.catalogKey?.startsWith('rb:')) return blFor(o.catalogKey.slice(3));
+  return partByKey(o.catalogKey)?.partNo;
 }
 
 /** Group identical pieces for lists (a walkway is "Plate Round 1×1, Tan × 400"). */

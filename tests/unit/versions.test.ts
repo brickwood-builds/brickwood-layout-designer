@@ -50,8 +50,8 @@ describe('comparing versions', () => {
     expect(c.piecesRemoved).toEqual([{ name: 'Plate Round 1×1', count: 4 }]);
     expect(c.piecesAdded).toEqual([{ name: 'Tile 1×1', count: 2 }]);
     expect(c.parts.map((x) => [x.partNo, x.change])).toEqual([
-      ['3070b', 2],
-      ['6141', -4],
+      ['3070', 2],
+      ['4073', -4],
     ]);
   });
 });

@@ -1,4 +1,5 @@
 import { ProjectSchema, SCHEMA_VERSION, type Project } from './schema';
+import { upgradeCatalogKey } from './partNumbers';
 
 export class ProjectFormatError extends Error {
   constructor(message: string, readonly details: string[] = []) {
@@ -9,11 +10,22 @@ export class ProjectFormatError extends Error {
 
 type Migration = (doc: Record<string, unknown>) => Record<string, unknown>;
 
+/** Rewrite every `catalogKey` in a document (pieces, curve templates, designs…). */
+function mapCatalogKeys(v: unknown, f: (key: string) => string): unknown {
+  if (Array.isArray(v)) return v.map((x) => mapCatalogKeys(x, f));
+  if (typeof v !== 'object' || v === null) return v;
+  return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, k === 'catalogKey' && typeof x === 'string' ? f(x) : mapCatalogKeys(x, f)]));
+}
+
 /**
  * Step migrations keyed by the version they upgrade *from*.
- * Each must preserve all IDs. None exist yet: version 1 is the first released format.
+ * Each must preserve all IDs.
  */
-const MIGRATIONS: Record<number, Migration> = {};
+const MIGRATIONS: Record<number, Migration> = {
+  // 2 (19 Nov 2026): placed parts store their BrickLink number ("bl:<no>") instead of
+  // Rebrickable's ("rb:<no>").
+  1: (doc) => mapCatalogKeys(doc, upgradeCatalogKey) as Record<string, unknown>,
+};
 
 /** Upgrade any supported stored/exported project document to the current schema, then validate. */
 export function migrateProject(raw: unknown): Project {

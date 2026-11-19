@@ -5,7 +5,7 @@ import { ProjectSchema, type Project } from '../domain/schema';
 import type { BrickwoodDb, CheckpointRow, PhotoRow, VersionRow } from './db';
 
 export type VersionInfo = Pick<VersionRow, 'id' | 'projectId' | 'createdAt' | 'name' | 'note'>;
-import { InventorySchema, emptyInventory, type Inventory } from '../domain/inventory';
+import { InventorySchema, emptyInventory, parseInventory, type Inventory } from '../domain/inventory';
 import { BACKUP_KIND, fromBase64, toBase64, type Backup } from '../domain/backup';
 
 const INVENTORY = 'inventory';
@@ -324,8 +324,8 @@ export class ProjectRepository {
       }
     });
     if (opts.inventory && backup.inventory) {
-      const inv = InventorySchema.safeParse(backup.inventory);
-      if (inv.success) await this.saveInventory(inv.data);
+      const inv = parseInventory(backup.inventory);
+      if (inv) await this.saveInventory(inv);
     }
     return { restored };
   }
@@ -377,8 +377,7 @@ export class ProjectRepository {
   /** Your parts (one list for all projects), or an empty one. */
   async getInventory(): Promise<Inventory> {
     const row = await this.db.meta.get(INVENTORY);
-    const parsed = InventorySchema.safeParse(row?.value);
-    return parsed.success ? parsed.data : emptyInventory();
+    return parseInventory(row?.value) ?? emptyInventory();
   }
 
   async saveInventory(inv: Inventory): Promise<void> {

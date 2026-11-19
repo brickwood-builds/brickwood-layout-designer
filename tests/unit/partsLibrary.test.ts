@@ -40,7 +40,7 @@ describe('parts library', () => {
   it('placing a part keeps its number, size, smoothness and height; plants start green', () => {
     const tile = lib.byNo.get('3068b')!;
     const t = libraryTemplate(tile);
-    expect(t).toMatchObject({ catalogKey: 'rb:3068b', width: 2, depth: 2, smooth: true, heightPlates: 1 });
+    expect(t).toMatchObject({ catalogKey: 'bl:3068', width: 2, depth: 2, smooth: true, heightPlates: 1 });
     const p = createProject({ name: 'Parts', table: { widthIn: 20, depthIn: 20 } });
     const r = addObject(p, { ...t, levelId: p.levels[0]!.id, center: { x: 5, y: 5 } }, 'full');
     expect(computeStack(r.project, p.levels[0]!.id).get(r.id)!.top).toBe(1);

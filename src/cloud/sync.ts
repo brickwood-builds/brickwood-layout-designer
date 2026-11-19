@@ -6,7 +6,7 @@
 // Taking a cloud copy keeps the local one as a checkpoint. Versions and photos never change
 // once saved, so they are simply copied both ways.
 import { exportProject, parseProjectFile } from '../domain/exchange';
-import { InventorySchema, type Inventory } from '../domain/inventory';
+import { parseInventory, type Inventory } from '../domain/inventory';
 import { fromBase64, toBase64 } from '../domain/backup';
 import { migrateProject } from '../domain/migrations';
 import type { Project } from '../domain/schema';
@@ -154,8 +154,7 @@ export class SyncEngine {
     let theirETag = rf.eTag;
     if (thereChanged) {
       const f = await this.drive.read(INV);
-      const parsed = f ? InventorySchema.safeParse(JSON.parse(f.text)) : null;
-      theirs = parsed?.success ? parsed.data : null;
+      theirs = f ? parseInventory(JSON.parse(f.text)) : null;
       if (f) theirETag = f.eTag;
     }
     if (theirs && (!hereChanged || empty || theirs.updatedAt > mine.updatedAt)) {

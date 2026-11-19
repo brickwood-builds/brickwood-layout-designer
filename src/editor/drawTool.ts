@@ -4,7 +4,7 @@ import { STARTER_PARTS } from '../domain/catalog';
 import type { PaintTemplate, WhenTaken } from '../domain/brush';
 import { touchingSpacing, type StampSource, type Turn } from '../domain/stamps';
 import type { Project } from '../domain/schema';
-import { libraryTemplate } from '../domain/partsLibrary';
+import { libraryTemplate, shownPartNo } from '../domain/partsLibrary';
 import { preferredParts } from './partPrefs';
 
 export interface StairDraft {
@@ -79,7 +79,7 @@ export function drawSources(project: Project): DrawSource[] {
     label: s.name,
     template: { type: s.type, name: s.name, width: s.width, depth: s.depth, color: s.color, round: s.round, smooth: s.smooth, catalogKey: `shape:${s.id}` },
   }));
-  const library: DrawSource[] = preferredParts().map((p) => ({ key: p.key, label: `${p.name} (${p.partNo})`, template: libraryTemplate(p) }));
+  const library: DrawSource[] = preferredParts().map((p) => ({ key: p.key, label: `${p.name} (${shownPartNo(p)})`, template: libraryTemplate(p) }));
   return [...parts, ...own, ...library];
 }
 

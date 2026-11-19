@@ -30,7 +30,7 @@ describe('built-in parts', () => {
 
   it('plates have studs, tiles are smooth; heights come from the part', () => {
     expect(partByKey('plate-2x2')).toMatchObject({ name: 'Plate 2×2', studs: true, height: 1, partNo: '3022' });
-    expect(partByKey('tile-2x2')).toMatchObject({ name: 'Tile 2×2', studs: false, partNo: '3068b' });
+    expect(partByKey('tile-2x2')).toMatchObject({ name: 'Tile 2×2', studs: false, partNo: '3068', rbNo: '3068b' }); // BrickLink's number shown
     expect(partByKey('plate-2x4')).toMatchObject({ width: 4, depth: 2 });
     expect(defaultHeight(obj({ catalogKey: 'brick-2x4' }))).toBe(3);
     expect(defaultHeight(obj({ catalogKey: 'roundtile-1x1' }))).toBe(1);

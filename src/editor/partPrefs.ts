@@ -2,7 +2,8 @@
 // Whole part entries are stored, so they show at once (before the parts list loads).
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { partLookup } from './partLookup';
-import { libraryIfLoaded, loadLibrary, type LibraryPart, type PartsLibrary } from '../domain/partsLibrary';
+import { libraryIfLoaded, loadLibrary, shownPartNo, type LibraryPart, type PartsLibrary } from '../domain/partsLibrary';
+import { blFor } from '../domain/partNumbers';
 
 const FAV = 'brickwood.favouriteParts';
 const RECENT = 'brickwood.recentParts';
@@ -68,9 +69,10 @@ export function preferredParts(): LibraryPart[] {
   return [...state.favourites, ...state.recent].filter((p) => !seen.has(p.key) && seen.add(p.key));
 }
 
-/** The library entry for a placed piece ("rb:<no>"), loading the parts list if needed. */
+/** The library entry for a placed piece ("bl:<BrickLink no>"), loading the parts list if needed. */
 export function useLibraryPart(catalogKey: string | undefined): LibraryPart | null {
-  const partNo = catalogKey?.startsWith('rb:') ? catalogKey.slice(3) : null;
+  // Older pieces stored "rb:<Rebrickable no>".
+  const partNo = catalogKey?.startsWith('bl:') ? catalogKey.slice(3) : catalogKey?.startsWith('rb:') ? blFor(catalogKey.slice(3)) : null;
   const [lib, setLib] = useState<PartsLibrary | null>(libraryIfLoaded());
   useEffect(() => {
     if (!partNo || lib) return;
@@ -81,5 +83,5 @@ export function useLibraryPart(catalogKey: string | undefined): LibraryPart | nu
     };
   }, [partNo, lib]);
   if (!partNo) return null;
-  return partLookup()?.byPartNo(partNo) ?? lib?.byNo.get(partNo) ?? [...state.favourites, ...state.recent].find((p) => p.partNo === partNo) ?? null;
+  return partLookup()?.byBrickLinkNo(partNo) ?? lib?.byBl.get(partNo) ?? [...state.favourites, ...state.recent].find((p) => shownPartNo(p) === partNo) ?? null;
 }

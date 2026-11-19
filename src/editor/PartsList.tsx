@@ -289,6 +289,7 @@ function PartsListDialog({ store, repo, onClose }: { store: EditorStore; repo: P
               const r = rebrickableCsv(
                 rows.filter((x) => x.supplier === 'bricklink'),
                 lib!.colorIds,
+                (no) => lib!.byNo.has(no),
               );
               download(fileName(project.name, 'BrickLink shopping list (Rebrickable format)'), r.csv);
               setMessage(r.skipped.length ? `${r.skipped.length} part(s) with an unknown colour were left out.` : '');

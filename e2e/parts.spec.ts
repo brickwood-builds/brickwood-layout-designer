@@ -18,7 +18,7 @@ test('search all parts, place one, favourite it; colours it is made in come firs
   await row.getByRole('button', { name: /^Tile 2×2 Corner/ }).click();
   const s = await st(page);
   const tile = s.project.objects.find((o) => o.id === s.selection[0])!;
-  expect(tile).toMatchObject({ catalogKey: 'rb:14719', width: 2, depth: 2, smooth: true, heightPlates: 1 });
+  expect(tile).toMatchObject({ catalogKey: 'bl:14719', width: 2, depth: 2, smooth: true, heightPlates: 1 });
   // The panel names the part and offers the colours it is made in first.
   await expect(page.getByText(/LEGO part 14719/)).toBeVisible();
   await page.getByRole('button', { name: /Light Bluish Gray|Colour/ }).first().click();

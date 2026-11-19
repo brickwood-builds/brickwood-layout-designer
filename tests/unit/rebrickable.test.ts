@@ -143,7 +143,7 @@ describe('Looked-up parts are kept for offline use', () => {
     await later.init();
     expect(later.searchCached('plate 2x4').parts.map((p) => p.partNo)).toEqual(['3020']);
     expect(later.searchCached('3068b').parts.map((p) => p.partNo)).toEqual(['3068b']);
-    expect(later.byPartNo('3020')?.blNo).toBe('3020');
+    expect(later.byBrickLinkNo('3020')?.blNo).toBe('3020');
     await expect(later.lookup('6141')).rejects.toMatchObject({ kind: 'offline' });
     expect(later.state.cached).toHaveLength(2);
   });

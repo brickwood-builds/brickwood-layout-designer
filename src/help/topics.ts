@@ -206,7 +206,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       'Tap ☆ to keep a part in Favourites. Parts you place show under Recently used. Both stay on this device for every project, and also appear in Draw › Draw with.',
       'Select a placed part to see its part number. Its colour list shows the colours it has really been made in first.',
       'A few parts (some plants and animals) don’t have their size in the list: they come in as 1×1 — set their width and depth in the panel.',
-      'Part numbers are Rebrickable’s; they are nearly always the same as BrickLink’s. The parts list comes from Rebrickable’s free downloads and works offline.',
+      'Part numbers are BrickLink’s, so shopping lists work on BrickLink and with Brickwith. The parts list comes from Rebrickable’s free downloads and works offline; a few parts are numbered differently there (Rebrickable’s 6141 is BrickLink’s 4073), and searching finds either number.',
       'Not in the list? Below the results, choose “Not here? Look it up online…” and paste your own free Rebrickable key (rebrickable.com → Profile → Settings → API). Then “Look up … on Rebrickable” searches every LEGO part by name or number (BrickLink numbers work too). Parts you look up are kept on this device and found again offline, and show their BrickLink number.',
       'The key is entered once: with OneDrive sync on, it goes to your other devices in a small settings file in the app’s OneDrive folder. Without OneDrive, enter it on each device. It is never put in project files, exports or backups.',
     ],

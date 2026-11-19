@@ -47,7 +47,7 @@ test('parts list: switch it on, type what I have, download the shopping list', a
   await bwPrice.fill('0.30');
   await bwPrice.press('Enter');
   const [bw] = await Promise.all([page.waitForEvent('download'), dialog.getByRole('button', { name: 'Brickwith shopping list' }).click()]);
-  expect(await readFile((await bw.path())!, 'utf8')).toBe('Part,Brickwith part,Name,Colour,Quantity,Price each\n4282,4282,Plate 2×16,Light Bluish Gray,2,0.3\n');
+  expect(await readFile((await bw.path())!, 'utf8')).toBe('BrickLink part,Brickwith part,Name,Colour,Quantity,Price each\n4282,4282,Plate 2×16,Light Bluish Gray,2,0.3\n');
 
   // Money spent.
   await dialog.getByText(/Money spent on this layout/).click();
