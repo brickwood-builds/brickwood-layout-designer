@@ -16,8 +16,11 @@ test('parts list: switch it on, type what I have, download the shopping list', a
   // Three 2×16 plates from the parts list.
   await page.getByText('Single pieces', { exact: true }).click();
   await page.getByLabel('Search single pieces').fill('4282');
-  const add = page.locator('.part-row', { hasText: '4282' }).first().getByRole('button').first();
-  for (let i = 0; i < 3; i++) await add.click();
+  // Pick it once, then click on the table three times.
+  await page.locator('.part-row', { hasText: '4282' }).first().getByRole('button').first().click();
+  const r = (await page.getByTestId('canvas').boundingBox())!;
+  for (let i = 0; i < 3; i++) await page.mouse.click(r.x + r.width / 2, r.y + r.height / 4 + i * 30);
+  await page.keyboard.press('Escape');
 
   await page.getByRole('button', { name: 'Parts list…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Parts list' });

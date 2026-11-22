@@ -38,7 +38,8 @@ type Gesture =
   | { type: 'measure'; x1: number; y1: number }
   | { type: 'draw'; points: { x: number; y: number }[] }
   /** Draw › Curve: a tap/click adds a point; dragging pans instead. */
-  | { type: 'curvePoint'; sx: number; sy: number; startView: View; panning: boolean }
+  /** Also used while holding a palette entry: a tap puts one down (`hold`), dragging pans. */
+  | { type: 'curvePoint'; sx: number; sy: number; startView: View; panning: boolean; hold?: boolean }
   /** Dragging one of a curve's handles. */
   | { type: 'handle'; pathId: string; index: number; points: { x: number; y: number }[]; moved: boolean };
 
@@ -90,10 +91,15 @@ export function Canvas({ store }: { store: EditorStore }) {
   const [spaceDown, setSpaceDown] = useState(false);
   const [cursor, setCursor] = useState('default');
   const spaceDownRef = useRef(false);
+  const holding = useStore(store, (s) => s.holding);
   // Leaving Draw › Curve drops an unfinished curve.
   useEffect(() => {
     if (mode !== 'draw' || !isPointByPoint({ shape: drawShape })) store.getState().set({ curveDraft: null });
   }, [mode, drawShape, store]);
+  // Another tool puts down what was held.
+  useEffect(() => {
+    if (mode !== 'select') store.getState().set({ holding: null });
+  }, [mode, store]);
   useEffect(() => {
     spaceDownRef.current = spaceDown;
   }, [spaceDown]);
@@ -211,6 +217,8 @@ export function Canvas({ store }: { store: EditorStore }) {
 
     const onDown = (e: PointerEvent) => {
       if (e.button === 2) return;
+      // Buttons drawn over the canvas (the Placing bar) work as buttons.
+      if (e.target instanceof Element && e.target.closest('.hold-bar')) return;
       el.setPointerCapture(e.pointerId);
       const p = local(e);
       pointers.current.set(e.pointerId, p);
@@ -246,6 +254,11 @@ export function Canvas({ store }: { store: EditorStore }) {
       }
       if (s.mode === 'draw' && isPointByPoint(s.draw) && e.button === 0 && !spaceDownRef.current) {
         gesture.current = { type: 'curvePoint', sx: p.x, sy: p.y, startView: s.view, panning: false };
+        return;
+      }
+      // Holding a palette entry: a tap puts one down (even on top of something), a drag pans.
+      if (s.holding && s.mode === 'select' && e.button === 0 && !spaceDownRef.current) {
+        gesture.current = { type: 'curvePoint', sx: p.x, sy: p.y, startView: s.view, panning: false, hold: true };
         return;
       }
       if (s.mode === 'draw' && e.button === 0 && !spaceDownRef.current) {
@@ -301,7 +314,7 @@ export function Canvas({ store }: { store: EditorStore }) {
       const g = gesture.current;
       if (!g && s.mode === 'draw' && isPointByPoint(s.draw) && s.curveDraft?.length) setCurveHover(toWorld(s.view, p.x, p.y));
       if (!g) {
-        if (e.pointerType === 'mouse') setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' ? 'crosshair' : hitTest(p) ? 'move' : 'default');
+        if (e.pointerType === 'mouse') setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' || s.holding ? 'crosshair' : hitTest(p) ? 'move' : 'default');
         return;
       }
       if (g.type === 'pinch') {
@@ -363,6 +376,10 @@ export function Canvas({ store }: { store: EditorStore }) {
       }
       gesture.current = null;
       if (g.type === 'curvePoint') {
+        if (g.hold) {
+          if (!cancelled && !g.panning) s.holding?.place(toWorld(s.view, g.sx, g.sy));
+          return;
+        }
         if (!cancelled && !g.panning) {
           const w = toWorld(s.view, g.sx, g.sy);
           s.set({ curveDraft: [...(s.curveDraft ?? []), w] });
@@ -468,6 +485,16 @@ export function Canvas({ store }: { store: EditorStore }) {
       data-testid="canvas"
       onContextMenu={(e) => e.preventDefault()}
     >
+      {holding && (
+        <div className="hold-bar" role="status">
+          <span>
+            Placing <strong>{holding.label}</strong> — click (or tap) where each one goes.
+          </span>
+          <button type="button" onClick={() => store.getState().set({ holding: null })}>
+            Done
+          </button>
+        </div>
+      )}
       {viewport.width > 0 && (
         <Stage ref={stageRef} width={viewport.width} height={viewport.height}>
           <Layer listening={false}>
@@ -523,6 +550,7 @@ export function Canvas({ store }: { store: EditorStore }) {
               {stroke && <StrokePreview cells={stroke} store={store} />}
               {stamps && <StampsPreview plan={stamps} store={store} />}
               {curveDraft && curveDraft.length > 0 && <CurveDraftPreview store={store} points={curveHover ? [...curveDraft, curveHover] : curveDraft} ctrl={curveDraft} scale={view.scale} />}
+              {holding?.preview && <HoldGhost store={store} preview={holding.preview} />}
               {editing && <CurveHandles store={store} points={handleDrag ?? editing.points} scale={view.scale} dragging={!!handleDrag} />}
             </Group>
             <Rulers view={view} viewport={viewport} unit={project.settings.displayUnit} />
@@ -810,6 +838,21 @@ const Studs = memo(function Studs({ items, view, viewport }: { items: Item[]; vi
     />
   );
 });
+
+/** What is held, following the mouse: where the next click would put it. */
+function HoldGhost({ store, preview }: { store: EditorStore; preview: NonNullable<EditorState['holding']>['preview'] & object }) {
+  const pointer = useStore(store, (s) => s.pointer);
+  const mode = useStore(store, (s) => s.project.settings.snap);
+  if (!pointer) return null;
+  const x = snap(pointer.x - preview.width / 2, mode);
+  const y = snap(pointer.y - preview.depth / 2, mode);
+  const common = { fill: preview.color, opacity: 0.55, stroke: ACCENT, strokeWidth: 1.5, strokeScaleEnabled: false, dash: [5, 3], listening: false };
+  return preview.round ? (
+    <Ellipse {...common} x={x + preview.width / 2} y={y + preview.depth / 2} radiusX={preview.width / 2} radiusY={preview.depth / 2} />
+  ) : (
+    <Rect {...common} x={x} y={y} width={preview.width} height={preview.depth} />
+  );
+}
 
 /** Fill an item's box, or its outline when it is a shaped feature. */
 function fillShape(c: CanvasRenderingContext2D, i: Item, r: R) {

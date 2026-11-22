@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { freeSpot, putDown } from './helpers';
 
 // Phase 2D: reusable designs with linked copies.
 type St = {
@@ -49,7 +50,7 @@ test('save a food stand as a design, place a copy, change the design, update the
 
   // Place a copy from the palette.
   await page.getByText('Designs', { exact: true }).click();
-  await page.locator('.palette-section', { hasText: 'Designs' }).getByRole('button', { name: /^Food stand with brick/ }).click();
+  await putDown(page, page.locator('.palette-section', { hasText: 'Designs' }).getByRole('button', { name: /^Food stand with brick/ }), await freeSpot(page, 32, 32));
   s = await st(page);
   expect(s.project.groups.filter((g) => g.designId)).toHaveLength(2);
   expect(s.project.modules.filter((m) => m.name === 'Food stand')).toHaveLength(2);

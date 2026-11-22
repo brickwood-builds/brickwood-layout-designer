@@ -11,20 +11,31 @@ import { MILS_COLORS, MILS_SIZES, milsKindForSize, type MilsKind, type Shape } f
 import { formatLength } from '../domain/units';
 import { Modal } from '../ui/Modal';
 import { addModuleAt, addObjectAt, itemLayerId, placeDesignAt, type ObjectTemplate } from './actions';
-import { copiesOf, deleteDesign, isOutdated } from '../domain/designs';
-import type { EditorStore } from './store';
+import { copiesOf, deleteDesign, designSize, isOutdated } from '../domain/designs';
+import type { EditorStore, Holding } from './store';
 import { toWorld } from './view';
 import { KIND_LABEL } from './Panels';
 import { OnlineLookup } from './OnlineLookup';
 
 type Place = (at?: { x: number; y: number }) => void;
 
+type Hold = Omit<Holding, 'place'>;
+
+/** Pick up a palette entry (or put it back when it is already held). */
+function toggleHold(store: EditorStore, hold: Hold, place: Place) {
+  const s = store.getState();
+  if (s.holding?.key === hold.key) return s.set({ holding: null });
+  s.set({ holding: { ...hold, place: (at) => place(at) }, mode: 'select', measure: null, curveDraft: null });
+}
+
 /**
- * Palette entry: click/tap adds it near the middle of the view; dragging it onto the
- * canvas drops it where it is released. Uses pointer events so it works with a finger too.
+ * Palette entry: click/tap picks it up — then each click or tap on the table puts one down
+ * there, until another is picked, it is clicked again, or Escape. Dragging it onto the
+ * canvas drops one where it is released. Pointer events, so it works with a finger too.
  */
-function PaletteItem({ store, place, title, children }: { store: EditorStore; place: Place; title: string; children: ReactNode }) {
+function PaletteItem({ store, place, title, hold, children }: { store: EditorStore; place: Place; title: string; hold: Hold; children: ReactNode }) {
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
+  const held = useStore(store, (s) => s.holding?.key === hold.key);
   const drag = useRef<{ x: number; y: number; active: boolean } | null>(null);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -43,7 +54,7 @@ function PaletteItem({ store, place, title, children }: { store: EditorStore; pl
     drag.current = null;
     setGhost(null);
     if (!d) return;
-    if (!d.active) return place();
+    if (!d.active) return toggleHold(store, hold, place);
     const canvas = document.querySelector('[data-testid="canvas"]');
     const r = canvas?.getBoundingClientRect();
     if (!r || e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
@@ -54,7 +65,9 @@ function PaletteItem({ store, place, title, children }: { store: EditorStore; pl
     <>
       <button
         type="button"
-        title={title}
+        title={held ? `${title} — click on the table to put one down; click here again or press Escape to stop` : `${title} — click, then click on the table for each one`}
+        aria-pressed={held}
+        className={held ? 'holding' : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -63,7 +76,7 @@ function PaletteItem({ store, place, title, children }: { store: EditorStore; pl
           setGhost(null);
         }}
         // Keyboard activation (Enter/Space) arrives as a click with detail 0.
-        onClick={(e) => e.detail === 0 && place()}
+        onClick={(e) => e.detail === 0 && toggleHold(store, hold, place)}
       >
         {children}
       </button>
@@ -94,6 +107,7 @@ function LibraryEntry({ store, part }: { store: EditorStore; part: LibraryPart }
     <div className="part-row">
       <PaletteItem
         store={store}
+        hold={{ key: part.key, label: part.name, preview: { width: t.width, depth: t.depth, color: t.color, round: t.round } }}
         title={`${part.name} — part ${shownPartNo(part)}, ${sizeText(part)}${part.sizeKnown ? '' : ': placed as 1×1, set its size after'}`}
         place={(at) => {
           addObjectAt(store, t, at);
@@ -178,7 +192,7 @@ export function Palette({ store }: { store: EditorStore }) {
     const template: ObjectTemplate = { type: sh.type, name: sh.name, width: sh.width, depth: sh.depth, color: sh.color, round: sh.round, catalogKey: `shape:${sh.id}` };
     return (
       <div className="shape-row" key={sh.id}>
-        <PaletteItem store={store} title={`${sh.name} (${sh.width}×${sh.depth} studs, ${legoColorName(sh.color) ?? 'custom colour'})`} place={(at) => addObjectAt(store, template, at)}>
+        <PaletteItem store={store} hold={{ key: `shape:${sh.id}`, label: sh.name, preview: { width: sh.width, depth: sh.depth, color: sh.color, round: sh.round } }} title={`${sh.name} (${sh.width}×${sh.depth} studs, ${legoColorName(sh.color) ?? 'custom colour'})`} place={(at) => addObjectAt(store, template, at)}>
           <Swatch color={sh.color} ratio={sh.width / sh.depth} round={sh.round} />
           {sh.name}
         </PaletteItem>
@@ -191,19 +205,19 @@ export function Palette({ store }: { store: EditorStore }) {
 
   return (
     <aside className="palette" aria-label="Add">
-      <p className="muted small palette-hint">Tap to add, or drag onto the table.</p>
+      <p className="muted small palette-hint">Pick one, then click (or tap) on the table for each one you want. Esc or Done to stop.</p>
       <Section title="Modules" open>
         {(['32x32', '16x16', '16x8'] as const).map((k) => (
-          <PaletteItem key={k} store={store} title={`Add a ${KIND_LABEL[k]} MILS module`} place={(at) => addModuleAt(store, k, undefined, at)}>
+          <PaletteItem key={k} store={store} hold={{ key: `module:${k}`, label: `${KIND_LABEL[k]} module`, preview: { ...MILS_SIZES[k], color: MILS_COLORS[k] } }} title={`Add a ${KIND_LABEL[k]} MILS module`} place={(at) => addModuleAt(store, k, undefined, at)}>
             <Swatch color={MILS_COLORS[k]} ratio={MILS_SIZES[k].width / MILS_SIZES[k].depth} />
             {KIND_LABEL[k]}
           </PaletteItem>
         ))}
-        <PaletteItem store={store} title="Add an 8×16 MILS module (a 16×8 plate standing upright; gets an A-xx ID)" place={(at) => addModuleAt(store, '16x8', { width: 8, depth: 16 }, at)}>
+        <PaletteItem store={store} hold={{ key: 'module:8x16', label: '8×16 module', preview: { width: 8, depth: 16, color: MILS_COLORS['16x8'] } }} title="Add an 8×16 MILS module (a 16×8 plate standing upright; gets an A-xx ID)" place={(at) => addModuleAt(store, '16x8', { width: 8, depth: 16 }, at)}>
           <Swatch color={MILS_COLORS['16x8']} ratio={0.5} />
           8×16
         </PaletteItem>
-        <PaletteItem store={store} title="Add a 32×16 MILS module" place={(at) => addModuleAt(store, '32x16', undefined, at)}>
+        <PaletteItem store={store} hold={{ key: 'module:32x16', label: '32×16 module', preview: { ...MILS_SIZES['32x16'], color: MILS_COLORS['32x16'] } }} title="Add a 32×16 MILS module" place={(at) => addModuleAt(store, '32x16', undefined, at)}>
           <Swatch color={MILS_COLORS['32x16']} ratio={2} />
           32×16
         </PaletteItem>
@@ -238,7 +252,7 @@ export function Palette({ store }: { store: EditorStore }) {
           const old = copies.filter((g) => isOutdated(project, g)).length;
           return (
             <div className="shape-row" key={d.id}>
-              <PaletteItem store={store} title={`${d.name}: ${copies.length} cop${copies.length === 1 ? 'y' : 'ies'}${old ? `, ${old} not updated` : ''}`} place={(at) => placeDesignAt(store, d.id, at)}>
+              <PaletteItem store={store} hold={{ key: `design:${d.id}`, label: d.name, preview: { ...designSize(d), color: '#6639ba' } }} title={`${d.name}: ${copies.length} cop${copies.length === 1 ? 'y' : 'ies'}${old ? `, ${old} not updated` : ''}`} place={(at) => placeDesignAt(store, d.id, at)}>
                 <Swatch color="#6639ba" />
                 {d.name}
                 {old > 0 && <span className="badge" title={`${old} cop${old === 1 ? 'y has' : 'ies have'} not been updated to the latest design`}>{old}</span>}
@@ -280,6 +294,7 @@ export function Palette({ store }: { store: EditorStore }) {
           <PaletteItem
             key={part.key}
             store={store}
+            hold={{ key: `part:${part.key}`, label: part.name, preview: { width: part.width, depth: part.depth, color: part.color, round: part.round } }}
             title={`${part.name}${part.partNo ? ` (part ${part.partNo})` : ''}`}
             place={(at) =>
               addObjectAt(store, { type: 'piece', name: part.name, width: part.width, depth: part.depth, color: part.color, round: part.round, smooth: !part.studs, catalogKey: part.key }, at)

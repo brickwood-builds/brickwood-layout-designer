@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { putDown } from './helpers';
 
 // Phase 3A: the full LEGO parts list in Single pieces.
 type Obj = { id: string; name: string; catalogKey?: string; color: string; smooth?: boolean; heightPlates?: number; width: number; depth: number };
@@ -15,7 +16,7 @@ test('search all parts, place one, favourite it; colours it is made in come firs
   await search.fill('14719');
   await expect(page.getByText('All LEGO parts')).toBeVisible();
   const row = page.locator('.part-row', { hasText: 'Tile 2×2 Corner' }).first();
-  await row.getByRole('button', { name: /^Tile 2×2 Corner/ }).click();
+  await putDown(page, row.getByRole('button', { name: /^Tile 2×2 Corner/ }));
   const s = await st(page);
   const tile = s.project.objects.find((o) => o.id === s.selection[0])!;
   expect(tile).toMatchObject({ catalogKey: 'bl:14719', width: 2, depth: 2, smooth: true, heightPlates: 1 });

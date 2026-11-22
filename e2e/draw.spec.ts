@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { putDown } from './helpers';
 
 // Phase 2B: Draw tool — walkways of 1×1 round plates (owner's example).
 type Obj = { name: string; type: string; x: number; y: number; round?: boolean; color: string; layerId: string };
@@ -105,7 +106,7 @@ test('single pieces: search the built-in parts; a made-up tile is smooth', async
   await search.fill('3024');
   await expect(page.locator('.palette-section', { hasText: 'Single pieces' }).getByRole('button', { name: /^Plate 1×1$/ })).toBeVisible();
   await search.fill('tile 1x6');
-  await page.getByRole('button', { name: 'Tile 1×6', exact: true }).click();
+  await putDown(page, page.getByRole('button', { name: 'Tile 1×6', exact: true }));
   await search.fill('');
   await page.getByRole('button', { name: '+ New piece…' }).click();
   const dlg = page.getByRole('dialog');

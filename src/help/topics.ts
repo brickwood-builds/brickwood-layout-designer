@@ -33,7 +33,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     id: 'editor-basics',
     title: 'Adding and moving modules',
     body: [
-      '• Add: tap a size in the left column (it goes in a free spot near the middle of the view), or drag it onto the table. 8×16 is a 16×8 plate standing upright (it gets an A-xx ID).',
+      '• Add: pick anything in the left column — a module size, a piece, an item — then click (or tap) on the table where you want it. It stays picked, so each click puts down another; pick something else to switch, or press Escape (or Done) to stop. Dragging on the table still moves the view. You can also drag an entry onto the table to drop just one. 8×16 is a 16×8 plate standing upright (it gets an A-xx ID).',
       '• Studs: zoom in and the studs appear on the plates, so you can place things exactly; everything snaps to whole studs.',
       '• Select: click or tap. Shift-click adds to the selection. With a mouse, drag a box on empty space to select everything it touches.',
       '• Move: drag. Everything selected moves together and snaps to whole studs (change this with Snap). A red outline while dragging means it would overlap something or hang off the table — you can still drop it.',
@@ -50,7 +50,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       '• Tap to select; tap empty space to clear the selection.',
       '• Drag a module with one finger to move it.',
       '• Drag empty space with one finger to move around; pinch with two fingers to zoom.',
-      '• Drag from the left column onto the table to place something exactly; a tap adds it near the middle.',
+      '• Pick something in the left column and click on the table to put one down there — keep clicking to put down more. Or drag one from the left column onto the table.',
       '• The details panel floats at the bottom right when something is selected.',
       'Changes save as you go and again whenever you switch away from the app.',
     ],

@@ -630,6 +630,7 @@ function useKeyboard(store: EditorStore) {
         case 'Backspace': return handled(), deleteSelection(store);
         case 'Enter': return s.curveDraft ? (handled(), finishCurve(store)) : undefined;
         case 'Escape':
+          if (s.holding) return s.set({ holding: null });
           if (s.curveDraft) return s.set({ curveDraft: null });
           if (s.editingPath) return s.set({ editingPath: null });
           return s.drag ? s.set({ drag: null }) : s.measure ? s.set({ measure: null }) : s.select([]);

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { putDown } from './helpers';
 
 // Owner feedback round 1: LEGO colours, 8×16, own markers/items, layers, finished look.
 type Obj = { name: string; type: string; layerId: string; color: string; x: number; y: number };
@@ -28,7 +29,7 @@ test.describe('feedback round 1 (desktop)', () => {
   });
 
   test('8×16 module gets an A-xx ID; toolbar shows the save time', async ({ page }) => {
-    await page.getByRole('button', { name: '8×16', exact: true }).click();
+    await putDown(page, page.getByRole('button', { name: '8×16', exact: true }));
     await expect(page.getByLabel('ID (on back of plate)')).toHaveValue('A-01');
     const m = (await state(page)).modules[0]!;
     expect(m).toMatchObject({ kind: '16x8', width: 8, depth: 16 });
@@ -48,15 +49,15 @@ test.describe('feedback round 1 (desktop)', () => {
     const objs = (await state(page)).objects;
     expect(objs).toHaveLength(1);
     expect(objs[0]).toMatchObject({ name: 'Popcorn cart', type: 'setupMarker', color: '#f8bb3d' });
-    // It's in the list now; tap it to place another.
-    await page.getByRole('button', { name: 'Popcorn cart', exact: true }).click();
+    // It's in the list now; pick it and click to place another.
+    await putDown(page, page.getByRole('button', { name: 'Popcorn cart', exact: true }));
     expect((await state(page)).objects.filter((o) => o.name === 'Popcorn cart')).toHaveLength(2);
     // The colour picker only offers LEGO colours (no gradient input).
     await expect(page.locator('input[type="color"]')).toHaveCount(0);
   });
 
   test('a sidewalk on the Surface details layer under a lamp: no warning; MILS IDs and finished look', async ({ page }) => {
-    await page.getByRole('button', { name: '32×32', exact: true }).click();
+    await putDown(page, page.getByRole('button', { name: '32×32', exact: true }));
     // Pick Surface details as the layer for new items, then draw a sidewalk.
     await page.getByRole('button', { name: 'Layers' }).click();
     await page.getByLabel('New items go on Surface details').check();
@@ -94,7 +95,7 @@ test.describe('feedback round 1 (desktop)', () => {
   });
 
   test('plate colour is chosen from LEGO colours in the module details', async ({ page }) => {
-    await page.getByRole('button', { name: '32×32', exact: true }).click();
+    await putDown(page, page.getByRole('button', { name: '32×32', exact: true }));
     await page.getByRole('button', { name: 'Not set (shown as Green)' }).click();
     await page.getByRole('option', { name: 'Dark Bluish Gray' }).click();
     expect((await state(page)).modules[0]!.plateColor).toBe('#6c6e68');

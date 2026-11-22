@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { freeSpot, putDown } from './helpers';
 
 const PARK = 'Brickwood Adventure Park';
 
@@ -128,7 +129,7 @@ test.describe('mouse (desktop Chrome)', () => {
   });
 
   test('add from the palette gets the next free ID, never a stored plate ID', async ({ page }) => {
-    await page.getByRole('button', { name: '16×16', exact: true }).click();
+    await putDown(page, page.getByRole('button', { name: '16×16', exact: true }), await freeSpot(page));
     await expect(page.getByLabel('ID (on back of plate)')).toHaveValue('B-61');
     await expect(page.getByText('93 modules')).toBeVisible();
     await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
@@ -187,7 +188,7 @@ test.describe('mouse (desktop Chrome)', () => {
     await page.getByRole('button', { name: 'Add level' }).click();
     await expect(page.getByLabel('Level')).toHaveValue(/.+/);
     await expect(page.getByText('0 modules')).toBeVisible();
-    await page.getByRole('button', { name: '32×32', exact: true }).click();
+    await putDown(page, page.getByRole('button', { name: '32×32', exact: true }), await freeSpot(page, 32, 32));
     await expect(page.getByText('1 module', { exact: true })).toBeVisible();
     await page.getByLabel('Others').check();
     await page.getByLabel('Level').selectOption({ label: 'Main table' });
@@ -219,7 +220,7 @@ test.describe('objects and groups (desktop Chrome)', () => {
 
   test('tap-add a plate, resize it in properties, undo', async ({ page }) => {
     await page.getByText('Single pieces', { exact: true }).click();
-    await page.getByRole('button', { name: 'Plate 2×2', exact: true }).click();
+    await putDown(page, page.getByRole('button', { name: 'Plate 2×2', exact: true }), await freeSpot(page, 2, 2));
     await expect(page.getByRole('heading', { name: 'Single piece' })).toBeVisible();
     const width = page.getByLabel('Width (studs)');
     await width.fill('4');
@@ -287,11 +288,11 @@ test.describe('objects and groups (desktop Chrome)', () => {
 
   test('a small item added to the palette can be reused', async ({ page }) => {
     await page.getByText('Single pieces', { exact: true }).click();
-    await page.getByRole('button', { name: 'Brick 2×4', exact: true }).click();
+    await putDown(page, page.getByRole('button', { name: 'Brick 2×4', exact: true }), await freeSpot(page, 4, 2));
     await page.getByLabel('Name').fill('Ticket booth');
     await page.getByLabel('Name').press('Enter');
     await page.getByRole('button', { name: 'Add to palette' }).click();
-    await page.getByRole('button', { name: 'Ticket booth', exact: true }).click();
+    await putDown(page, page.getByRole('button', { name: 'Ticket booth', exact: true }), await freeSpot(page, 4, 2));
     expect((await objects(page)).filter((o) => o.name === 'Ticket booth')).toHaveLength(2);
   });
 

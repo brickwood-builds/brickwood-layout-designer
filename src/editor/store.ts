@@ -6,6 +6,20 @@ import { DEFAULT_DRAW, type DrawSettings } from './drawTool';
 
 export type SaveState = 'saved' | 'pending' | 'saving' | 'error' | 'conflict';
 
+/**
+ * A palette entry being held: each click (or tap) on the table puts one down there, until
+ * another entry is picked, it is picked again, or Escape / Done.
+ */
+export interface Holding {
+  /** Which palette entry (so it can show as picked). */
+  key: string;
+  label: string;
+  /** Put one down with its middle at this spot (studs). */
+  place: (at: { x: number; y: number }) => void;
+  /** Size and look, for the outline that follows the pointer. */
+  preview?: { width: number; depth: number; color: string; round?: boolean };
+}
+
 /** Live drag preview: the selection drawn shifted by dx/dy until the drag is committed. */
 export interface DragPreview {
   ids: string[];
@@ -38,6 +52,8 @@ export interface EditorState {
   activeLayerId: string | null;
   /** Heights: hide things that sit at or above this many plates (null = show all). */
   heightLimit: number | null;
+  /** A palette entry being held for placing several (null = none). */
+  holding: Holding | null;
   /** Draw › Curve or Stairs: the points clicked so far (null when not drawing one). */
   curveDraft: { x: number; y: number }[] | null;
   /** The curve or stairs whose handles are shown for reshaping (null = none). */
@@ -57,7 +73,7 @@ export interface EditorState {
   redo: () => void;
   select: (ids: string[]) => void;
   setView: (view: View) => void;
-  set: (patch: Partial<Pick<EditorState, 'mode' | 'measure' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer' | 'activeLayerId' | 'heightLimit' | 'draw' | 'curveDraft' | 'editingPath' | 'buildDialog' | 'packingDialog' | 'showsDialog' | 'setupDialog'>>) => void;
+  set: (patch: Partial<Pick<EditorState, 'mode' | 'measure' | 'showOtherLevels' | 'drag' | 'levelId' | 'clipboard' | 'viewport' | 'pointer' | 'activeLayerId' | 'heightLimit' | 'draw' | 'holding' | 'curveDraft' | 'editingPath' | 'buildDialog' | 'packingDialog' | 'showsDialog' | 'setupDialog'>>) => void;
   /** Called by autosave once a revision is stored. Not an undoable change. */
   markSaved: (saved: Pick<Project, 'revision' | 'revisionId' | 'updatedAt'>) => void;
   setSaveState: (state: SaveState, error?: string) => void;
@@ -102,6 +118,7 @@ export function createEditorStore(project: Project): EditorStore {
     pointer: null,
     activeLayerId: null,
     heightLimit: null,
+    holding: null,
     curveDraft: null,
     editingPath: null,
     buildDialog: null,
