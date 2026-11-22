@@ -16,6 +16,8 @@ export interface NewObject {
   color: string;
   round?: boolean;
   smooth?: boolean;
+  /** Show its name on the layout. */
+  showName?: boolean;
   markerKind?: string;
   catalogKey?: string;
   /** Height in plates, when the part says (catalog parts). */
@@ -56,6 +58,7 @@ export function addObject(p: Project, spec: NewObject, mode: SnapMode): { projec
     notes: '',
     ...(spec.round ? { round: true } : {}),
     ...(spec.smooth ? { smooth: true } : {}),
+    ...(spec.showName ? { showName: true } : {}),
     ...(spec.markerKind ? { markerKind: spec.markerKind } : {}),
     ...(spec.catalogKey ? { catalogKey: spec.catalogKey } : {}),
     ...(spec.heightPlates !== undefined ? { heightPlates: spec.heightPlates } : {}),
@@ -93,12 +96,40 @@ export function addShape(p: Project, s: Omit<Shape, 'id'>): { project: Project; 
   const shape: Shape = { ...s, id: newId(), name: s.name.trim() || 'Shape' };
   if (!shape.round) delete shape.round;
   if (!shape.smooth) delete shape.smooth;
+  if (!shape.showName) delete shape.showName;
   return { project: { ...p, shapes: [...p.shapes, shape] }, id: shape.id };
 }
 
-/** Keep a placed item's size and colour in the palette. */
+/**
+ * Keep a placed item's size and colour in the palette. A made-up item then counts as one of
+ * that kind (so showing names, for example, applies to it and the ones placed from the
+ * palette); a real LEGO part keeps its part number.
+ */
 export function saveShape(p: Project, o: CanvasObject, name: string): { project: Project; id: string } {
-  return addShape(p, { name: name.trim() || o.name, type: o.type, width: o.width, depth: o.depth, color: o.color, round: o.round, smooth: o.smooth });
+  const r = addShape(p, { name: name.trim() || o.name, type: o.type, width: o.width, depth: o.depth, color: o.color, round: o.round, smooth: o.smooth, showName: o.showName });
+  if (o.catalogKey && !o.catalogKey.startsWith('shape:')) return r;
+  return { ...r, project: { ...r.project, objects: r.project.objects.map((x) => (x.id === o.id ? { ...x, catalogKey: `shape:${r.id}` } : x)) } };
+}
+
+/**
+ * Show (or hide) an item's name on the layout. An item placed from the palette changes with
+ * all of its kind in the project, and new ones from the palette follow.
+ */
+export function setShowName(p: Project, id: string, show: boolean): Project {
+  const o = p.objects.find((x) => x.id === id);
+  if (!o) return p;
+  const shapeId = o.catalogKey?.startsWith('shape:') && p.shapes.some((s) => `shape:${s.id}` === o.catalogKey) ? o.catalogKey : null;
+  const change = <T extends { showName?: boolean }>(x: T): T => {
+    const next = { ...x };
+    if (show) next.showName = true;
+    else delete next.showName;
+    return next;
+  };
+  return {
+    ...p,
+    objects: p.objects.map((x) => (x.id === id || (shapeId && x.catalogKey === shapeId) ? change(x) : x)),
+    shapes: shapeId ? p.shapes.map((s) => (`shape:${s.id}` === shapeId ? change(s) : s)) : p.shapes,
+  };
 }
 
 export function deleteShape(p: Project, id: string): Project {

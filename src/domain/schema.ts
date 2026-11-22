@@ -105,6 +105,8 @@ export const CanvasObjectSchema = z.object({
   round: z.boolean().optional(),
   /** Smooth top, no studs (tiles). */
   smooth: z.boolean().optional(),
+  /** Show its name on the layout (small items like a game building; features always show theirs). */
+  showName: z.boolean().optional(),
   /** Ride power, kept for later power/packing planning. */
   powerVolts: z.number().positive().optional(),
   outline,
@@ -138,6 +140,8 @@ export const ShapeSchema = z.object({
   color,
   round: z.boolean().optional(),
   smooth: z.boolean().optional(),
+  /** New ones placed from the palette show their name on the layout. */
+  showName: z.boolean().optional(),
 });
 
 /**

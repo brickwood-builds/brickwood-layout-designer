@@ -110,7 +110,7 @@ test('single pieces: search the built-in parts; a made-up tile is smooth', async
   await search.fill('');
   await page.getByRole('button', { name: '+ New piece…' }).click();
   const dlg = page.getByRole('dialog');
-  await dlg.getByLabel('Name').fill('Tile 1×10');
+  await dlg.getByLabel('Name', { exact: true }).fill('Tile 1×10');
   await dlg.getByLabel('Width (studs)').fill('10');
   await dlg.getByLabel(/Smooth top/).check();
   await dlg.getByRole('button', { name: 'Add', exact: true }).click();

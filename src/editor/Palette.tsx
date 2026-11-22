@@ -189,7 +189,7 @@ export function Palette({ store }: { store: EditorStore }) {
   const userItems = shapes.filter((sh) => sh.type === 'item' || sh.type === 'footprint');
 
   const shapeEntry = (sh: Shape) => {
-    const template: ObjectTemplate = { type: sh.type, name: sh.name, width: sh.width, depth: sh.depth, color: sh.color, round: sh.round, catalogKey: `shape:${sh.id}` };
+    const template: ObjectTemplate = { type: sh.type, name: sh.name, width: sh.width, depth: sh.depth, color: sh.color, round: sh.round, ...(sh.showName ? { showName: true } : {}), catalogKey: `shape:${sh.id}` };
     return (
       <div className="shape-row" key={sh.id}>
         <PaletteItem store={store} hold={{ key: `shape:${sh.id}`, label: sh.name, preview: { width: sh.width, depth: sh.depth, color: sh.color, round: sh.round } }} title={`${sh.name} (${sh.width}×${sh.depth} studs, ${legoColorName(sh.color) ?? 'custom colour'})`} place={(at) => addObjectAt(store, template, at)}>
@@ -351,7 +351,7 @@ export function Palette({ store }: { store: EditorStore }) {
             setDialog(null);
             let shapeId = '';
             store.getState().commit((p) => {
-              const r = addShape(p, { name: template.name, type: template.type, width: template.width, depth: template.depth, color: template.color, round: template.round, smooth: template.smooth });
+              const r = addShape(p, { name: template.name, type: template.type, width: template.width, depth: template.depth, color: template.color, round: template.round, smooth: template.smooth, showName: template.showName });
               shapeId = r.id;
               return r.project;
             });
@@ -379,12 +379,13 @@ function NewThingDialog({ store, kind, onAdd, onClose }: { store: EditorStore; k
   const [d, setD] = useState<number>(t.size);
   const [round, setRound] = useState(false);
   const [smooth, setSmooth] = useState(false);
+  const [showName, setShowName] = useState(false);
   const [color, setColor] = useState(lego(t.color));
   const [layerId, setLayerId] = useState(kind === 'marker' ? defaultItemLayerId(project) : itemLayerId(store));
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim() || w <= 0 || d <= 0) return;
-    onAdd({ type: t.type, name: name.trim(), width: w, depth: d, color, round, smooth: kind === 'piece' && smooth, layerId });
+    onAdd({ type: t.type, name: name.trim(), width: w, depth: d, color, round, smooth: kind === 'piece' && smooth, showName, layerId });
   };
   return (
     <Modal title={t.title} onClose={onClose}>
@@ -413,6 +414,10 @@ function NewThingDialog({ store, kind, onAdd, onClose }: { store: EditorStore; k
             Smooth top (tile — no studs)
           </label>
         )}
+        <label className="radio">
+          <input type="checkbox" checked={showName} onChange={(e) => setShowName(e.target.checked)} />
+          Show its name on the layout (e.g. a game building, so you can see what’s where)
+        </label>
         <LegoColorPicker label="LEGO colour" value={color} onChange={(hex) => hex && setColor(hex)} />
         <label>
           Layer

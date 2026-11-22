@@ -503,6 +503,7 @@ export function Canvas({ store }: { store: EditorStore }) {
               {studsVisible && <Studs items={baseItems} view={view} viewport={viewport} />}
               {shading && <HeightShading items={baseItems} stack={shading.stack} max={shading.max} />}
               {showLabels && <Labels items={baseItems} dx={0} dy={0} zoom={labelZoom} builtOn={builtOn} />}
+              {showLabels && <ItemNames items={baseItems} dx={0} dy={0} zoom={labelZoom} />}
             </Group>
           </Layer>
           <Layer listening={false}>
@@ -511,6 +512,7 @@ export function Canvas({ store }: { store: EditorStore }) {
                 <>
                   <Items items={draggedItems} dx={drag.dx} dy={drag.dy} selected={selectedSet} problems={dragProblems} editable={editable} plateColors={plateColors} />
                   {showLabels && <Labels items={draggedItems} dx={drag.dx} dy={drag.dy} zoom={labelZoom} builtOn={builtOn} />}
+                  {showLabels && <ItemNames items={draggedItems} dx={drag.dx} dy={drag.dy} zoom={labelZoom} />}
                 </>
               )}
               {levelItems.filter(hasZone).map((i) => {
@@ -622,6 +624,43 @@ const ItemShape = memo(function ItemShape({
     <Ellipse {...common} x={r.x + r.width / 2} y={r.y + r.depth / 2} radiusX={r.width / 2} radiusY={r.depth / 2} />
   ) : (
     <Rect {...common} x={r.x} y={r.y} width={r.width} height={r.depth} opacity={!module && item.type === 'footprint' ? 0.85 : 1} />
+  );
+});
+
+/**
+ * Names of small items set to show theirs (a game building): the same size on screen at any
+ * zoom, white with a dark edge so they read on any colour, so the whole layout shows what's where.
+ */
+const ItemNames = memo(function ItemNames({ items, dx, dy, zoom }: { items: Item[]; dx: number; dy: number; zoom: number }) {
+  const fontSize = 12 / zoom;
+  const box = 400 / zoom;
+  return (
+    <>
+      {items.map((item) => {
+        if (isModule(item) || !item.showName || !item.name) return null;
+        const r = footprint({ ...item, x: item.x + dx, y: item.y + dy });
+        return (
+          <Text
+            key={item.id}
+            x={r.x + r.width / 2 - box / 2}
+            y={r.y + r.depth / 2 - fontSize / 2}
+            width={box}
+            text={item.name}
+            fontSize={fontSize}
+            fontFamily="system-ui, sans-serif"
+            fontStyle="bold"
+            fill="#ffffff"
+            stroke="rgba(0,0,0,0.8)"
+            strokeWidth={3 / zoom}
+            fillAfterStrokeEnabled
+            align="center"
+            wrap="none"
+            listening={false}
+            perfectDrawEnabled={false}
+          />
+        );
+      })}
+    </>
   );
 });
 

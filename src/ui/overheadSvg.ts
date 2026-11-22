@@ -50,6 +50,8 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
   const b = opts.bounds ?? levelBounds(project, level.id) ?? { x: 0, y: 0, width: 64, depth: 32 };
   const vb = { x: b.x - MARGIN, y: b.y - MARGIN, w: b.width + MARGIN * 2, h: b.depth + MARGIN * 2 };
   const visible = new Set(project.layers.filter((l) => l.visible).map((l) => l.id));
+  // Names of small items: about 1/70 of the picture's width, at least 1.6 studs.
+  const nameSize = Math.max(1.6, vb.w / 70);
   const out: string[] = [];
   const size = opts.pixelsPerStud ? ` width="${Math.round(vb.w * opts.pixelsPerStud)}" height="${Math.round(vb.h * opts.pixelsPerStud)}"` : '';
   out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${n(vb.x)} ${n(vb.y)} ${n(vb.w)} ${n(vb.h)}"${size} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Overhead view of ${esc(project.name)}">`);
@@ -92,6 +94,9 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
     }
     if (opts.itemLabels && !isModule(i) && (i.type === 'setupMarker' || i.type === 'item') && i.name) {
       out.push(`<text class="pv-name" x="${n(r.x + r.width / 2)}" y="${n(r.y - 0.6)}" font-size="1.6">${esc(i.name)}</text>`);
+    } else if (opts.labels && !isModule(i) && i.showName && i.name) {
+      // A small item set to show its name: readable on the whole-layout picture.
+      out.push(`<text class="pv-name" x="${n(r.x + r.width / 2)}" y="${n(r.y + r.depth / 2)}" font-size="${n(nameSize)}">${esc(i.name)}</text>`);
     }
     if (opts.titles) out.push('</g>');
   }

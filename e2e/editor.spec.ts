@@ -277,7 +277,7 @@ test.describe('objects and groups (desktop Chrome)', () => {
   test('new ride from the dialog is a named base with no plate ID, placed in free space', async ({ page }) => {
     await page.getByText('Features', { exact: true }).click();
     await page.getByRole('button', { name: 'New…' }).click();
-    await page.getByLabel('Name').fill('Bumper Boats');
+    await page.getByLabel('Name', { exact: true }).fill('Bumper Boats');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Feature (on its own base)' })).toBeVisible();
     await expect(page.getByLabel('ID (on back of plate)')).toHaveValue('');
@@ -289,8 +289,8 @@ test.describe('objects and groups (desktop Chrome)', () => {
   test('a small item added to the palette can be reused', async ({ page }) => {
     await page.getByText('Single pieces', { exact: true }).click();
     await putDown(page, page.getByRole('button', { name: 'Brick 2×4', exact: true }), await freeSpot(page, 4, 2));
-    await page.getByLabel('Name').fill('Ticket booth');
-    await page.getByLabel('Name').press('Enter');
+    await page.getByLabel('Name', { exact: true }).fill('Ticket booth');
+    await page.getByLabel('Name', { exact: true }).press('Enter');
     await page.getByRole('button', { name: 'Add to palette' }).click();
     await putDown(page, page.getByRole('button', { name: 'Ticket booth', exact: true }), await freeSpot(page, 4, 2));
     expect((await objects(page)).filter((o) => o.name === 'Ticket booth')).toHaveLength(2);

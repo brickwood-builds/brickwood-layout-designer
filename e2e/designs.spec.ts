@@ -25,7 +25,7 @@ test('save a food stand as a design, place a copy, change the design, update the
   // A food stand feature with a brick on it.
   await page.getByText('Features', { exact: true }).click();
   await page.getByRole('button', { name: 'New…' }).click();
-  await page.getByRole('dialog').getByLabel('Name').fill('Food stand');
+  await page.getByRole('dialog').getByLabel('Name', { exact: true }).fill('Food stand');
   await page.getByRole('dialog').getByRole('button', { name: 'Add', exact: true }).click();
   const stand = (await st(page)).project.modules.find((m) => m.name === 'Food stand')!;
   await page.getByText('Single pieces', { exact: true }).click();

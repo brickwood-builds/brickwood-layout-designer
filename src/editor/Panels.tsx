@@ -10,7 +10,7 @@ import { updateStairs } from './actions';
 import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, saveSelectionAsDesign, ungroupSelection } from './actions';
 import { designable, isOutdated, unlinkCopy, updateCopyToDesign, updateDesignFromCopy } from '../domain/designs';
 import { Modal } from '../ui/Modal';
-import { groupOf, modulesUnder, withCarriedItems, renameGroup, resizeObject, saveShape } from '../domain/objects';
+import { groupOf, modulesUnder, withCarriedItems, renameGroup, resizeObject, saveShape, setShowName } from '../domain/objects';
 import { markerKind } from '../domain/catalog';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { DrawPanel } from './DrawPanel';
@@ -214,6 +214,7 @@ function ObjectFields({ store, o, unit }: { store: EditorStore; o: CanvasObject;
     <>
       <h2>{{ footprint: 'Feature', setupMarker: 'Setup marker', item: 'Small item', piece: 'Single piece' }[o.type]}</h2>
       <Field label="Name" value={o.name} onCommit={(v) => commit((p) => updateObject(p, o.id, { name: v.trim() }))} />
+      {o.type !== 'footprint' && <ShowNameField store={store} o={o} />}
       {part && (
         <p className="muted small">
           {part.blNo ? (
@@ -261,6 +262,18 @@ function ObjectFields({ store, o, unit }: { store: EditorStore; o: CanvasObject;
       )}
       <SaveShape store={store} o={o} />
     </>
+  );
+}
+
+/** "Show its name on the layout": for this item, or all of its kind when it came from the palette. */
+function ShowNameField({ store, o }: { store: EditorStore; o: CanvasObject }) {
+  const project = useStore(store, (s) => s.project);
+  const kind = o.catalogKey?.startsWith('shape:') && project.shapes.some((s) => `shape:${s.id}` === o.catalogKey) ? project.objects.filter((x) => x.catalogKey === o.catalogKey).length : 1;
+  return (
+    <label className="check">
+      <input type="checkbox" checked={!!o.showName} onChange={(e) => store.getState().commit((p) => setShowName(p, o.id, e.target.checked))} />
+      Show its name on the layout{kind > 1 ? ` (all ${kind} in this project)` : ''}
+    </label>
   );
 }
 

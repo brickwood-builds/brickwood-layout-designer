@@ -42,7 +42,7 @@ test.describe('feedback round 1 (desktop)', () => {
     await expect(page.locator('.palette-section', { hasText: 'Setup markers' }).getByRole('button')).toHaveText(['+ New marker…']);
     await page.getByRole('button', { name: '+ New marker…' }).click();
     const dlg = page.getByRole('dialog');
-    await dlg.getByLabel('Name').fill('Popcorn cart');
+    await dlg.getByLabel('Name', { exact: true }).fill('Popcorn cart');
     await dlg.getByRole('button', { name: 'White' }).click(); // opens the LEGO colour grid
     await page.getByRole('option', { name: 'Bright Light Orange' }).click();
     await page.getByRole('button', { name: 'Add', exact: true }).click();
@@ -65,7 +65,7 @@ test.describe('feedback round 1 (desktop)', () => {
     await page.getByText('Small items', { exact: true }).click();
     await page.getByRole('button', { name: '+ New item…' }).click();
     const dlg = page.getByRole('dialog');
-    await dlg.getByLabel('Name').fill('Sidewalk');
+    await dlg.getByLabel('Name', { exact: true }).fill('Sidewalk');
     await dlg.getByLabel('Width (studs)').fill('16');
     await dlg.getByLabel('Depth (studs)').fill('4');
     await expect(dlg.getByLabel('Layer')).toHaveValue((await state(page)).layers.find((l) => l.name === 'Surface details')!.id);
@@ -77,7 +77,7 @@ test.describe('feedback round 1 (desktop)', () => {
     // A new project has no markers of its own yet: make one.
     await page.getByText('Setup markers', { exact: true }).click();
     await page.getByRole('button', { name: '+ New marker…' }).click();
-    await page.getByRole('dialog').getByLabel('Name').fill('Lamp');
+    await page.getByRole('dialog').getByLabel('Name', { exact: true }).fill('Lamp');
     await page.getByRole('dialog').getByRole('button', { name: 'Add', exact: true }).click();
     const p = await state(page);
     const layerName = (id: string) => p.layers.find((l) => l.id === id)!.name;
