@@ -15,12 +15,19 @@ describe('brush cells', () => {
     expect(sorted(cells)).toEqual(sorted(Array.from({ length: 11 }, (_, i) => ({ x: i, y: 0 }))));
   });
 
-  it('brush width 3 paints a walkway 3 studs wide', () => {
-    const cells = cellsForLine({ x: 5, y: 5 }, { x: 15, y: 5 }, { ...b1, width: 3 });
-    const rows = new Set(cells.map((c) => c.y));
-    expect([...rows].sort()).toEqual([3, 4, 5, 6].filter((y) => cells.some((c) => c.y === y)));
-    expect(rows.size).toBeGreaterThanOrEqual(3);
-    expect(Math.min(...cells.map((c) => c.x))).toBeLessThanOrEqual(4);
+  it('brush width N paints a walkway exactly N studs wide, wherever the pointer is in a stud', () => {
+    for (const width of [1, 2, 3, 4, 6, 8]) {
+      for (const y of [5, 5.1, 5.3, 5.5, 5.7, 5.9]) {
+        const cells = cellsForLine({ x: 5.4, y }, { x: 15.4, y }, { ...b1, width });
+        expect(new Set(cells.map((c) => c.y)).size, `width ${width} at y=${y}`).toBe(width);
+      }
+    }
+    // A single click with a 1-stud brush is one stud, the one clicked.
+    expect(cellsForPath([{ x: 7.6, y: 3.2 }], b1)).toEqual([{ x: 7, y: 3 }]);
+    // 3 wide: the stud under the pointer is in the middle.
+    expect(sorted(cellsForPath([{ x: 7.6, y: 3.2 }], { ...b1, width: 3 }))).toEqual(sorted([6, 7, 8].flatMap((x) => [2, 3, 4].map((y) => ({ x, y })))));
+    // 2×2 pieces with a 4-stud brush: two pieces across.
+    expect(cellsForPath([{ x: 5.3, y: 5.3 }], { cellW: 2, cellD: 2, width: 4 })).toHaveLength(4);
   });
 
   it('box fill covers the box; 2×2 pieces line up on a 2-stud grid', () => {

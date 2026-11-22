@@ -29,14 +29,20 @@ export interface BrushSize {
 
 const key = (c: Cell) => `${c.x},${c.y}`;
 
-/** Cells covered by a square brush centred on one point. */
+/**
+ * Cells under a square brush at one point: exactly `width` studs across (in whole pieces, at
+ * least one), the block of cells whose middle is nearest the point. Counting every cell the
+ * square merely touched painted one stud too many each way unless the pointer was exactly
+ * on a stud line (a 1-stud brush painted 2×2).
+ */
 function cellsAt(p: Pt, b: BrushSize, out: Map<string, Cell>) {
-  const half = Math.max(b.width, Math.min(b.cellW, b.cellD)) / 2;
-  const x0 = Math.floor((p.x - half) / b.cellW) * b.cellW;
-  const y0 = Math.floor((p.y - half) / b.cellD) * b.cellD;
-  for (let x = x0; x < p.x + half - 1e-9; x += b.cellW) {
-    for (let y = y0; y < p.y + half - 1e-9; y += b.cellD) {
-      const c = { x, y };
+  const nx = Math.max(1, Math.round(b.width / b.cellW));
+  const ny = Math.max(1, Math.round(b.width / b.cellD));
+  const x0 = Math.round((p.x - (nx * b.cellW) / 2) / b.cellW) * b.cellW;
+  const y0 = Math.round((p.y - (ny * b.cellD) / 2) / b.cellD) * b.cellD;
+  for (let i = 0; i < nx; i++) {
+    for (let j = 0; j < ny; j++) {
+      const c = { x: x0 + i * b.cellW, y: y0 + j * b.cellD };
       out.set(key(c), c);
     }
   }
