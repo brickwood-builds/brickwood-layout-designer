@@ -217,8 +217,6 @@ export function Canvas({ store }: { store: EditorStore }) {
 
     const onDown = (e: PointerEvent) => {
       if (e.button === 2) return;
-      // Buttons drawn over the canvas (the Placing bar) work as buttons.
-      if (e.target instanceof Element && e.target.closest('.hold-bar')) return;
       el.setPointerCapture(e.pointerId);
       const p = local(e);
       pointers.current.set(e.pointerId, p);
@@ -485,16 +483,6 @@ export function Canvas({ store }: { store: EditorStore }) {
       data-testid="canvas"
       onContextMenu={(e) => e.preventDefault()}
     >
-      {holding && (
-        <div className="hold-bar" role="status">
-          <span>
-            Placing <strong>{holding.label}</strong> — click (or tap) where each one goes.
-          </span>
-          <button type="button" onClick={() => store.getState().set({ holding: null })}>
-            Done
-          </button>
-        </div>
-      )}
       {viewport.width > 0 && (
         <Stage ref={stageRef} width={viewport.width} height={viewport.height}>
           <Layer listening={false}>

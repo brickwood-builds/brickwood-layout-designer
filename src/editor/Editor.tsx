@@ -217,9 +217,10 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
   const canRedo = useStore(store, (s) => s.future.length > 0);
   const mode = useStore(store, (s) => s.mode);
   const saveState = useStore(store, (s) => s.saveState);
+  const holding = useStore(store, (s) => s.holding);
   const s = store.getState();
   return (
-    <header className="topbar toolbar">
+    <header className={`topbar toolbar${holding ? ' holding' : ''}`}>
       <button type="button" onClick={onBack}>← Projects</button>
       <h1 title={project.name}>{project.name}</h1>
       <span className="save-state" role="status" data-state={saveState} title={`Every change saves automatically within a second. Last saved ${new Date(project.updatedAt).toLocaleString()}`}>
@@ -227,6 +228,18 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
           ? `Saved ${savedWhen(project.updatedAt)}`
           : { pending: 'Saving…', saving: 'Saving…', error: 'Not saved', conflict: 'Not saved' }[saveState]}
       </span>
+      {holding && (
+        // Up here rather than over the table, so it never covers where pieces go.
+        <span className="hold-chip" role="status" title={`Placing ${holding.label}: click (or tap) on the table where each one goes. Done or Escape to stop.`}>
+          <span className="hold-label">
+            <span className="hold-word">Placing </span>
+            <strong>{holding.label}</strong>
+          </span>
+          <button type="button" className="primary" onClick={() => s.set({ holding: null })}>
+            Done
+          </button>
+        </span>
+      )}
       <div className="tool-group">
         <button type="button" onClick={s.undo} disabled={!canUndo} title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
         <button type="button" onClick={s.redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
