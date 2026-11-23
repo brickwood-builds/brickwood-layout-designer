@@ -91,6 +91,8 @@ export function Canvas({ store }: { store: EditorStore }) {
   const [spaceDown, setSpaceDown] = useState(false);
   const [cursor, setCursor] = useState('default');
   const spaceDownRef = useRef(false);
+  /** The pointer picking something now is a finger (more slack for small things). */
+  const touchHit = useRef(false);
   const holding = useStore(store, (s) => s.holding);
   // Leaving Draw › Curve drops an unfinished curve.
   useEffect(() => {
@@ -194,7 +196,9 @@ export function Canvas({ store }: { store: EditorStore }) {
     const hitTest = (p: { x: number; y: number }): Item | null => {
       const s = store.getState();
       const w = toWorld(s.view, p.x, p.y);
-      return itemAt(s.project, s.levelId, w.x, w.y, hiddenByHeight(s.project, s.levelId, s.project.features.heights ? s.heightLimit : null));
+      // A few pixels of slack for small things (more for a finger).
+      const reach = (touchHit.current ? 12 : 6) / s.view.scale;
+      return itemAt(s.project, s.levelId, w.x, w.y, hiddenByHeight(s.project, s.levelId, s.project.features.heights ? s.heightLimit : null), reach);
     };
     /** Put a curve or stairs handle under the pointer (snapped). */
     const moveHandle = (g: Extract<Gesture, { type: 'handle' }>, p: { x: number; y: number }) => {
@@ -233,6 +237,7 @@ export function Canvas({ store }: { store: EditorStore }) {
       }
       if (pointers.current.size > 2) return;
       const touch = e.pointerType === 'touch';
+      touchHit.current = touch;
       const ec = e.button === 0 && !spaceDownRef.current ? editablePath(s) : null;
       if (ec) {
         let best = -1;
@@ -294,10 +299,12 @@ export function Canvas({ store }: { store: EditorStore }) {
         }
         return;
       }
-      if (touch) {
+      // Empty table: dragging moves the view, a click lets go of the selection. Shift-drag
+      // draws a box to select (Ctrl/Cmd as well: add to the selection).
+      if (touch || !e.shiftKey) {
         gesture.current = { type: 'pan', startView: s.view, sx: p.x, sy: p.y, moved: false, clearOnTap: true };
       } else {
-        gesture.current = { type: 'marquee', sx: p.x, sy: p.y, x: p.x, y: p.y, additive: e.shiftKey || e.metaKey || e.ctrlKey };
+        gesture.current = { type: 'marquee', sx: p.x, sy: p.y, x: p.x, y: p.y, additive: e.metaKey || e.ctrlKey };
       }
     };
 
@@ -312,7 +319,11 @@ export function Canvas({ store }: { store: EditorStore }) {
       const g = gesture.current;
       if (!g && s.mode === 'draw' && isPointByPoint(s.draw) && s.curveDraft?.length) setCurveHover(toWorld(s.view, p.x, p.y));
       if (!g) {
-        if (e.pointerType === 'mouse') setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' || s.holding ? 'crosshair' : hitTest(p) ? 'move' : 'default');
+        if (e.pointerType === 'mouse') {
+          touchHit.current = false;
+          // Over empty table in Select, the hand shows that dragging moves the view.
+          setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' || s.holding ? 'crosshair' : hitTest(p) ? 'move' : e.shiftKey ? 'crosshair' : 'grab');
+        }
         return;
       }
       if (g.type === 'pinch') {
@@ -324,7 +335,9 @@ export function Canvas({ store }: { store: EditorStore }) {
         const zoomed = zoomAt(g.startView, g.mid.x, g.mid.y, dist / g.dist);
         s.setView({ ...zoomed, x: zoomed.x + mid.x - g.mid.x, y: zoomed.y + mid.y - g.mid.y });
       } else if (g.type === 'pan') {
-        if (Math.hypot(p.x - g.sx, p.y - g.sy) > DRAG_THRESHOLD.touch) g.moved = true;
+        // A click isn't a drag: the view only moves once the pointer really travels.
+        if (!g.moved && Math.hypot(p.x - g.sx, p.y - g.sy) <= (e.pointerType === 'touch' ? DRAG_THRESHOLD.touch : DRAG_THRESHOLD.mouse)) return;
+        g.moved = true;
         s.setView({ ...g.startView, x: g.startView.x + p.x - g.sx, y: g.startView.y + p.y - g.sy });
         setCursor('grabbing');
       } else if (g.type === 'move') {

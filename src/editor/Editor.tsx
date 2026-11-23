@@ -498,6 +498,32 @@ function FileStatus({ file }: { file: ReturnType<typeof useFileSync> }) {
   }
 }
 
+/** What the pointer does right now, and how to get out: always in view, never wraps. */
+function ToolHint({ store }: { store: EditorStore }) {
+  const mode = useStore(store, (s) => s.mode);
+  const erase = useStore(store, (s) => s.draw.erase);
+  const holding = useStore(store, (s) => s.holding?.label);
+  const selected = useStore(store, (s) => s.selection.length);
+  const [tool, hint] = holding
+    ? ['Placing', `${holding}: click where each one goes · Esc to stop`]
+    : mode === 'draw'
+      ? erase
+        ? ['Erase', 'Drag over pieces and items to remove them · Esc for Select']
+        : ['Draw', 'Drag to paint pieces · Esc for Select']
+      : mode === 'measure'
+        ? ['Measure', 'Drag between two points · Esc for Select']
+        : mode === 'pan'
+          ? ['Pan', 'Drag to move the view · Esc for Select']
+          : selected
+            ? ['Select', 'Drag to move it · Delete removes · R turns · Esc lets go']
+            : ['Select', 'Click to pick something · drag the table to move the view · Shift-drag to select a box'];
+  return (
+    <span className="tool-hint" data-testid="tool-hint" title={`${tool}: ${hint}`}>
+      <strong>{tool}</strong> <span className="muted">{hint}</span>
+    </span>
+  );
+}
+
 function StatusBar({ store, file, parts, builds, versions, packing, shows, setup }: { store: EditorStore; file: ReactNode; parts: ReactNode; builds: ReactNode; versions: ReactNode; packing: ReactNode; shows: ReactNode; setup: ReactNode }) {
   const project = useStore(store, (s) => s.project);
   const levelId = useStore(store, (s) => s.levelId);
@@ -534,6 +560,7 @@ function StatusBar({ store, file, parts, builds, versions, packing, shows, setup
 
   return (
     <footer className="statusbar">
+      <ToolHint store={store} />
       <span>{counts}</span>
       <span className="muted" data-testid="pointer">
         {pointer ? `${formatLength(Math.floor(pointer.x), unit)}, ${formatLength(Math.floor(pointer.y), unit)}` : ' '}
@@ -648,7 +675,11 @@ function useKeyboard(store: EditorStore) {
           if (s.holding) return s.set({ holding: null });
           if (s.curveDraft) return s.set({ curveDraft: null });
           if (s.editingPath) return s.set({ editingPath: null });
-          return s.drag ? s.set({ drag: null }) : s.measure ? s.set({ measure: null }) : s.select([]);
+          if (s.drag) return s.set({ drag: null });
+          if (s.measure) return s.set({ measure: null });
+          // Escape always gets you back to Select.
+          if (s.mode !== 'select') return s.set({ mode: 'select' });
+          return s.select([]);
       }
       if (key === 'r') return handled(), rotateSelection(store, e.shiftKey ? -1 : 1);
       if (key === 'f') return handled(), fitToLevel(store);

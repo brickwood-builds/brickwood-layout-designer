@@ -11,7 +11,18 @@ export async function putDown(page: Page, entry: Locator, at?: { x: number; y: n
   await entry.click();
   let p: { x: number; y: number };
   if (at) {
-    p = await page.evaluate(([x, y]) => (window as unknown as { __brickwoodEditor: Hook }).__brickwoodEditor.toPage(x, y), [at.x, at.y] as const);
+    const toPage = () => page.evaluate(([x, y]) => (window as unknown as { __brickwoodEditor: Hook }).__brickwoodEditor.toPage(x, y), [at.x, at.y] as const);
+    p = await toPage();
+    // Off the visible part of the table (a narrow window, or behind the panel)? Move the view
+    // over first, as a person would.
+    const r = (await page.getByTestId('canvas').boundingBox())!;
+    if (p.x < r.x + 20 || p.x > r.x + r.width - 20 || p.y < r.y + 20 || p.y > r.y + r.height - 20) {
+      await page.evaluate(([x, y]) => {
+        const s = (window as unknown as { __brickwoodEditor: { state(): { view: { scale: number; x: number; y: number }; viewport: { width: number; height: number }; setView(v: { scale: number; x: number; y: number }): void } } }).__brickwoodEditor.state();
+        s.setView({ ...s.view, x: s.viewport.width / 3 - x * s.view.scale, y: s.viewport.height / 2 - y * s.view.scale });
+      }, [at.x, at.y] as const);
+      p = await toPage();
+    }
   } else {
     const r = (await page.getByTestId('canvas').boundingBox())!;
     p = { x: r.x + r.width / 2, y: r.y + r.height / 2 };

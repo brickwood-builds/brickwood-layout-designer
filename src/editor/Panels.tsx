@@ -91,13 +91,8 @@ export function Properties({ store }: { store: EditorStore }) {
   const unit = project.settings.displayUnit;
   if (mode === 'measure') return <MeasurePanel store={store} />;
   if (mode === 'draw') return <DrawPanel store={store} />;
-  if (selection.length === 0) {
-    return (
-      <aside className="props empty" aria-label="Properties">
-        <p className="muted">Select something to see its details. Drag to move; Shift-click or drag a box to select several.</p>
-      </aside>
-    );
-  }
+  // Nothing selected: no panel, so the table gets the room. (The status bar says what to do.)
+  if (selection.length === 0) return null;
   if (selection.length > 1) {
     const sel = new Set(selection);
     const group = project.groups.find((g) => g.memberIds.length === sel.size && g.memberIds.every((id) => sel.has(id)));

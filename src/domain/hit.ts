@@ -12,8 +12,33 @@ export function drawOrder(project: Project, items: Item[]): Item[] {
   return [...items].sort((a, b) => (layerOrder.get(a.layerId) ?? 0) - (layerOrder.get(b.layerId) ?? 0) || rank(a) - rank(b));
 }
 
-/** The topmost selectable item at (x, y) studs on a level, skipping hidden and locked layers. */
-export function itemAt(project: Project, levelId: string, x: number, y: number, hidden?: ReadonlySet<string>): Item | null {
+/**
+ * What a click at (x, y) studs picks: the topmost selectable item there (skipping hidden and
+ * locked layers) — but small things win when the click is near them. Zoomed out, a brick
+ * is a few pixels wide; a click that just misses it (within `reach` studs, the editor passes
+ * a few screen pixels' worth) picks the brick, not the plate it sits on.
+ */
+export function itemAt(project: Project, levelId: string, x: number, y: number, hidden?: ReadonlySet<string>, reach = 0): Item | null {
+  const exact = topmostAt(project, levelId, x, y, hidden);
+  if (exact && !isModule(exact) && exact.type !== 'footprint') return exact;
+  if (reach <= 0) return exact;
+  // Small things (pieces, items, markers) near the click: the nearest, then the smallest.
+  const editable = new Set(project.layers.filter((l) => l.visible && !l.locked).map((l) => l.id));
+  let best: { item: Item; d: number; area: number } | null = null;
+  for (const o of project.objects) {
+    if (o.levelId !== levelId || o.type === 'footprint' || !editable.has(o.layerId) || hidden?.has(o.id)) continue;
+    const r = footprint(o);
+    const dx = Math.max(r.x - x, 0, x - (r.x + r.width));
+    const dy = Math.max(r.y - y, 0, y - (r.y + r.depth));
+    const d = Math.hypot(dx, dy);
+    if (d > reach) continue;
+    const area = r.width * r.depth;
+    if (!best || d < best.d - 1e-9 || (Math.abs(d - best.d) < 1e-9 && area < best.area)) best = { item: o, d, area };
+  }
+  return best?.item ?? exact;
+}
+
+function topmostAt(project: Project, levelId: string, x: number, y: number, hidden?: ReadonlySet<string>): Item | null {
   const editable = new Set(project.layers.filter((l) => l.visible && !l.locked).map((l) => l.id));
   const stack = drawOrder(
     project,
