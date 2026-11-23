@@ -34,7 +34,8 @@ type Gesture =
   | { type: 'pan'; startView: View; sx: number; sy: number; moved: boolean; clearOnTap: boolean }
   | { type: 'pinch'; startView: View; dist: number; mid: { x: number; y: number } }
   | { type: 'move'; ids: string[]; sx: number; sy: number; anchor: { x: number; y: number }; moved: boolean; touch: boolean }
-  | { type: 'marquee'; sx: number; sy: number; x: number; y: number; additive: boolean }
+  /** A box being drawn. `pick`: what a plain click (no drag) selects instead — the thing under it. */
+  | { type: 'marquee'; sx: number; sy: number; x: number; y: number; additive: boolean; pick?: string[] }
   | { type: 'measure'; x1: number; y1: number }
   | { type: 'draw'; points: { x: number; y: number }[] }
   /** Draw › Curve: a tap/click adds a point; dragging pans instead. */
@@ -285,6 +286,14 @@ export function Canvas({ store }: { store: EditorStore }) {
         return;
       }
       const hit = hitTest(p);
+      // With a mouse, only what's already selected can be dragged. On anything else a click
+      // picks it and a drag draws a box — a layout is plates edge to edge, so there's rarely
+      // bare table to start a box on.
+      if (hit && !touch && !s.selection.includes(hit.id)) {
+        const unit = e.altKey ? [hit.id] : expandToGroups(s.project, [hit.id]);
+        gesture.current = { type: 'marquee', sx: p.x, sy: p.y, x: p.x, y: p.y, additive: e.shiftKey || e.metaKey || e.ctrlKey, pick: unit };
+        return;
+      }
       if (hit) {
         const additive = e.shiftKey || e.metaKey || e.ctrlKey;
         // A grouped item brings its whole group, unless Alt picks the single piece.
@@ -322,7 +331,8 @@ export function Canvas({ store }: { store: EditorStore }) {
         if (e.pointerType === 'mouse') {
           touchHit.current = false;
           // Select: the arrow (a move cursor over something that can be dragged).
-          setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' || s.holding ? 'crosshair' : hitTest(p) ? 'move' : 'default');
+          const over = s.mode === 'select' && !s.holding ? hitTest(p) : null;
+          setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' || s.holding ? 'crosshair' : over && s.selection.includes(over.id) ? 'move' : 'default');
         }
         return;
       }
@@ -425,13 +435,17 @@ export function Canvas({ store }: { store: EditorStore }) {
         setMarquee(null);
         if (cancelled) return;
         if (Math.abs(g.x - g.sx) < 4 && Math.abs(g.y - g.sy) < 4) {
-          if (!g.additive) s.select([]);
+          // A click: pick what's under it (Shift adds it), or let go on bare table.
+          if (g.pick) s.select(g.additive ? [...s.selection.filter((id) => !g.pick!.includes(id)), ...g.pick] : g.pick);
+          else if (!g.additive) s.select([]);
           return;
         }
+        // Everything fully inside the box (like Visio), and the groups they belong to.
         const a = toWorld(s.view, Math.min(g.sx, g.x), Math.min(g.sy, g.y));
         const b = toWorld(s.view, Math.max(g.sx, g.x), Math.max(g.sy, g.y));
+        const box = { x: a.x, y: a.y, width: b.x - a.x, depth: b.y - a.y };
         const candidates = allItems(s.project).filter((i) => i.levelId === s.levelId && isEditable(store, i.layerId));
-        const hits = expandToGroups(s.project, new SpatialIndex(candidates).intersecting({ x: a.x, y: a.y, width: b.x - a.x, depth: b.y - a.y }));
+        const hits = expandToGroups(s.project, new SpatialIndex(candidates).intersecting(box).filter((id) => rectContains(box, footprint(candidates.find((c) => c.id === id)!))));
         s.select(g.additive ? [...s.selection, ...hits] : hits);
       }
     };

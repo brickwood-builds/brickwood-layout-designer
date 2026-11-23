@@ -515,8 +515,8 @@ function ToolHint({ store }: { store: EditorStore }) {
         : mode === 'pan'
           ? ['Pan', 'Drag to move the view · Esc for Select']
           : selected
-            ? ['Select', 'Drag to move it · Delete removes · R turns · Esc lets go']
-            : ['Select', 'Click to pick something · drag a box to pick several · Pan or Space-drag moves the view'];
+            ? ['Select', 'Drag what’s selected to move it · Delete removes · R turns · Esc lets go']
+            : ['Select', 'Click to pick something, then drag it to move · drag a box around things to pick several'];
   return (
     <span className="tool-hint" data-testid="tool-hint" title={`${tool}: ${hint}`}>
       <strong>{tool}</strong> <span className="muted">{hint}</span>

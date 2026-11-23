@@ -22,11 +22,17 @@ test('drag a box to select; small pieces are easy to pick; panel and tool hint f
   // Nothing selected: no panel; the status bar says what a click does.
   await expect(panel).toHaveCount(0);
   await expect(hint).toContainText('Select');
-  await expect(hint).toContainText('drag a box to pick several');
+  await expect(hint).toContainText('drag a box around things to pick several');
 
   // Dragging on empty table draws a box: it selects what it touches, and the view stays put.
   let s = await st(page);
   const b01 = s.modules.find((m) => m.label === 'B-01')!;
+  // Over a plate that isn't selected the pointer is the plain arrow (a drag won't move it).
+  const canvas = page.getByTestId('canvas');
+  const over = await at(page, b01.x + 8, b01.y + 8);
+  await page.mouse.move(over.x, over.y);
+  await page.mouse.move(over.x + 1, over.y + 1);
+  await expect(canvas).toHaveCSS('cursor', 'default');
   const from = await at(page, b01.x - 4, b01.y - 4);
   const to = await at(page, b01.x + b01.width + 2, b01.y + b01.depth + 2);
   await page.mouse.move(from.x, from.y);
@@ -38,6 +44,10 @@ test('drag a box to select; small pieces are easy to pick; panel and tool hint f
   expect(after.modules.map((m) => [m.x, m.y])).toEqual(s.modules.map((m) => [m.x, m.y]));
   expect(after.selection).toContain(b01.id);
   await expect(panel).toBeVisible();
+  // Now it's selected, the four-arrow pointer says a drag will move it.
+  await page.mouse.move(over.x, over.y);
+  await page.mouse.move(over.x + 1, over.y + 1);
+  await expect(canvas).toHaveCSS('cursor', 'move');
   await page.keyboard.press('Escape');
   await expect(panel).toHaveCount(0);
 
@@ -59,7 +69,7 @@ test('drag a box to select; small pieces are easy to pick; panel and tool hint f
   s = await st(page);
   expect(s.selection).toEqual([brick.id]);
   await expect(panel).toBeVisible();
-  await expect(hint).toContainText('Drag to move it');
+  await expect(hint).toContainText('Drag what’s selected to move it');
 
   // Clicking empty table lets go; the panel closes.
   const away = await at(page, -6, -6);

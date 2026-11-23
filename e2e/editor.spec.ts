@@ -64,6 +64,8 @@ test.describe('mouse (desktop Chrome)', () => {
   });
 
   test('drag a module onto the empty end of the table; it snaps, saves and survives reload', async ({ page }) => {
+    // Click it, then drag it (a drag on something not selected draws a box).
+    await page.mouse.click(...xy(await centerOf(page, 'C-05')));
     await mouseDrag(page, await centerOf(page, 'C-05'), await toPage(page, 496.3, 56.4));
     expect(await mod(page, 'C-05')).toMatchObject({ x: 480, y: 40 });
     await expect(page.getByRole('button', { name: 'No warnings' })).toBeVisible();
@@ -137,9 +139,10 @@ test.describe('mouse (desktop Chrome)', () => {
     await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
   });
 
-  test('marquee selects several; delete and undo as one step', async ({ page }) => {
+  test('a box drawn around plates selects them (even starting on a plate); delete and undo as one step', async ({ page }) => {
     const b01 = (await mod(page, 'B-01'))!;
-    await mouseDrag(page, await toPage(page, -2, b01.y - 20), await toPage(page, b01.x + 40, b01.y + 8));
+    // Around B-01 to B-03 (starting on the plate beside B-01): what's fully inside is picked.
+    await mouseDrag(page, await toPage(page, b01.x - 1, b01.y - 1), await toPage(page, b01.x + 50, b01.y + 17));
     const { selection } = await editorState(page);
     expect(selection.length).toBeGreaterThan(2);
     await expect(page.getByRole('heading', { name: `${selection.length} selected` })).toBeVisible();
@@ -155,6 +158,7 @@ test.describe('mouse (desktop Chrome)', () => {
   });
 
   test('overlap warning while dragging, listed afterwards, gone after undo', async ({ page }) => {
+    await page.mouse.click(...xy(await centerOf(page, 'C-05')));
     await mouseDrag(page, await centerOf(page, 'C-05'), await centerOf(page, 'C-06'));
     const button = page.getByRole('button', { name: /1 warning/ });
     await expect(button).toBeVisible();
@@ -304,7 +308,7 @@ test.describe('objects and groups (desktop Chrome)', () => {
     const c05 = (await mod(page, 'C-05'))!;
     await mouseDrag(page, { x: lamp.x + lamp.width / 2, y: lamp.y + lamp.height / 2 }, await toPage(page, c05.x + 10, c05.y + 10));
     const before = (await objects(page)).find((o) => o.name === 'Lamp')!;
-    await page.mouse.click(...xy(await toPage(page, -3, -3)));
+    await page.mouse.click(...xy(await toPage(page, c05.x + 24, c05.y + 24)));
     await mouseDrag(page, await toPage(page, c05.x + 24, c05.y + 24), await toPage(page, 496 + 8, 56 + 8));
     const after = (await mod(page, 'C-05'))!;
     expect(after).toMatchObject({ x: 480, y: 40 });
