@@ -64,6 +64,8 @@ export function DrawPanel({ store }: { store: EditorStore }) {
         ? 'Drag on the table: one is placed every few studs along the stroke (a grid for Fill box). A single click places one. Each stroke is one Undo.'
         : 'Drag on the table to paint — for example a walkway of 1×1 round plates. Each stroke is one Undo.';
 
+  if (draw.erase) return <ErasePanel store={store} />;
+
   return (
     <aside className="props" aria-label="Properties">
       <h2>Draw</h2>
@@ -229,16 +231,39 @@ export function DrawPanel({ store }: { store: EditorStore }) {
               </button>
             </div>
           </div>
-          <label className="check">
-            <input type="checkbox" checked={draw.erase} onChange={(e) => set({ erase: e.target.checked })} />
-            Erase instead (removes things on this layer under the brush)
-          </label>
         </>
       )}
       {!outline && <p className="muted small">
         Draws on layer <strong>{layer?.name}</strong> — change it in Layers (“New items”).{' '}
         {stairs ? '' : stamping ? 'Red spots are already taken and are skipped.' : draw.whenTaken === 'stack' ? 'Painting over what’s there adds a layer on top.' : 'Painting over what’s already there doesn’t double it up.'}
       </p>}
+    </aside>
+  );
+}
+
+/** Erase (toolbar): the brush, removing instead of painting. */
+function ErasePanel({ store }: { store: EditorStore }) {
+  const draw = useStore(store, (s) => s.draw);
+  const set = (patch: Partial<DrawSettings>) => store.getState().set({ draw: { ...draw, ...patch } });
+  return (
+    <aside className="props" aria-label="Properties">
+      <h2>Erase</h2>
+      <p className="muted small">Drag over single pieces, small items and setup markers to remove them. Each stroke is one Undo. Modules and features are never erased.</p>
+      <Seg
+        label="Shape"
+        value={draw.shape}
+        options={[
+          ['free', 'Freehand'],
+          ['line', 'Straight'],
+          ['box', 'Fill box'],
+        ]}
+        onChange={(shape) => set({ shape })}
+      />
+      {draw.shape !== 'box' && <Seg label="Eraser width (studs)" value={draw.width} options={WIDTHS.map((w) => [w, String(w)])} onChange={(width) => set({ width })} />}
+      <p className="muted small">It removes things on every layer you can see. To keep something safe, lock or hide its layer (Layers).</p>
+      <button type="button" onClick={() => set({ erase: false })}>
+        Back to Draw
+      </button>
     </aside>
   );
 }

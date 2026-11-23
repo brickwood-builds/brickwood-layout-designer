@@ -66,6 +66,16 @@ describe('painting', () => {
     expect(project.objects.some((o) => o.name === 'Lamp')).toBe(true);
   });
 
+  it('given several layers (the toolbar eraser: every visible, unlocked one) it removes from all of them', () => {
+    const { p, level, layer } = setup();
+    const painted = paintCells(p, level, layer, round1x1, cellsForBox({ x: 0, y: 0 }, { x: 10, y: 2 }, b1)).project;
+    const otherLayer = p.layers.find((l) => l.name === 'Markers & small items')!.id;
+    const withLamp = paintCells(painted, level, otherLayer, { ...round1x1, type: 'setupMarker', name: 'Lamp' }, [{ x: 3, y: 0 }]).project;
+    const { project, removed } = eraseCells(withLamp, level, new Set([layer, otherLayer]), cellsForBox({ x: 0, y: 0 }, { x: 5, y: 2 }, b1), b1);
+    expect(removed).toBe(11);
+    expect(project.objects.some((o) => o.name === 'Lamp')).toBe(false);
+  });
+
   it('pieces are counted for lists', () => {
     const { p, level, layer } = setup();
     let q = paintCells(p, level, layer, round1x1, cellsForBox({ x: 0, y: 0 }, { x: 10, y: 4 }, b1)).project;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useKeepInView } from '../ui/useKeepInView';
 import { useStore } from 'zustand';
-import type { Features } from '../domain/schema';
+import type { Features, Project } from '../domain/schema';
 import type { EditorStore } from './store';
 import { HEIGHT_RAMP_CSS } from '../domain/heights';
 import { viewerFileName, viewerHtml } from '../ui/viewer';
@@ -19,6 +19,7 @@ const OPTIONS: { key: keyof Features; label: string; hint: string }[] = [
 
 export function OptionsMenu({ store }: { store: EditorStore }) {
   const features = useStore(store, (s) => s.project.features);
+  const snap = useStore(store, (s) => s.project.settings.snap);
   const [open, setOpen] = useState(false);
   const popRef = useKeepInView<HTMLDivElement>(open);
   return (
@@ -28,6 +29,18 @@ export function OptionsMenu({ store }: { store: EditorStore }) {
       </button>
       {open && (
         <div ref={popRef} className="popover options-pop" role="dialog" aria-label="More tools">
+          <label className="field">
+            <span>Snap — how things line up when placed or moved</span>
+            <select
+              aria-label="Snap"
+              value={snap}
+              onChange={(e) => store.getState().commit((p) => ({ ...p, settings: { ...p.settings, snap: e.target.value as Project['settings']['snap'] } }))}
+            >
+              <option value="full">To whole studs</option>
+              <option value="half">To half studs</option>
+              <option value="free">Off (anywhere)</option>
+            </select>
+          </label>
           <span className="muted small">Switch on extra tools for this project. They stay out of the way until you do.</span>
           <div className="actions options-links">
             <button type="button" onClick={() => (window.location.hash = `#/project/${store.getState().project.id}/report`)} title="Display report: builds and repairs, show history, issues, spending — printable">

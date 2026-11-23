@@ -91,6 +91,16 @@ export function drawSources(project: Project): DrawSource[] {
 }
 
 /** The template to paint with, in the chosen colour. */
+/** Size of one brush cell: the piece being drawn with, or single studs for the eraser. */
+export function brushCell(project: Project, d: DrawSettings): { width: number; depth: number } {
+  if (d.erase) return { width: 1, depth: 1 };
+  const t = paintTemplate(project, d);
+  return { width: t.width, depth: t.depth };
+}
+
+/** Shapes the eraser can be used with (not stairs or a building outline). */
+export const ERASE_SHAPES: DrawSettings['shape'][] = ['free', 'line', 'box'];
+
 export function paintTemplate(project: Project, d: DrawSettings): PaintTemplate {
   const src = drawSources(project).find((s) => s.key === d.source) ?? drawSources(project).find((s) => s.key === DEFAULT_DRAW.source)!;
   return { ...src.template, color: d.color };

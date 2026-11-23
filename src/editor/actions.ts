@@ -1,6 +1,7 @@
 // Editor commands shared by the toolbar, keyboard shortcuts and panels.
 import { levelBounds, snap, unionRect, footprint } from '../domain/geometry';
 import {
+  isModule,
   addShapedFeature,
   findFreeSpot,
   addModule,
@@ -142,12 +143,25 @@ export function copySelection(store: EditorStore) {
   if (items.length) s.set({ clipboard: structuredClone(items) });
 }
 
-/** Paste the clipboard centred in the view, on the active level, on the snap grid. */
+/**
+ * Paste: pick up what was copied, like a palette entry — each click (or tap) on the table puts
+ * a copy down there, until Escape or Done.
+ */
 export function paste(store: EditorStore) {
   const s = store.getState();
   const b = unionRect(s.clipboard.map(footprint));
   if (!b) return;
-  const c = viewCenter(store);
+  const one = s.clipboard.length === 1 ? s.clipboard[0]! : null;
+  const label = one ? `copy of ${isModule(one) ? one.label || one.name || 'module' : one.name || 'item'}` : `copies of ${s.clipboard.length} things`;
+  s.set({ holding: { key: 'paste', label, place: (at) => pasteAt(store, at), preview: { width: b.width, depth: b.depth, color: '#6639ba' } }, mode: 'select', measure: null, curveDraft: null });
+}
+
+/** Put a copy of the clipboard down centred at `at` (or the middle of the view), on the snap grid. */
+export function pasteAt(store: EditorStore, at?: { x: number; y: number }) {
+  const s = store.getState();
+  const b = unionRect(s.clipboard.map(footprint));
+  if (!b) return;
+  const c = at ?? viewCenter(store);
   const mode = s.project.settings.snap;
   const dx = snap(c.x - b.width / 2, mode) - b.x;
   const dy = snap(c.y - b.depth / 2, mode) - b.y;
@@ -182,7 +196,9 @@ export function finishStroke(store: EditorStore, cells: Cell[]) {
   const layerId = itemLayerId(store);
   const template = paintTemplate(s.project, s.draw);
   if (s.draw.erase) {
-    s.commit((p) => eraseCells(p, s.levelId, layerId, cells, { cellW: template.width, cellD: template.depth, width: s.draw.width }).project, []);
+    // Every layer that's visible and not locked: what you see is what the eraser takes.
+    const layers = new Set(s.project.layers.filter((l) => l.visible && !l.locked).map((l) => l.id));
+    s.commit((p) => eraseCells(p, s.levelId, layers, cells, { cellW: 1, cellD: 1, width: s.draw.width }).project, []);
     return;
   }
   let ids: string[] = [];
@@ -222,8 +238,7 @@ export function finishCurve(store: EditorStore) {
     return;
   }
   if (s.draw.erase) {
-    const t = paintTemplate(s.project, s.draw);
-    finishStroke(store, cellsForPath(splinePoints(points), { cellW: t.width, cellD: t.depth, width: s.draw.width }));
+    finishStroke(store, cellsForPath(splinePoints(points), { cellW: 1, cellD: 1, width: s.draw.width }));
     return;
   }
   const src = stampSource(s.project, s.draw);

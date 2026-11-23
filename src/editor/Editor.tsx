@@ -41,6 +41,7 @@ import { SetupButton, SetupDialog } from './Setup';
 import { computeStack } from '../domain/heights';
 import { HelpButton } from '../help/HelpDialog';
 import { createEditorStore, type EditorStore } from './store';
+import { ERASE_SHAPES } from './drawTool';
 import { toScreen } from './view';
 
 type OnSaved = (p: Project) => void;
@@ -218,10 +219,14 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
   const mode = useStore(store, (s) => s.mode);
   const saveState = useStore(store, (s) => s.saveState);
   const holding = useStore(store, (s) => s.holding);
+  const erasing = useStore(store, (s) => s.draw.erase);
+  const hasSelection = useStore(store, (s) => s.selection.length > 0);
+  const hasCopy = useStore(store, (s) => s.clipboard.length > 0);
+  const pasting = holding?.key === 'paste';
   const s = store.getState();
   return (
     <header className={`topbar toolbar${holding ? ' holding' : ''}`}>
-      <button type="button" onClick={onBack}>← Projects</button>
+      <button type="button" className="back-btn" onClick={onBack} title="Back to your projects" aria-label="← Projects">←<span className="back-word"> Projects</span></button>
       <h1 title={project.name}>{project.name}</h1>
       <span className="save-state" role="status" data-state={saveState} title={`Every change saves automatically within a second. Last saved ${new Date(project.updatedAt).toLocaleString()}`}>
         {saveState === 'saved'
@@ -244,29 +249,22 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
         <button type="button" onClick={s.undo} disabled={!canUndo} title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
         <button type="button" onClick={s.redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
       </div>
+      <div className="tool-group">
+        <button type="button" onClick={() => copySelection(store)} disabled={!hasSelection} title="Copy what’s selected (Ctrl+C)">Copy</button>
+        <button type="button" aria-pressed={pasting} onClick={() => (pasting ? s.set({ holding: null }) : paste(store))} disabled={!hasCopy} title="Paste: then click (or tap) on the table where each copy goes (Ctrl+V)">Paste</button>
+      </div>
       <div className="tool-group" role="group" aria-label="Pointer mode">
         <button type="button" aria-pressed={mode === 'select'} onClick={() => s.set({ mode: 'select', measure: null })} title="Select and move (V)">Select</button>
         <button type="button" aria-pressed={mode === 'pan'} onClick={() => s.set({ mode: 'pan', measure: null })} title="Pan (H, or hold Space)">Pan</button>
-        <button type="button" aria-pressed={mode === 'draw'} onClick={() => s.set({ mode: 'draw', measure: null })} title="Draw: paint pieces, e.g. a walkway of 1×1 round plates (B)">Draw</button>
+        <button type="button" aria-pressed={mode === 'draw' && !erasing} onClick={() => startDraw(store, false)} title="Draw: paint pieces, e.g. a walkway of 1×1 round plates (B)">Draw</button>
+        <button type="button" aria-pressed={mode === 'draw' && erasing} onClick={() => startDraw(store, true)} title="Erase: drag over pieces, items and markers to remove them (E)">Erase</button>
         <button type="button" aria-pressed={mode === 'measure'} onClick={() => s.set({ mode: 'measure' })} title="Measure: drag between two points (M)">Measure</button>
       </div>
       <div className="tool-group">
-        <button type="button" onClick={() => zoomBy(store, 1 / 1.25)} title="Zoom out (−)" aria-label="Zoom out">−</button>
+        <button type="button" onClick={() => zoomBy(store, 1 / 1.25)} className="zoom-step" title="Zoom out (−)" aria-label="Zoom out">−</button>
         <button type="button" onClick={() => fitToLevel(store)} title="Fit to table (F)">Fit</button>
-        <button type="button" onClick={() => zoomBy(store, 1.25)} title="Zoom in (+)" aria-label="Zoom in">+</button>
+        <button type="button" onClick={() => zoomBy(store, 1.25)} className="zoom-step" title="Zoom in (+)" aria-label="Zoom in">+</button>
       </div>
-      <label className="tool-select">
-        <select
-          aria-label="Snap"
-          title="Snap: how positions line up"
-          value={project.settings.snap}
-          onChange={(e) => s.commit((p) => ({ ...p, settings: { ...p.settings, snap: e.target.value as Project['settings']['snap'] } }))}
-        >
-          <option value="full">Snap: stud</option>
-          <option value="half">Snap: ½ stud</option>
-          <option value="free">Snap: off</option>
-        </select>
-      </label>
       <LevelControls store={store} />
       <LayersMenu store={store} />
       <button type="button" onClick={onPrint} title="Printable plan, PDF and picture downloads">Print…</button>
@@ -653,13 +651,22 @@ function useKeyboard(store: EditorStore) {
       if (key === 'v') return s.set({ mode: 'select', measure: null });
       if (key === 'h') return s.set({ mode: 'pan', measure: null });
       if (key === 'm') return s.set({ mode: 'measure' });
-      if (key === 'b') return s.set({ mode: 'draw', measure: null });
+      if (key === 'b') return startDraw(store, false);
+      if (key === 'e') return startDraw(store, true);
       if (e.key === '+' || e.key === '=') return handled(), zoomBy(store, 1.25);
       if (e.key === '-' || e.key === '_') return handled(), zoomBy(store, 1 / 1.25);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [store]);
+}
+
+/** Draw or Erase (the same brush tool; Erase removes instead of painting). */
+function startDraw(store: EditorStore, erase: boolean) {
+  const s = store.getState();
+  // The eraser has no stairs or building outline: go back to freehand for those.
+  const shape = erase && !ERASE_SHAPES.includes(s.draw.shape) ? 'free' : s.draw.shape;
+  s.set({ mode: 'draw', measure: null, draw: { ...s.draw, erase, shape } });
 }
 
 /** iPad Safari may kill a backgrounded tab: save as soon as the page is hidden. */

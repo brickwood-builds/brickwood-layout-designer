@@ -132,13 +132,17 @@ export function paintCells(project: Project, levelId: string, layerId: string, t
   return { project: { ...project, objects: [...project.objects, ...added] }, ids: added.map((o) => o.id) };
 }
 
-/** Remove markers, items and pieces on the layer whose centre is inside a cell (eraser). */
-export function eraseCells(project: Project, levelId: string, layerId: string, cells: Cell[], b: BrushSize): { project: Project; removed: number } {
+/**
+ * Remove markers, items and pieces whose centre is inside a cell (eraser), on the given
+ * layer — or layers: the editor passes every layer that is visible and not locked.
+ */
+export function eraseCells(project: Project, levelId: string, layerId: string | ReadonlySet<string>, cells: Cell[], b: BrushSize): { project: Project; removed: number } {
+  const onLayer = (id: string) => (typeof layerId === 'string' ? id === layerId : layerId.has(id));
   if (!cells.length) return { project, removed: 0 };
   const index = new SpatialIndex(cells.map((c) => ({ id: key(c), x: c.x, y: c.y, width: b.cellW, depth: b.cellD, rotation: 0 as const })));
   const gone = new Set<string>();
   for (const o of project.objects) {
-    if (o.levelId !== levelId || o.layerId !== layerId || isModule(o) || o.type === 'footprint') continue;
+    if (o.levelId !== levelId || !onLayer(o.layerId) || isModule(o) || o.type === 'footprint') continue;
     const f = footprint(o);
     const cx = f.x + f.width / 2;
     const cy = f.y + f.depth / 2;

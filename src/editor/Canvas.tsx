@@ -22,7 +22,7 @@ import { planStamps, spotsAlongPath, spotsInBox, type StampPlan, type StampSpot 
 import { currentPoints, splinePoints } from '../domain/curves';
 import type { EditorState } from './store';
 import { cellsForBox, cellsForLine, cellsForPath, type Cell } from '../domain/brush';
-import { isPointByPoint, isStamping, paintTemplate, stampSource, stampSpacing } from './drawTool';
+import { brushCell, isPointByPoint, isStamping, paintTemplate, stampSource, stampSpacing } from './drawTool';
 import type { EditorStore } from './store';
 import { gridStep, toScreen, toWorld, zoomAt, type View } from './view';
 
@@ -938,8 +938,8 @@ function hiddenByHeight(project: Project, levelId: string, limit: number | null)
 /** Cells for the current stroke, following the Draw tool's shape and brush. */
 function strokeCells(store: EditorStore, points: { x: number; y: number }[]): Cell[] {
   const { project, draw } = store.getState();
-  const t = paintTemplate(project, draw);
-  const b = { cellW: t.width, cellD: t.depth, width: draw.width };
+  const cell = brushCell(project, draw);
+  const b = { cellW: cell.width, cellD: cell.depth, width: draw.width };
   const first = points[0]!;
   const last = points[points.length - 1]!;
   if (draw.shape === 'box') return cellsForBox(first, last, b);
@@ -1005,7 +1005,7 @@ function CurveDraftPreview({ store, points, ctrl, scale }: { store: EditorStore;
       </>
     );
   }
-  const t = paintTemplate(project, draw);
+  const t = { ...paintTemplate(project, draw), ...brushCell(project, draw) };
   const stamping = isStamping(draw);
   const cells = stamping ? [] : curveCells(points, draw.width, t);
   return (
@@ -1120,7 +1120,7 @@ function StairsPreview({ units, color, scale }: { units: StairUnit[]; color: str
 /** What the stroke will paint (or, red, what it will erase). */
 function StrokePreview({ cells, store }: { cells: Cell[]; store: EditorStore }) {
   const { project, draw } = store.getState();
-  const t = paintTemplate(project, draw);
+  const t = { ...paintTemplate(project, draw), ...brushCell(project, draw) };
   return (
     <Shape
       listening={false}

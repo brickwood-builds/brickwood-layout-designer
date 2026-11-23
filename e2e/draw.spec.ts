@@ -65,7 +65,7 @@ test.describe('draw (desktop)', () => {
     await page.mouse.up();
     expect(await plates(page)).toHaveLength(11 * 5);
     // Erase a 3-wide box at the left end.
-    await page.getByLabel(/Erase instead/).check();
+    await page.getByRole('button', { name: 'Erase', exact: true }).click(); // keeps Fill box
     const e1 = await at(page, c05.x + 2.2, c05.y + 2.2);
     const e2 = await at(page, c05.x + 4.8, c05.y + 6.8);
     await page.mouse.move(e1.x, e1.y);
