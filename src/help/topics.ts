@@ -35,12 +35,12 @@ export const HELP_TOPICS: HelpTopic[] = [
     body: [
       '• Add: pick anything in the left column — a module size, a piece, an item — then click (or tap) on the table where you want it. It stays picked, so each click puts down another; pick something else to switch, or press Escape (or Done) to stop. Dragging on the table still moves the view. You can also drag an entry onto the table to drop just one. 8×16 is a 16×8 plate standing upright (it gets an A-xx ID).',
       '• Studs: zoom in and the studs appear on the plates, so you can place things exactly; everything snaps to whole studs.',
-      '• Select: click or tap. Shift-click adds to the selection. A click near a small piece picks the piece, not the plate under it. Hold Shift and drag on empty space to draw a box that selects everything it touches.',
+      '• Select: click or tap. Shift-click adds to the selection. A click near a small piece picks the piece, not the plate under it. With a mouse, drag on empty space to draw a box that selects everything it touches.',
       '• Move: drag. Everything selected moves together and snaps to whole studs (change this with Snap in the ⋯ menu). A red outline while dragging means it would overlap something or hang off the table — you can still drop it.',
       '• Rotate: R (or the Rotate buttons). Several modules rotate together as one block.',
       '• Delete: Delete key or the Delete button. Undo with Ctrl+Z (⌘Z on a Mac) or ↶.',
       '• Details: when something is selected, the right-hand panel shows its ID, name, size, position and notes (with nothing selected it closes, so the table has the room). Type a new value and press Enter. The bar along the bottom always says what a click does right now; Escape always brings you back to Select.',
-      '• Zoom: mouse wheel (or pinch) or the − / Fit / + buttons. Move the view: drag on an empty part of the table (or two fingers on the iPad); Space-drag or the middle mouse button work anywhere.',
+      '• Zoom: mouse wheel (or pinch) or the − / Fit / + buttons. Move the view: Pan mode, hold Space and drag, the middle mouse button, or drag with a finger on the iPad.',
     ],
   },
   {

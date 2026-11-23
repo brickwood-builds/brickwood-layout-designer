@@ -137,11 +137,9 @@ test.describe('mouse (desktop Chrome)', () => {
     await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
   });
 
-  test('Shift-drag a box selects several; delete and undo as one step', async ({ page }) => {
+  test('marquee selects several; delete and undo as one step', async ({ page }) => {
     const b01 = (await mod(page, 'B-01'))!;
-    await page.keyboard.down('Shift');
     await mouseDrag(page, await toPage(page, -2, b01.y - 20), await toPage(page, b01.x + 40, b01.y + 8));
-    await page.keyboard.up('Shift');
     const { selection } = await editorState(page);
     expect(selection.length).toBeGreaterThan(2);
     await expect(page.getByRole('heading', { name: `${selection.length} selected` })).toBeVisible();

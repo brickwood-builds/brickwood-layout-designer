@@ -299,12 +299,12 @@ export function Canvas({ store }: { store: EditorStore }) {
         }
         return;
       }
-      // Empty table: dragging moves the view, a click lets go of the selection. Shift-drag
-      // draws a box to select (Ctrl/Cmd as well: add to the selection).
-      if (touch || !e.shiftKey) {
+      // Empty table: with a mouse, drag a box to select several (a click lets go of the
+      // selection; Shift/Ctrl adds). With a finger, dragging moves the view.
+      if (touch) {
         gesture.current = { type: 'pan', startView: s.view, sx: p.x, sy: p.y, moved: false, clearOnTap: true };
       } else {
-        gesture.current = { type: 'marquee', sx: p.x, sy: p.y, x: p.x, y: p.y, additive: e.metaKey || e.ctrlKey };
+        gesture.current = { type: 'marquee', sx: p.x, sy: p.y, x: p.x, y: p.y, additive: e.shiftKey || e.metaKey || e.ctrlKey };
       }
     };
 
@@ -321,8 +321,8 @@ export function Canvas({ store }: { store: EditorStore }) {
       if (!g) {
         if (e.pointerType === 'mouse') {
           touchHit.current = false;
-          // Over empty table in Select, the hand shows that dragging moves the view.
-          setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' || s.holding ? 'crosshair' : hitTest(p) ? 'move' : e.shiftKey ? 'crosshair' : 'grab');
+          // Select: the arrow (a move cursor over something that can be dragged).
+          setCursor(spaceDownRef.current || s.mode === 'pan' ? 'grab' : s.mode === 'measure' || s.mode === 'draw' || s.holding ? 'crosshair' : hitTest(p) ? 'move' : 'default');
         }
         return;
       }

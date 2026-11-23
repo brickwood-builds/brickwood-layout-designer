@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// Clicks and the right panel (23 Nov 2026): drag the empty table to move the view, small things
-// are easy to pick, the panel only shows when something is selected, Escape always to Select.
+// Clicks and the right panel (23 Nov 2026): in Select a drag on empty table draws a box, small
+// things are easy to pick, the panel only shows when something is selected, Escape to Select.
 type Obj = { id: string; name: string; x: number; y: number };
 type Mod = { id: string; label: string; x: number; y: number; width: number; depth: number };
 type Hook = { state(): { project: { objects: Obj[]; modules: Mod[] }; selection: string[]; mode: string; view: { x: number; y: number; scale: number } }; toPage(x: number, y: number): { x: number; y: number } };
@@ -11,7 +11,7 @@ const st = (page: Page) => page.evaluate(() => {
 });
 const at = (page: Page, x: number, y: number) => page.evaluate(([x, y]) => (window as unknown as { __brickwoodEditor: Hook }).__brickwoodEditor.toPage(x, y), [x, y] as const);
 
-test('drag empty table pans; small pieces are easy to pick; panel and tool hint follow', async ({ page, isMobile }) => {
+test('drag a box to select; small pieces are easy to pick; panel and tool hint follow', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
   await page.goto('/');
   await page.getByRole('article', { name: 'Brickwood Adventure Park', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
@@ -22,19 +22,24 @@ test('drag empty table pans; small pieces are easy to pick; panel and tool hint 
   // Nothing selected: no panel; the status bar says what a click does.
   await expect(panel).toHaveCount(0);
   await expect(hint).toContainText('Select');
-  await expect(hint).toContainText('drag the table to move the view');
+  await expect(hint).toContainText('drag a box to pick several');
 
-  // Dragging an empty part of the table moves the view and selects nothing.
+  // Dragging on empty table draws a box: it selects what it touches, and the view stays put.
   let s = await st(page);
-  const empty = await at(page, -6, -6);
-  await page.mouse.move(empty.x, empty.y);
+  const b01 = s.modules.find((m) => m.label === 'B-01')!;
+  const from = await at(page, b01.x - 4, b01.y - 4);
+  const to = await at(page, b01.x + b01.width + 2, b01.y + b01.depth + 2);
+  await page.mouse.move(from.x, from.y);
   await page.mouse.down();
-  await page.mouse.move(empty.x + 60, empty.y + 30, { steps: 6 });
+  await page.mouse.move(to.x, to.y, { steps: 6 });
   await page.mouse.up();
   const after = await st(page);
-  expect(after.view.x - s.view.x).toBeCloseTo(60, 0);
-  expect(after.selection).toEqual([]);
+  expect(after.view).toEqual(s.view);
   expect(after.modules.map((m) => [m.x, m.y])).toEqual(s.modules.map((m) => [m.x, m.y]));
+  expect(after.selection).toContain(b01.id);
+  await expect(panel).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
 
   // A brick on module C-05, at the whole-layout zoom (a few pixels wide).
   await page.getByRole('button', { name: 'Fit' }).click();
