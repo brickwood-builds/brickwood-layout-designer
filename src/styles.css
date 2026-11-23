@@ -176,11 +176,10 @@ input[aria-invalid='true'] { border-color: var(--error-text); }
 @media (pointer: coarse) { .toolbar .zoom-step { display: none; } }
 @media (max-width: 1240px) { .toolbar .back-word { display: none; } }
 .hold-chip { display: inline-flex; flex: 0 1 auto; align-items: center; gap: 6px; min-width: 0; padding: 2px 2px 2px 10px; border: 1px solid var(--accent); border-radius: 8px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); font-size: 0.85rem; }
-/* While placing, the chip takes the place of the project name and save time, so the toolbar doesn't grow and the table doesn't jump. */
-.toolbar.holding > h1, .toolbar.holding > .save-state { display: none; }
-/* The chip only takes room that's left over (flex-basis 0, so it never makes the toolbar wrap),
-   at least enough for a short name and Done; the name gets "…" when space is tight. */
-.toolbar.holding > .hold-chip { flex: 1 1 0; min-width: 8em; max-width: 24em; }
+.title-box { position: relative; display: flex; align-items: center; gap: 8px; min-width: 0; flex: 0 1 auto; }
+.title-box.holding > h1, .title-box.holding > .save-state { visibility: hidden; }
+/* Over the name and save time, exactly their size: the toolbar never changes layout. */
+.title-box > .hold-chip { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); }
 .hold-chip .hold-label { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hold-chip button { flex: none; min-height: 30px; padding: 0 10px; }
 @media (max-width: 1240px) { .hold-chip { gap: 4px; padding-left: 8px; } .hold-chip .hold-word { display: none; } .hold-chip button { padding: 0 8px; } }

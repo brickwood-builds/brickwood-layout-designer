@@ -208,6 +208,7 @@ test.describe('objects and groups (desktop Chrome)', () => {
   test('drag a setup marker from the palette onto a module', async ({ page }) => {
     await page.getByText('Setup markers', { exact: true }).click();
     const lamp = page.getByRole('button', { name: 'Lamp', exact: true });
+    await lamp.scrollIntoViewIfNeeded();
     const box = (await lamp.boundingBox())!;
     const c05 = (await mod(page, 'C-05'))!;
     await mouseDrag(page, { x: box.x + box.width / 2, y: box.y + box.height / 2 }, await toPage(page, c05.x + 10, c05.y + 10));
@@ -298,6 +299,7 @@ test.describe('objects and groups (desktop Chrome)', () => {
 
   test('markers sitting on a module travel with it when it is dragged', async ({ page }) => {
     await page.getByText('Setup markers', { exact: true }).click();
+    await page.getByRole('button', { name: 'Lamp', exact: true }).scrollIntoViewIfNeeded();
     const lamp = (await page.getByRole('button', { name: 'Lamp', exact: true }).boundingBox())!;
     const c05 = (await mod(page, 'C-05'))!;
     await mouseDrag(page, { x: lamp.x + lamp.width / 2, y: lamp.y + lamp.height / 2 }, await toPage(page, c05.x + 10, c05.y + 10));

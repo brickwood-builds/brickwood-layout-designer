@@ -23,6 +23,7 @@ test('a lamp inside the Swings operating zone warns; the zone is saved', async (
   // Drop a lamp 2 studs to the left of the ride (on the neighbouring plate).
   await page.getByText('Setup markers', { exact: true }).click();
   const lamp = page.getByRole('button', { name: 'Lamp', exact: true });
+  await lamp.scrollIntoViewIfNeeded();
   const box = (await lamp.boundingBox())!;
   const to = await at(page, swings.x - 2, swings.y + 16);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);

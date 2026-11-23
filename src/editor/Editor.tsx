@@ -225,8 +225,11 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
   const pasting = holding?.key === 'paste';
   const s = store.getState();
   return (
-    <header className={`topbar toolbar${holding ? ' holding' : ''}`}>
+    <header className="topbar toolbar">
       <button type="button" className="back-btn" onClick={onBack} title="Back to your projects" aria-label="← Projects">←<span className="back-word"> Projects</span></button>
+      {/* While placing, the chip sits exactly over the name and save time (which stay, unseen),
+          so the toolbar's layout never changes and the table never moves under the pointer. */}
+      <div className={`title-box${holding ? ' holding' : ''}`}>
       <h1 title={project.name}>{project.name}</h1>
       <span className="save-state" role="status" data-state={saveState} title={`Every change saves automatically within a second. Last saved ${new Date(project.updatedAt).toLocaleString()}`}>
         {saveState === 'saved'
@@ -245,6 +248,7 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
           </button>
         </span>
       )}
+      </div>
       <div className="tool-group">
         <button type="button" onClick={s.undo} disabled={!canUndo} title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
         <button type="button" onClick={s.redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
