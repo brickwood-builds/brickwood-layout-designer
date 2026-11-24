@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useStore } from 'zustand';
-import { addLevel, canDeleteLevel, deleteLevel, setLevelTable, updateLevel } from '../domain/edits';
+import { addLevel, canDeleteLevel, deleteLevel, setLevelTableShape, updateLevel } from '../domain/edits';
+import { L_CORNERS, SHAPE_LABEL, TABLE_SHAPES, U_OPENINGS, shapeProblem, surfaceEdges, tablePieces, type TableShape, type TableShapeKind } from '../domain/tableShape';
 import { duplicateProject } from '../domain/project';
 import { isBase, type Project } from '../domain/schema';
 import { studsToInches, inchesToStuds, formatLength } from '../domain/units';
@@ -342,13 +343,30 @@ function LevelDialog({
 }) {
   const project = store.getState().project;
   const level = levelId ? project.levels.find((l) => l.id === levelId) : undefined;
-  const table = level ? project.tables.find((t) => t.levelId === level.id) : undefined;
+  const pieces = level ? project.tables.filter((t) => t.levelId === level.id) : [];
+  const table = pieces[0];
   const round1 = (n: number) => Math.round(n * 10) / 10;
+  // The whole surface's size (all of its table pieces).
+  const spanW = pieces.length ? Math.max(...pieces.map((t) => t.x + t.width)) - Math.min(...pieces.map((t) => t.x)) : 0;
+  const spanD = pieces.length ? Math.max(...pieces.map((t) => t.y + t.depth)) - Math.min(...pieces.map((t) => t.y)) : 0;
   const [name, setName] = useState(level?.name ?? `Shelf ${project.levels.length}`);
   const [tableName, setTableName] = useState(table?.name ?? 'Table');
   const [elevation, setElevation] = useState(level?.elevationIn ?? 30);
-  const [width, setWidth] = useState(table ? round1(studsToInches(table.width)) : 96);
-  const [depth, setDepth] = useState(table ? round1(studsToInches(table.depth)) : 18);
+  const [width, setWidth] = useState(level?.tableShape?.widthIn ?? (table ? round1(studsToInches(spanW)) : 96));
+  const [depth, setDepth] = useState(level?.tableShape?.depthIn ?? (table ? round1(studsToInches(spanD)) : 18));
+  const [kind, setKind] = useState<TableShapeKind>(level?.tableShape?.kind ?? 'rect');
+  const [arm, setArm] = useState(level?.tableShape?.armIn ?? 30);
+  const [side, setSide] = useState<NonNullable<TableShape['side']>>(level?.tableShape?.side ?? 'back-left');
+  const shape: TableShape = kind === 'rect' ? { kind, widthIn: width, depthIn: depth } : { kind, widthIn: width, depthIn: depth, armIn: arm, ...(kind === 'ring' ? {} : { side }) };
+  const problem = width > 0 && depth > 0 ? shapeProblem(shape) : 'Enter the size.';
+  const pickKind = (k: TableShapeKind) => {
+    setKind(k);
+    // Each shape has its own choice of sides; start from a sensible one.
+    if (k === 'L' && !(L_CORNERS as readonly string[]).includes(side)) setSide('back-left');
+    if (k === 'U' && !(U_OPENINGS as readonly string[]).includes(side)) setSide('front');
+    // An L, U or ring of 8 ft folding tables: about 30 in deep, unless the shape is smaller.
+    if (k !== 'rect' && !(arm > 0)) setArm(30);
+  };
   const [offX, setOffX] = useState(level ? round1(studsToInches(level.offsetX)) : 0);
   const [offY, setOffY] = useState(level ? round1(studsToInches(level.offsetY)) : 0);
 
@@ -357,21 +375,22 @@ function LevelDialog({
     const s = store.getState();
     if (!level) {
       let id = '';
+      if (problem) return;
       s.commit((p) => {
-        const r = addLevel(p, { name, elevationIn: elevation, tableWidthIn: width, tableDepthIn: depth });
+        const r = addLevel(p, { name, elevationIn: elevation, tableWidthIn: width, tableDepthIn: depth, tableShape: shape });
         id = r.id;
         return updateLevel(r.project, id, { offsetX: inchesToStuds(offX), offsetY: inchesToStuds(offY) });
       });
       onCreated(id);
       return;
     }
+    if (problem) return;
     s.commit((p) =>
-      setLevelTable(
+      setLevelTableShape(
         updateLevel(p, level.id, { name: name.trim() || level.name, elevationIn: elevation, offsetX: inchesToStuds(offX), offsetY: inchesToStuds(offY) }),
         level.id,
         tableName,
-        width,
-        depth,
+        shape,
       ),
     );
     onClose();
@@ -393,19 +412,57 @@ function LevelDialog({
             <input value={tableName} onChange={(e) => setTableName(e.target.value)} maxLength={80} />
           </label>
         )}
+        <div className="field">
+          <span>Shape</span>
+          <div className="seg" role="group" aria-label="Table shape">
+            {TABLE_SHAPES.map((k) => (
+              <button key={k} type="button" aria-pressed={kind === k} onClick={() => pickKind(k)}>
+                {SHAPE_LABEL[k]}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="row">
           <label>
-            Table width (in)
-            <input type="number" min={1} step="any" value={width} onChange={(e) => setWidth(Number(e.target.value))} required />
+            {kind === 'rect' ? 'Table width (in)' : 'Overall width (in)'}
+            <input aria-label="Table width (in)" type="number" min={1} step="any" value={width} onChange={(e) => setWidth(Number(e.target.value))} required />
           </label>
           <label>
-            Table depth (in)
-            <input type="number" min={1} step="any" value={depth} onChange={(e) => setDepth(Number(e.target.value))} required />
+            {kind === 'rect' ? 'Table depth (in)' : 'Overall depth, back to front (in)'}
+            <input aria-label="Table depth (in)" type="number" min={1} step="any" value={depth} onChange={(e) => setDepth(Number(e.target.value))} required />
           </label>
         </div>
-        <p className="muted small">
-          {formatLength(inchesToStuds(width), 'studs')} × {formatLength(inchesToStuds(depth), 'studs')}
-        </p>
+        {kind !== 'rect' && (
+          <div className="row">
+            <label>
+              Depth of the tables (in)
+              <input aria-label="Depth of the tables (in)" type="number" min={1} step="any" value={arm} onChange={(e) => setArm(Number(e.target.value))} required />
+            </label>
+            {kind !== 'ring' && (
+              <label>
+                {kind === 'L' ? 'Corner' : 'Open side'}
+                <select aria-label={kind === 'L' ? 'Corner' : 'Open side'} value={side} onChange={(e) => setSide(e.target.value as NonNullable<TableShape['side']>)}>
+                  {(kind === 'L' ? L_CORNERS : U_OPENINGS).map((v) => (
+                    <option key={v} value={v}>
+                      {SIDE_LABEL[v]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+        )}
+        <TableShapePreview shape={shape} ok={!problem} />
+        {problem ? (
+          <p className="small" role="alert">
+            {problem}
+          </p>
+        ) : (
+          <p className="muted small">
+            About {Math.round(inchesToStuds(width))} × {Math.round(inchesToStuds(depth))} studs
+            {kind !== 'rect' && ` overall, tables ${Math.round(inchesToStuds(arm))} studs deep`}. The back is at the top, as on the layout.
+          </p>
+        )}
         {multi && (
           <>
             <label>
@@ -446,10 +503,37 @@ function LevelDialog({
             </button>
           )}
           <button type="button" onClick={onClose}>Cancel</button>
-          <button type="submit" className="primary">{level ? 'Save' : 'Add level'}</button>
+          <button type="submit" className="primary" disabled={!!problem}>{level ? 'Save' : 'Add level'}</button>
         </footer>
       </form>
     </Modal>
+  );
+}
+
+const SIDE_LABEL: Record<NonNullable<TableShape['side']>, string> = {
+  'back-left': 'Back left',
+  'back-right': 'Back right',
+  'front-left': 'Front left',
+  'front-right': 'Front right',
+  front: 'Front',
+  back: 'Back',
+  left: 'Left',
+  right: 'Right',
+};
+
+/** A small drawing of the table shape as it will be (back at the top). */
+function TableShapePreview({ shape, ok }: { shape: TableShape; ok: boolean }) {
+  const rects = tablePieces(shape);
+  const w = Math.max(...rects.map((r) => r.x + r.width));
+  const d = Math.max(...rects.map((r) => r.y + r.depth));
+  const pad = Math.max(w, d) * 0.04;
+  return (
+    <svg className="table-preview" viewBox={`${-pad} ${-pad} ${w + pad * 2} ${d + pad * 2}`} role="img" aria-label={`Preview: ${SHAPE_LABEL[shape.kind]}`} style={{ opacity: ok ? 1 : 0.35 }}>
+      {rects.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.width} height={r.depth} className="pv-table-fill" shapeRendering="crispEdges" />
+      ))}
+      <path className="pv-table-edge" vectorEffect="non-scaling-stroke" d={surfaceEdges(rects).map((e) => `M${e.x1} ${e.y1}L${e.x2} ${e.y2}`).join('')} style={{ strokeWidth: 2 }} />
+    </svg>
   );
 }
 

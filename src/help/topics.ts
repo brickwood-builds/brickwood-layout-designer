@@ -118,7 +118,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     id: 'levels',
     title: 'Tables and levels',
     body: [
-      'Table… sets the table’s name and size in inches; overhang warnings use it.',
+      'Table… sets the table’s name, shape and size in inches; overhang warnings use it. Shape: a rectangle, or an L, a U or a ring of tables with an open middle — give the overall size, how deep the tables are, and (for an L or U) which corner or side. It is drawn as one surface; plates can cross the joins between tables, and anything hanging over the open middle gets an overhang warning.',
       'Table… → Add a level… adds another surface — for example a shelf above the main table — with its own table size and height above the floor. Switch levels with the Level picker. Tick Others to see the other levels faintly for lining things up.',
       'A level can be deleted once it’s empty.',
     ],

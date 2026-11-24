@@ -7,6 +7,7 @@ import { allItems, isModule, moveItems, type Item } from '../domain/edits';
 import { makeDragChecker } from './dragCheck';
 import { drawOrder, itemAt } from '../domain/hit';
 import { labelSpot, outlineOnTable } from '../domain/outline';
+import { surfaceEdges } from '../domain/tableShape';
 import { computeStack, heightColor, type StackInfo } from '../domain/heights';
 import { SpatialIndex } from '../domain/spatial';
 import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
@@ -519,12 +520,7 @@ export function Canvas({ store }: { store: EditorStore }) {
                   <LevelContent project={project} levelId={l.id} visibleLayers={visibleLayers} />
                 </Group>
               ))}
-              {project.tables
-                .filter((t) => t.levelId === level.id)
-                .map((t) => {
-                  const r = footprint(t);
-                  return <Rect key={t.id} x={r.x} y={r.y} width={r.width} height={r.depth} fill="#d9b27c" stroke="#a67c45" strokeWidth={1.5} strokeScaleEnabled={false} cornerRadius={1} listening={false} />;
-                })}
+              <TableSurface rects={project.tables.filter((t) => t.levelId === level.id).map(footprint)} fill="#d9b27c" stroke="#a67c45" width={1.5} />
               <Grid view={view} viewport={viewport} />
               <Items items={baseItems} dx={0} dy={0} selected={selectedSet} problems={EMPTY} editable={editable} plateColors={plateColors} />
               {studsVisible && <Studs items={baseItems} view={view} viewport={viewport} />}
@@ -735,16 +731,40 @@ const Labels = memo(function Labels({ items, dx, dy, zoom, builtOn }: { items: I
   );
 });
 
+/**
+ * A level's table: its pieces filled, and one outline around the whole shape (an L, U or ring
+ * of tables reads as one surface, with no seams where the pieces meet).
+ */
+function TableSurface({ rects, fill, stroke, width, dash, scaled }: { rects: R[]; fill?: string; stroke: string; width: number; dash?: number[]; scaled?: boolean }) {
+  const edges = useMemo(() => surfaceEdges(rects), [rects]);
+  return (
+    <>
+      {/* Fills overlap by a hair so the joins between tables never show as a seam. */}
+      {fill && rects.map((r, i) => <Rect key={i} x={r.x - 0.05} y={r.y - 0.05} width={r.width + 0.1} height={r.depth + 0.1} fill={fill} listening={false} perfectDrawEnabled={false} />)}
+      <Shape
+        listening={false}
+        stroke={stroke}
+        strokeWidth={width}
+        strokeScaleEnabled={!!scaled}
+        dash={dash}
+        sceneFunc={(ctx, shape) => {
+          ctx.beginPath();
+          for (const e of edges) {
+            ctx.moveTo(e.x1, e.y1);
+            ctx.lineTo(e.x2, e.y2);
+          }
+          ctx.strokeShape(shape);
+        }}
+      />
+    </>
+  );
+}
+
 /** Static drawing of another level for the combined overview. */
 function LevelContent({ project, levelId, visibleLayers }: { project: Project; levelId: string; visibleLayers: Set<string> }) {
   return (
     <>
-      {project.tables
-        .filter((t) => t.levelId === levelId)
-        .map((t) => {
-          const r = footprint(t);
-          return <Rect key={t.id} x={r.x} y={r.y} width={r.width} height={r.depth} stroke="#7a5a2f" strokeWidth={0.5} dash={[2, 2]} />;
-        })}
+      <TableSurface rects={project.tables.filter((t) => t.levelId === levelId).map(footprint)} stroke="#7a5a2f" width={0.5} dash={[2, 2]} scaled />
       {allItems(project)
         .filter((i) => i.levelId === levelId && visibleLayers.has(i.layerId))
         .map((i) => {

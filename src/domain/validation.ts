@@ -1,6 +1,7 @@
 // Advisory layout checks. Warnings never modify or delete anything.
-import { footprint, rectContains, type Placed } from './geometry';
+import { footprint, type Placed } from './geometry';
 import { outlineOnTable, shapesClash } from './outline';
+import { onSurface } from './tableShape';
 import { isBase, moduleDisplayName, type Project } from './schema';
 import { SpatialIndex } from './spatial';
 import { clearanceProblems } from './heights';
@@ -44,14 +45,15 @@ export function checkLayout(project: Project): LayoutWarning[] {
   for (const level of project.levels) {
     const tables = project.tables.filter((t) => t.levelId === level.id);
     const tableRects = tables.map(footprint);
-    const surfaceName = tables.map((t) => t.name).join(' + ') || level.name;
+    const surfaceName = [...new Set(tables.map((t) => t.name))].join(' + ') || level.name;
     const items = [...project.modules.filter((m) => m.levelId === level.id), ...project.objects.filter((o) => o.levelId === level.id)];
 
     if (tableRects.length > 0) {
       for (const item of items) {
         const r = footprint(item);
-        // Allowed if fully inside any single table (multi-table joins are modelled as one surface).
-        if (!tableRects.some((t) => rectContains(t, r))) {
+        // Allowed if fully on the surface: tables pushed together (an L, a U, a ring) are one
+        // surface; over a ring's open middle is off it. Shaped features are checked by their shape.
+        if (!onSurface(r, tableRects, outlineOnTable(item))) {
           const label = 'label' in item ? moduleDisplayName(item) : item.name || 'Object';
           warnings.push({ kind: 'overhang', levelId: level.id, ids: [item.id], message: `${label} overhangs ${surfaceName}` });
         }

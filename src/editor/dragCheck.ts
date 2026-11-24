@@ -1,5 +1,6 @@
-import { footprint, rectContains } from '../domain/geometry';
+import { footprint } from '../domain/geometry';
 import { outlineOnTable, shapesClash } from '../domain/outline';
+import { onSurface } from '../domain/tableShape';
 import { allItems, isModule, type Item } from '../domain/edits';
 import { warningKey } from '../domain/objects';
 import { isBase, type Project } from '../domain/schema';
@@ -41,7 +42,7 @@ export function makeDragChecker(project: Project, levelId: string, draggedIds: R
         if (isSolid(item) && o && !shapesClash({ ...r, pts: outlineOnTable(moved) }, o.r, canSit(item), o.sit)) continue; // sits entirely on it, or it on this
         if (!acknowledged.has(warningKey({ kind: 'overlap', ids: [item.id, other] }))) problems.add(item.id);
       }
-      if (tables.length && !tables.some((t) => rectContains(t, r)) && !acknowledged.has(warningKey({ kind: 'overhang', ids: [item.id] }))) {
+      if (tables.length && !onSurface(r, tables, outlineOnTable(moved)) && !acknowledged.has(warningKey({ kind: 'overhang', ids: [item.id] }))) {
         problems.add(item.id);
       }
     }

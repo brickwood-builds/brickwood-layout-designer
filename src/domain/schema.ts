@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TableShapeSchema } from './tableShape';
 
 /**
  * Canonical portable project format (one document per project).
@@ -50,6 +51,8 @@ export const LevelSchema = z.object({
   offsetY: studs,
   visible: z.boolean(),
   order: z.number().int(),
+  /** The table's shape when it isn't a plain rectangle (L, U, ring): its tables are the pieces. */
+  tableShape: TableShapeSchema.optional(),
 });
 
 /** A support surface (table / plywood top). Reusable equipment, modelled as its own object. */

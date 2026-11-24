@@ -4,6 +4,7 @@ import { footprint, levelBounds } from '../domain/geometry';
 import { allItems, dimensionLength, isModule } from '../domain/edits';
 import { drawOrder } from '../domain/hit';
 import { labelSpot, outlineOnTable } from '../domain/outline';
+import { surfaceEdges } from '../domain/tableShape';
 import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
 import { DEFAULT_PLATE_COLOR } from '../domain/legoColors';
 import { formatLength } from '../domain/units';
@@ -36,6 +37,8 @@ function fitText(text: string, width: number, depth: number, max: number) {
 
 export const STANDALONE_STYLE = `
 .pv-table{fill:#d9b27c;stroke:#a67c45;stroke-width:.6}
+.pv-table-fill{fill:#d9b27c}
+.pv-table-edge{fill:none;stroke:#a67c45;stroke-width:.6}
 .pv-module{stroke:rgba(0,0,0,.45);stroke-width:.35}
 .pv-footprint{fill-opacity:.85;stroke:#7a2a24;stroke-width:.5}
 .pv-item{stroke:rgba(0,0,0,.45);stroke-width:.15}
@@ -57,9 +60,14 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
   out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${n(vb.x)} ${n(vb.y)} ${n(vb.w)} ${n(vb.h)}"${size} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Overhead view of ${esc(project.name)}">`);
   if (opts.standalone) out.push(`<style>${STANDALONE_STYLE}</style><rect x="${n(vb.x)}" y="${n(vb.y)}" width="${n(vb.w)}" height="${n(vb.h)}" fill="#ffffff"/>`);
 
-  for (const t of project.tables.filter((t) => t.levelId === level.id)) {
-    const r = footprint(t);
+  // The table: its pieces filled, one outline around the whole shape (no seams at the joins).
+  const tableRects = project.tables.filter((t) => t.levelId === level.id).map(footprint);
+  if (tableRects.length === 1) {
+    const r = tableRects[0]!;
     out.push(`<rect class="pv-table" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" rx="1.5"/>`);
+  } else if (tableRects.length > 1) {
+    for (const r of tableRects) out.push(`<rect class="pv-table-fill" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" shape-rendering="crispEdges"/>`);
+    out.push(`<path class="pv-table-edge" d="${surfaceEdges(tableRects).map((e) => `M${n(e.x1)} ${n(e.y1)}L${n(e.x2)} ${n(e.y2)}`).join('')}"/>`);
   }
   const items = drawOrder(
     project,

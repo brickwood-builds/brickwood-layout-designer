@@ -2,10 +2,10 @@
 // so the editor can keep earlier versions for undo.
 import { newId } from './ids';
 import { nextLabel } from './labels';
-import { footprint, rectContains, snap, unionRect, type Rect } from './geometry';
+import { footprint, snap, unionRect, type Rect } from './geometry';
 import { SpatialIndex } from './spatial';
-import { inchesToStuds } from './units';
 import { cleanOutline, outlineBox, scaleOutline, type Pt } from './outline';
+import { onSurface, tablePieces, type TableShape } from './tableShape';
 import { MILS_SIZES, milsKindForSize, type CanvasObject, type Dimension, type Level, type MilsKind, type MilsModule, type Project, type Rotation, type Table } from './schema';
 
 export type Item = MilsModule | CanvasObject;
@@ -163,7 +163,7 @@ export function findFreeSpot(p: Project, levelId: string, width: number, depth: 
         if (Math.max(Math.abs(gx), Math.abs(gy)) !== ring) continue;
         const r = { x: start.x + gx * step, y: start.y + gy * step, width, depth };
         if (index.overlapping(r).length > 0) continue;
-        if (tables.length && !tables.some((t) => rectContains(t, r))) {
+        if (tables.length && !onSurface(r, tables)) {
           offTable ??= { x: r.x, y: r.y };
           continue;
         }
@@ -259,6 +259,8 @@ export interface LevelInput {
   elevationIn: number;
   tableWidthIn: number;
   tableDepthIn: number;
+  /** An L, U or ring instead of a plain rectangle (sizes in it win). */
+  tableShape?: TableShape;
 }
 
 export function addLevel(p: Project, input: LevelInput): { project: Project; id: string } {
@@ -272,19 +274,8 @@ export function addLevel(p: Project, input: LevelInput): { project: Project; id:
     visible: true,
     order: Math.max(...p.levels.map((l) => l.order)) + 1,
   };
-  const table: Table = {
-    id: newId(),
-    levelId: id,
-    layerId: [...p.layers].sort((a, b) => a.order - b.order)[0]!.id,
-    name: 'Shelf',
-    x: 0,
-    y: 0,
-    width: inchesToStuds(input.tableWidthIn),
-    depth: inchesToStuds(input.tableDepthIn),
-    rotation: 0,
-    notes: '',
-  };
-  return { project: { ...p, levels: [...p.levels, level], tables: [...p.tables, table] }, id };
+  const shape: TableShape = input.tableShape ?? { kind: 'rect', widthIn: input.tableWidthIn, depthIn: input.tableDepthIn };
+  return { project: setLevelTableShape({ ...p, levels: [...p.levels, level] }, id, 'Shelf', shape), id };
 }
 
 export function updateLevel(p: Project, id: string, patch: Partial<Omit<Level, 'id'>>): Project {
@@ -301,28 +292,45 @@ export function deleteLevel(p: Project, id: string): Project {
   return { ...p, levels: p.levels.filter((l) => l.id !== id), tables: p.tables.filter((t) => t.levelId !== id) };
 }
 
-/** Set (or create) the table of a level, sizes in inches. */
+/** Set (or create) the table of a level as a plain rectangle, sizes in inches. */
 export function setLevelTable(p: Project, levelId: string, name: string, widthIn: number, depthIn: number): Project {
-  const existing = p.tables.find((t) => t.levelId === levelId);
-  const width = inchesToStuds(widthIn);
-  const depth = inchesToStuds(depthIn);
-  if (existing) {
-    return { ...p, tables: p.tables.map((t) => (t.id === existing.id ? { ...t, name: name.trim() || t.name, width, depth } : t)) };
-  }
-  const table: Table = {
-    id: newId(),
-    levelId,
-    layerId: [...p.layers].sort((a, b) => a.order - b.order)[0]!.id,
-    name: name.trim() || 'Table',
-    x: 0,
-    y: 0,
-    width,
-    depth,
-    rotation: 0,
-    notes: '',
-  };
-  return { ...p, tables: [...p.tables, table] };
+  return setLevelTableShape(p, levelId, name, { kind: 'rect', widthIn, depthIn });
 }
+
+/**
+ * Set the table of a level to a shape (rectangle, L, U, ring). The level's tables become the
+ * shape's pieces, starting where the table was (its back-left corner stays put); existing
+ * table IDs are reused, so a plain resize keeps the same table.
+ */
+export function setLevelTableShape(p: Project, levelId: string, name: string, shape: TableShape): Project {
+  const existing = p.tables.filter((t) => t.levelId === levelId);
+  const origin = existing.length ? { x: Math.min(...existing.map((t) => t.x)), y: Math.min(...existing.map((t) => t.y)) } : { x: 0, y: 0 };
+  const layerId = existing[0]?.layerId ?? [...p.layers].sort((a, b) => a.order - b.order)[0]!.id;
+  const label = name.trim() || existing[0]?.name || 'Table';
+  const pieces: Table[] = tablePieces(shape).map((r, i) => ({
+    id: existing[i]?.id ?? newId(),
+    levelId,
+    layerId,
+    name: label,
+    x: origin.x + r.x,
+    y: origin.y + r.y,
+    width: r.width,
+    depth: r.depth,
+    rotation: 0,
+    notes: existing[i]?.notes ?? '',
+    ...(existing[i]?.equipmentId ? { equipmentId: existing[i]!.equipmentId } : {}),
+  }));
+  const levels = p.levels.map((l) => {
+    if (l.id !== levelId) return l;
+    const { tableShape: _old, ...rest } = l;
+    void _old;
+    return shape.kind === 'rect' ? rest : { ...rest, tableShape: shape };
+  });
+  return { ...p, levels, tables: [...p.tables.filter((t) => t.levelId !== levelId), ...pieces] };
+}
+
+/** The table pieces of a level (its surface). */
+export const levelSurface = (p: Project, levelId: string): Rect[] => p.tables.filter((t) => t.levelId === levelId).map(footprint);
 
 // ---------- Layers ----------
 
