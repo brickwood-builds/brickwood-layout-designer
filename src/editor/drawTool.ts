@@ -33,8 +33,8 @@ export interface DrawSettings {
   turn: Turn;
   /** Settings for new stairs. */
   stair: StairDraft;
-  /** Name and colour for a new shaped feature. */
-  feature: { name: string; color: string };
+  /** Name and colour for a new drawn shape: a feature (building/ride base) or a small item. */
+  feature: { name: string; color: string; kind?: 'feature' | 'item'; itemColor?: string };
 }
 
 export const DEFAULT_DRAW: DrawSettings = {

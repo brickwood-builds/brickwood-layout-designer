@@ -54,8 +54,11 @@ export function DrawPanel({ store }: { store: EditorStore }) {
   const outline = draw.shape === 'outline';
   const pointByPoint = isPointByPoint(draw);
 
+  const makingItem = draw.feature.kind === 'item';
   const intro = outline
-    ? 'Click (or tap) each corner of the building, all the way round. Corners snap to the stud grid. Finish with a double-click, Enter or “Finish shape” — it becomes one feature you can move, turn and copy. Dragging moves the view.'
+    ? makingItem
+      ? 'Click (or tap) each corner of the item, all the way round. Corners snap to the stud grid. Finish with a double-click, Enter or “Finish shape” — it goes in Small items so you can place more, and one is put here. Dragging moves the view.'
+      : 'Click (or tap) each corner of the building, all the way round. Corners snap to the stud grid. Finish with a double-click, Enter or “Finish shape” — it becomes one feature you can move, turn and copy. Dragging moves the view.'
     : stairs
     ? 'Click (or tap) where the stairs start, then where they turn and end — they go up from the first point. Finish with a double-click, Enter or “Finish stairs”.'
     : draw.shape === 'curve'
@@ -84,10 +87,27 @@ export function DrawPanel({ store }: { store: EditorStore }) {
         onChange={(shape) => set({ shape })}
       />
       {outline ? (
-        <label className="field">
-          <span>Name</span>
-          <input aria-label="Building name" placeholder="e.g. Town hall" value={draw.feature.name} onChange={(e) => set({ feature: { ...draw.feature, name: e.target.value } })} />
-        </label>
+        <>
+          <Seg
+            label="Make"
+            value={makingItem ? 'item' : 'feature'}
+            options={[
+              ['feature', 'A feature (building, ride base)'],
+              ['item', 'A small item'],
+            ]}
+            onChange={(kind) => set({ feature: { ...draw.feature, kind } })}
+          />
+          <label className="field">
+            <span>Name</span>
+            <input
+              aria-label={makingItem ? 'Item name' : 'Building name'}
+              placeholder={makingItem ? 'e.g. Pond, Odd bench' : 'e.g. Town hall'}
+              value={draw.feature.name}
+              onChange={(e) => set({ feature: { ...draw.feature, name: e.target.value } })}
+            />
+          </label>
+          {makingItem && <LegoColorPicker label="Colour" value={draw.feature.itemColor ?? '#a0a5a9'} onChange={(hex) => hex && set({ feature: { ...draw.feature, itemColor: hex } })} />}
+        </>
       ) : stairs ? (
         <>
           <LegoColorPicker label="Colour" value={draw.color} onChange={(hex) => hex && set({ color: hex })} />

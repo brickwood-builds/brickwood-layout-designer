@@ -23,8 +23,9 @@ import { drawStairs, reshapeStairs, type StairSettings, type StairSpec } from '.
 import { spotsAlongPath, stamp, type StampSpot } from '../domain/stamps';
 import { isStamping, paintTemplate, stampSource, stampSpacing } from './drawTool';
 import { designSize, placeDesign, saveDesign } from '../domain/designs';
-import { addObject, defaultItemLayerId, groupItems, ungroup, withCarriedItems, type NewObject } from '../domain/objects';
+import { addObject, addShapedItem, defaultItemLayerId, groupItems, ungroup, withCarriedItems, type NewObject } from '../domain/objects';
 import type { EditorStore } from './store';
+import { lego } from '../domain/legoColors';
 import { fitView, toWorld, zoomAt } from './view';
 
 export function fitToLevel(store: EditorStore) {
@@ -275,6 +276,20 @@ export function finishOutline(store: EditorStore): boolean {
   const points = s.curveDraft ?? [];
   let id = '';
   const { name, color } = s.draw.feature;
+  if (s.draw.feature.kind === 'item') {
+    // A small item: its own kind in the palette (Small items), one put down where drawn.
+    const spec = { levelId: s.levelId, layerId: itemLayerId(store), name, color: s.draw.feature.itemColor ?? lego('Light Bluish Gray'), points };
+    if (!addShapedItem(s.project, spec, s.project.settings.snap)) return false;
+    s.set({ curveDraft: null });
+    s.commit((p) => {
+      const r = addShapedItem(p, spec, p.settings.snap)!;
+      id = r.id;
+      return r.project;
+    });
+    s.set({ mode: 'select' });
+    s.select([id]);
+    return true;
+  }
   const made = addShapedFeature(s.project, { levelId: s.levelId, name: name.trim() || 'Building', color, points }, s.project.settings.snap);
   if (!made) return false;
   s.set({ curveDraft: null });

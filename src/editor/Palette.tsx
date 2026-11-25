@@ -189,7 +189,7 @@ export function Palette({ store }: { store: EditorStore }) {
   const userItems = shapes.filter((sh) => sh.type === 'item' || sh.type === 'footprint');
 
   const shapeEntry = (sh: Shape) => {
-    const template: ObjectTemplate = { type: sh.type, name: sh.name, width: sh.width, depth: sh.depth, color: sh.color, round: sh.round, ...(sh.showName ? { showName: true } : {}), catalogKey: `shape:${sh.id}` };
+    const template: ObjectTemplate = { type: sh.type, name: sh.name, width: sh.width, depth: sh.depth, color: sh.color, round: sh.round, ...(sh.showName ? { showName: true } : {}), ...(sh.outline ? { outline: sh.outline } : {}), catalogKey: `shape:${sh.id}` };
     return (
       <div className="shape-row" key={sh.id}>
         <PaletteItem store={store} hold={{ key: `shape:${sh.id}`, label: sh.name, preview: { width: sh.width, depth: sh.depth, color: sh.color, round: sh.round } }} title={`${sh.name} (${sh.width}×${sh.depth} studs, ${legoColorName(sh.color) ?? 'custom colour'})`} place={(at) => addObjectAt(store, template, at)}>
@@ -236,7 +236,7 @@ export function Palette({ store }: { store: EditorStore }) {
           type="button"
           onClick={() => {
             const s = store.getState();
-            s.set({ mode: 'draw', measure: null, curveDraft: null, draw: { ...s.draw, shape: 'outline', feature: { ...s.draw.feature, name: '' } } });
+            s.set({ mode: 'draw', measure: null, curveDraft: null, holding: null, draw: { ...s.draw, erase: false, shape: 'outline', feature: { ...s.draw.feature, name: '', kind: 'feature' } } });
           }}
           title="A building or base that isn’t a rectangle (an L, a T, a cut corner): click its corners on the table"
         >
@@ -276,6 +276,16 @@ export function Palette({ store }: { store: EditorStore }) {
         {userItems.map(shapeEntry)}
         <button type="button" onClick={() => setDialog('item')} title="A street light, bush, bench… any small thing, in a LEGO colour">
           + New item…
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const s = store.getState();
+            s.set({ mode: 'draw', measure: null, curveDraft: null, holding: null, draw: { ...s.draw, erase: false, shape: 'outline', feature: { ...s.draw.feature, name: '', kind: 'item' } } });
+          }}
+          title="A small item that isn’t a rectangle (a pond, a curved bench): click its corners on the table"
+        >
+          + Draw a shape…
         </button>
       </Section>
 

@@ -3,6 +3,7 @@
 import { newId, nowIso } from './ids';
 import { findFreeSpot, isModule, itemsOnLevel, type Item, type SnapMode } from './edits';
 import { baseRect, footprint, snap } from './geometry';
+import { cleanOutline, outlineBox, scaleOutline, type Pt } from './outline';
 import { SpatialIndex } from './spatial';
 import { moduleDisplayName, type CanvasObject, type Project, type Shape } from './schema';
 import type { LayoutWarning } from './validation';
@@ -18,6 +19,8 @@ export interface NewObject {
   smooth?: boolean;
   /** Show its name on the layout. */
   showName?: boolean;
+  /** Drawn corner by corner: its outline within width × depth (see domain/outline.ts). */
+  outline?: { x: number; y: number }[];
   markerKind?: string;
   catalogKey?: string;
   /** Height in plates, when the part says (catalog parts). */
@@ -59,11 +62,48 @@ export function addObject(p: Project, spec: NewObject, mode: SnapMode): { projec
     ...(spec.round ? { round: true } : {}),
     ...(spec.smooth ? { smooth: true } : {}),
     ...(spec.showName ? { showName: true } : {}),
+    ...(spec.outline ? { outline: spec.outline.map((q) => ({ ...q })) } : {}),
     ...(spec.markerKind ? { markerKind: spec.markerKind } : {}),
     ...(spec.catalogKey ? { catalogKey: spec.catalogKey } : {}),
     ...(spec.heightPlates !== undefined ? { heightPlates: spec.heightPlates } : {}),
   };
   return { project: { ...p, objects: [...p.objects, object] }, id: object.id };
+}
+
+/**
+ * A small item drawn corner by corner (a bench, a pond, an odd-shaped stand): kept in the
+ * palette as its own kind, so more can be placed, and one is put where it was drawn.
+ * Null when the corners don't make a shape.
+ */
+export function addShapedItem(
+  p: Project,
+  spec: { levelId: string; layerId: string; name: string; color: string; points: Pt[] },
+  mode: SnapMode,
+): { project: Project; id: string; shapeId: string } | null {
+  const pts = cleanOutline(spec.points, mode);
+  if (!pts) return null;
+  const box = outlineBox(pts);
+  const plainBox = pts.length === 4 && box.outline.every((q) => (q.x === 0 || q.x === box.width) && (q.y === 0 || q.y === box.depth));
+  const outline = plainBox ? undefined : box.outline;
+  const name = spec.name.trim() || 'Item';
+  const shape = addShape(p, { name, type: 'item', width: box.width, depth: box.depth, color: spec.color, ...(outline ? { outline } : {}) });
+  const object: CanvasObject = {
+    id: newId(),
+    levelId: spec.levelId,
+    layerId: spec.layerId,
+    type: 'item',
+    name,
+    x: box.x,
+    y: box.y,
+    width: box.width,
+    depth: box.depth,
+    rotation: 0,
+    color: spec.color,
+    notes: '',
+    catalogKey: `shape:${shape.id}`,
+    ...(outline ? { outline } : {}),
+  };
+  return { project: { ...shape.project, objects: [...shape.project.objects, object] }, id: object.id, shapeId: shape.id };
 }
 
 /** Change an object's size, keeping its centre. */
@@ -74,7 +114,9 @@ export function resizeObject(p: Project, id: string, width: number, depth: numbe
       if (o.id !== id) return o;
       const f = footprint(o);
       const nf = baseRect({ ...o, width, depth });
-      return { ...o, width, depth, x: snap(f.x + f.width / 2 - nf.width / 2, mode), y: snap(f.y + f.depth / 2 - nf.depth / 2, mode) };
+      // A drawn shape stretches with its size.
+      const outline = o.outline ? { outline: scaleOutline(o.outline, o, { width, depth }) } : {};
+      return { ...o, ...outline, width, depth, x: snap(f.x + f.width / 2 - nf.width / 2, mode), y: snap(f.y + f.depth / 2 - nf.depth / 2, mode) };
     }),
   };
 }
@@ -97,6 +139,7 @@ export function addShape(p: Project, s: Omit<Shape, 'id'>): { project: Project; 
   if (!shape.round) delete shape.round;
   if (!shape.smooth) delete shape.smooth;
   if (!shape.showName) delete shape.showName;
+  if (!shape.outline) delete shape.outline;
   return { project: { ...p, shapes: [...p.shapes, shape] }, id: shape.id };
 }
 
@@ -106,7 +149,7 @@ export function addShape(p: Project, s: Omit<Shape, 'id'>): { project: Project; 
  * palette); a real LEGO part keeps its part number.
  */
 export function saveShape(p: Project, o: CanvasObject, name: string): { project: Project; id: string } {
-  const r = addShape(p, { name: name.trim() || o.name, type: o.type, width: o.width, depth: o.depth, color: o.color, round: o.round, smooth: o.smooth, showName: o.showName });
+  const r = addShape(p, { name: name.trim() || o.name, type: o.type, width: o.width, depth: o.depth, color: o.color, round: o.round, smooth: o.smooth, showName: o.showName, outline: o.outline });
   if (o.catalogKey && !o.catalogKey.startsWith('shape:')) return r;
   return { ...r, project: { ...r.project, objects: r.project.objects.map((x) => (x.id === o.id ? { ...x, catalogKey: `shape:${r.id}` } : x)) } };
 }

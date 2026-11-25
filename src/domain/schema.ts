@@ -152,6 +152,8 @@ export const ShapeSchema = z.object({
   smooth: z.boolean().optional(),
   /** New ones placed from the palette show their name on the layout. */
   showName: z.boolean().optional(),
+  /** A small item drawn corner by corner: its outline (as on CanvasObject). */
+  outline,
 });
 
 /**

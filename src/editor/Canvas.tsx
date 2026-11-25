@@ -1056,7 +1056,7 @@ function CurveDraftPreview({ store, points, ctrl, scale }: { store: EditorStore;
     const snapped = points.map((q) => ({ x: snap(q.x, project.settings.snap), y: snap(q.y, project.settings.snap) }));
     return (
       <>
-        {snapped.length > 1 && <Line points={flat(snapped)} closed={snapped.length > 2} fill={snapped.length > 2 ? draw.feature.color : undefined} opacity={0.6} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} listening={false} />}
+        {snapped.length > 1 && <Line points={flat(snapped)} closed={snapped.length > 2} fill={snapped.length > 2 ? (draw.feature.kind === 'item' ? (draw.feature.itemColor ?? '#a0a5a9') : draw.feature.color) : undefined} opacity={0.6} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} listening={false} />}
         {snapped.slice(0, ctrl.length).map((q, i) => (
           <Circle key={i} x={q.x} y={q.y} radius={(i === 0 ? 6 : 4) / scale} fill={i === 0 ? '#fff' : ACCENT} stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} listening={false} />
         ))}
