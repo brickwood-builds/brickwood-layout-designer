@@ -12,6 +12,7 @@ import type { ProjectRepository } from '../storage/repository';
 import { Modal } from '../ui/Modal';
 import {
   copySelection,
+  turnSelection,
   deleteSelection,
   duplicateSelection,
   finishCurve,
@@ -804,6 +805,12 @@ function useKeyboard(store: EditorStore) {
           return s.select([]);
       }
       if (key === 'r') return handled(), rotateSelection(store, e.shiftKey ? -1 : 1);
+      // Turn by hand: [ and ] a degree at a time, with Shift 5°.
+      if ((e.key === '[' || e.key === ']' || e.key === '{' || e.key === '}') && s.selection.length) {
+        handled();
+        const deg = (e.key === '[' || e.key === '{' ? -1 : 1) * (e.shiftKey || e.key === '{' || e.key === '}' ? 5 : 1);
+        return turnSelection(store, deg);
+      }
       if (key === 'f') return handled(), fitToLevel(store);
       if (key === 'v') return s.set({ mode: 'select', measure: null });
       if (key === 'h') return s.set({ mode: 'pan', measure: null });

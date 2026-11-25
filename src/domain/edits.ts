@@ -2,7 +2,7 @@
 // so the editor can keep earlier versions for undo.
 import { newId } from './ids';
 import { nextLabel } from './labels';
-import { footprint, snap, unionRect, type Rect } from './geometry';
+import { baseRect, footprint, snap, unionRect, type Rect } from './geometry';
 import { SpatialIndex } from './spatial';
 import { cleanOutline, outlineBox, scaleOutline, type Pt } from './outline';
 import { joinAt, joinDistance, keepJoins, onSurface, tablePieces, type TableJoin, type TableShape } from './tableShape';
@@ -65,11 +65,67 @@ export function rotateItems(p: Project, ids: Iterable<string>, direction: 1 | -1
     const ncx = direction === 1 ? px - (cy - py) : px + (cy - py);
     const ncy = direction === 1 ? py + (cx - px) : py - (cx - px);
     const rotation = ((((i.rotation + direction * 90) % 360) + 360) % 360) as Rotation;
-    const nf = footprint({ ...i, rotation });
+    const nf = baseRect({ ...i, rotation });
     return { ...i, rotation, x: ncx - nf.width / 2, y: ncy - nf.depth / 2 };
   });
-  const nb = selectionBounds(rotated, set)!;
+  // Back on the grid by the items' own boxes (a tilted piece's corners needn't be on it).
+  const nb = unionRect(allItems(rotated).filter((i) => set.has(i.id)).map(baseRect))!;
   return moveItems(rotated, set, snap(nb.x, mode) - nb.x, snap(nb.y, mode) - nb.y);
+}
+
+/** An item's angle in degrees, −180 to 180 (its quarter turn plus any tilt). */
+export function angleOf(i: Pick<Item, 'rotation' | 'tilt'>): number {
+  const a = (((i.rotation + (i.tilt ?? 0)) % 360) + 360) % 360;
+  return Math.round((a > 180 ? a - 360 : a) * 10) / 10;
+}
+
+/** Split an angle into a quarter turn and a tilt (more than −45, up to 45), to 0.1°. */
+function splitAngle(angle: number): { rotation: Rotation; tilt: number } {
+  const a = (((Math.round(angle * 10) / 10) % 360) + 360) % 360;
+  let q = Math.round(a / 90) * 90;
+  let tilt = Math.round((a - q) * 10) / 10;
+  if (tilt <= -45) {
+    q -= 90;
+    tilt += 90;
+  }
+  return { rotation: ((((q % 360) + 360) % 360) as Rotation), tilt };
+}
+
+/** The same item at another angle, turned about the middle of its box (which may move to `center`). */
+function atAngle<T extends Item>(i: T, angle: number, center?: { x: number; y: number }): T {
+  const b = baseRect(i);
+  const c = center ?? { x: b.x + b.width / 2, y: b.y + b.depth / 2 };
+  const { rotation, tilt } = splitAngle(angle);
+  const nb = baseRect({ ...i, rotation });
+  const { tilt: _old, ...rest } = i;
+  void _old;
+  return { ...rest, rotation, ...(tilt ? { tilt } : {}), x: c.x - nb.width / 2, y: c.y - nb.depth / 2 } as T;
+}
+
+/**
+ * Turn the selection by any number of degrees (a piece that doesn't sit square), clockwise,
+ * as one block about its middle. Not put back on the grid: a turned piece sits where it is.
+ */
+export function turnItems(p: Project, ids: Iterable<string>, degrees: number): Project {
+  const set = new Set(ids);
+  const bounds = unionRect(allItems(p).filter((i) => set.has(i.id)).map(baseRect));
+  if (!bounds || !degrees) return p;
+  const px = bounds.x + bounds.width / 2;
+  const py = bounds.y + bounds.depth / 2;
+  const a = (degrees * Math.PI) / 180;
+  return mapItems(p, set, (i) => {
+    const b = baseRect(i);
+    const cx = b.x + b.width / 2 - px;
+    const cy = b.y + b.depth / 2 - py;
+    // Y points down, so this turns clockwise on screen.
+    const c = { x: px + cx * Math.cos(a) - cy * Math.sin(a), y: py + cx * Math.sin(a) + cy * Math.cos(a) };
+    return atAngle(i, angleOf(i) + degrees, c);
+  });
+}
+
+/** Set one item's angle exactly (degrees, clockwise), turning it about its middle. */
+export function setItemAngle(p: Project, id: string, degrees: number): Project {
+  return mapItems(p, new Set([id]), (i) => atAngle(i, degrees));
 }
 
 /** Deleting a labelled module keeps its ID reserved: the plate still exists. */
@@ -102,7 +158,7 @@ export function resizeModule(p: Project, id: string, kind: MilsKind, width: numb
   const m = p.modules.find((x) => x.id === id);
   if (!m) return p;
   const f = footprint(m);
-  const nf = footprint({ ...m, width, depth });
+  const nf = baseRect({ ...m, width, depth });
   const x = snap(f.x + f.width / 2 - nf.width / 2, mode);
   const y = snap(f.y + f.depth / 2 - nf.depth / 2, mode);
   return updateModule(p, id, { kind, width, depth, x, y, ...(m.outline ? { outline: scaleOutline(m.outline, m, { width, depth }) } : {}) });

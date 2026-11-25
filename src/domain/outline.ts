@@ -5,7 +5,7 @@
 // The outline is stored on the object as corner points in studs, relative to the object's
 // own upper-left corner before turning (0…width across, 0…depth down). x/y/width/depth stay
 // the bounding box, so everything that works with boxes keeps working.
-import { rectsOverlap, snap, solidsClash, type Rect } from './geometry';
+import { baseRect, rectsOverlap, snap, solidsClash, tiltCorners, type Rect } from './geometry';
 import type { CanvasObject, Rotation } from './schema';
 
 export interface Pt {
@@ -73,13 +73,21 @@ function turn(p: Pt, rotation: Rotation, width: number, depth: number): Pt {
   }
 }
 
-/** The outline's corners on the table (studs), or null for an ordinary rectangle. */
-export function outlineOnTable(o: Pick<CanvasObject, 'x' | 'y' | 'width' | 'depth' | 'rotation' | 'outline'>): Pt[] | null {
-  if (!o.outline) return null;
-  return o.outline.map((p) => {
+/** The outline's corners on the table (studs) — a shaped feature's, or a tilted box's — or null for an ordinary square-on rectangle. */
+export function outlineOnTable(o: Pick<CanvasObject, 'x' | 'y' | 'width' | 'depth' | 'rotation' | 'outline' | 'tilt'> & { round?: boolean }): Pt[] | null {
+  const box = baseRect(o);
+  // A tilted plain box (not a round piece: a circle looks the same turned) is its four corners.
+  if (!o.outline) return o.tilt && !o.round ? tiltCorners(box, o.tilt) : null;
+  const pts = o.outline.map((p) => {
     const t = turn(p, o.rotation, o.width, o.depth);
     return { x: o.x + t.x, y: o.y + t.y };
   });
+  if (!o.tilt) return pts;
+  // A tilted shaped feature: its corners turned about the middle of its box.
+  const a = (o.tilt * Math.PI) / 180;
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.depth / 2;
+  return pts.map((q) => ({ x: cx + (q.x - cx) * Math.cos(a) - (q.y - cy) * Math.sin(a), y: cy + (q.x - cx) * Math.sin(a) + (q.y - cy) * Math.cos(a) }));
 }
 
 /** Is a point inside a shape (edges count as inside)? */

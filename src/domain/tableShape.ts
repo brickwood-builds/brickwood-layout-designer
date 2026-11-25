@@ -89,14 +89,23 @@ function cuts(a: number, b: number, at: number[]): number[] {
  */
 export function onSurface(r: Rect, surfaces: Rect[], pts?: Pt[] | null): boolean {
   if (!surfaces.length) return true;
-  if (!pts && surfaces.some((s) => s.x <= r.x + EPS && s.y <= r.y + EPS && s.x + s.width >= r.x + r.width - EPS && s.y + s.depth >= r.y + r.depth - EPS)) return true;
-  const xs = cuts(r.x, r.x + r.width, [...surfaces.flatMap((s) => [s.x, s.x + s.width]), ...(pts ?? []).map((p) => p.x)]);
-  const ys = cuts(r.y, r.y + r.depth, [...surfaces.flatMap((s) => [s.y, s.y + s.depth]), ...(pts ?? []).map((p) => p.y)]);
+  // A shape (turned or shaped): every half stud of it must be on the table — thin corners
+  // poking past an edge count.
+  if (pts) {
+    for (let x = r.x + 0.25; x < r.x + r.width; x += 0.5) {
+      for (let y = r.y + 0.25; y < r.y + r.depth; y += 0.5) {
+        if (insideOutline(pts, x, y) && !surfaces.some((s) => within(s, x, y))) return false;
+      }
+    }
+    return true;
+  }
+  if (surfaces.some((s) => s.x <= r.x + EPS && s.y <= r.y + EPS && s.x + s.width >= r.x + r.width - EPS && s.y + s.depth >= r.y + r.depth - EPS)) return true;
+  const xs = cuts(r.x, r.x + r.width, surfaces.flatMap((s) => [s.x, s.x + s.width]));
+  const ys = cuts(r.y, r.y + r.depth, surfaces.flatMap((s) => [s.y, s.y + s.depth]));
   for (let i = 0; i + 1 < xs.length; i++) {
     for (let j = 0; j + 1 < ys.length; j++) {
       const cx = (xs[i]! + xs[i + 1]!) / 2;
       const cy = (ys[j]! + ys[j + 1]!) / 2;
-      if (pts && !insideOutline(pts, cx, cy)) continue;
       if (!surfaces.some((s) => within(s, cx, cy))) return false;
     }
   }

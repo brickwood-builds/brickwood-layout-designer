@@ -35,6 +35,11 @@ const placed = {
   width: positive,
   depth: positive,
   rotation,
+  /**
+   * A small turn on top of `rotation`, in degrees (clockwise, more than −45 up to 45), for a
+   * piece that doesn't sit square. Turned about the middle of its box. Absent: square.
+   */
+  tilt: z.number().finite().gt(-45).lte(45).optional(),
   notes: z.string().default(''),
   /** Reserved for Phase 2 stacking; plates above the support surface. */
   baseHeightPlates: z.number().finite().optional(),

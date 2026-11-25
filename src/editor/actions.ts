@@ -1,6 +1,8 @@
 // Editor commands shared by the toolbar, keyboard shortcuts and panels.
 import { levelBounds, snap, unionRect, footprint } from '../domain/geometry';
 import {
+  angleOf,
+  turnItems,
   isModule,
   addShapedFeature,
   findFreeSpot,
@@ -114,6 +116,19 @@ export function deleteSelection(store: EditorStore) {
 export function rotateSelection(store: EditorStore, direction: 1 | -1) {
   const s = store.getState();
   if (s.selection.length) s.commit((p) => rotateItems(p, withCarriedItems(p, s.selection), direction, p.settings.snap));
+}
+
+/** Turn the selection by hand (degrees, clockwise), taking along what sits on it. */
+export function turnSelection(store: EditorStore, degrees: number) {
+  const s = store.getState();
+  if (s.selection.length) s.commit((p) => turnItems(p, withCarriedItems(p, s.selection), degrees));
+}
+
+/** Set one item's angle (what sits on it turns with it). */
+export function setSelectionAngle(store: EditorStore, id: string, degrees: number) {
+  const s = store.getState();
+  const item = allItems(s.project).find((i) => i.id === id);
+  if (item) s.commit((p) => turnItems(p, withCarriedItems(p, [id]), degrees - angleOf(item)));
 }
 
 export function nudgeSelection(store: EditorStore, dx: number, dy: number) {

@@ -64,6 +64,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       '• Delete or Backspace: delete',
       '• Ctrl+Z: undo · Ctrl+Shift+Z or Ctrl+Y: redo',
       '• Ctrl+A: select all on this level · Escape: clear selection',
+      '• [ and ]: turn the selection by hand 1° (Shift: 5°), for a piece that doesn’t sit square. Or use Turn by hand / Angle in the panel; R still turns a quarter turn.',
       '• Ctrl+D: duplicate · Ctrl+C / Ctrl+V (or Copy / Paste in the toolbar): copy, then click where each copy goes · B: draw · E: erase',
       '• Ctrl+G: group · Ctrl+Shift+G: ungroup · Alt-click: pick one piece of a group',
       '• V: select · H: pan (or hold Space) · M: measure · B: draw',

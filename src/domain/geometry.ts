@@ -10,12 +10,45 @@ export interface Rect {
 
 export interface Placed extends Rect {
   rotation: Rotation;
+  /** Degrees turned on top of `rotation` (a piece that doesn't sit square). */
+  tilt?: number;
 }
 
-/** Axis-aligned footprint of a placed object (x/y are already the placed upper-left). */
-export function footprint(p: Placed): Rect {
+/**
+ * Its box before any tilt: x/y are the upper-left, width/depth swap for a quarter turn.
+ * Positions are worked out from this (x/y always mean this box's corner).
+ */
+export function baseRect(p: Placed): Rect {
   const swap = p.rotation === 90 || p.rotation === 270;
   return { x: p.x, y: p.y, width: swap ? p.depth : p.width, depth: swap ? p.width : p.depth };
+}
+
+/** The corners of a tilted box, turned about its middle (clockwise; Y points down). */
+export function tiltCorners(r: Rect, tilt: number): { x: number; y: number }[] {
+  const a = (tilt * Math.PI) / 180;
+  const cos = Math.cos(a);
+  const sin = Math.sin(a);
+  const cx = r.x + r.width / 2;
+  const cy = r.y + r.depth / 2;
+  return [
+    [r.x, r.y],
+    [r.x + r.width, r.y],
+    [r.x + r.width, r.y + r.depth],
+    [r.x, r.y + r.depth],
+  ].map(([x, y]) => ({ x: cx + (x! - cx) * cos - (y! - cy) * sin, y: cy + (x! - cx) * sin + (y! - cy) * cos }));
+}
+
+/**
+ * Axis-aligned footprint of a placed object: its box, or for a tilted one the box around its
+ * turned corners (what it covers on the table).
+ */
+export function footprint(p: Placed): Rect {
+  const r = baseRect(p);
+  if (!p.tilt) return r;
+  const pts = tiltCorners(r, p.tilt);
+  const x = Math.min(...pts.map((q) => q.x));
+  const y = Math.min(...pts.map((q) => q.y));
+  return { x, y, width: Math.max(...pts.map((q) => q.x)) - x, depth: Math.max(...pts.map((q) => q.y)) - y };
 }
 
 const EPS = 1e-9;

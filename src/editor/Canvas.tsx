@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Circle, Ellipse, Group, Layer, Line, Rect, Shape, Stage, Text } from 'react-konva';
 import type Konva from 'konva';
 import { useStore } from 'zustand';
-import { footprint, rectContains, snap, unionRect, type Rect as R } from '../domain/geometry';
+import { baseRect, footprint, rectContains, snap, unionRect, type Rect as R } from '../domain/geometry';
 import { allItems, isModule, moveItems, type Item } from '../domain/edits';
 import { makeDragChecker } from './dragCheck';
 import { drawOrder, itemAt } from '../domain/hit';
@@ -923,7 +923,10 @@ const Studs = memo(function Studs({ items, view, viewport }: { items: Item[]; vi
         if (!pattern) return;
         for (const i of visible) {
           const r = footprint(i);
-          pattern.setTransform(new DOMMatrix().translate(r.x, r.y).scale(1 / px));
+          // Studs line up with the piece: turned with it when it's tilted.
+          const b = baseRect(i);
+          const m = i.tilt ? new DOMMatrix().translate(b.x + b.width / 2, b.y + b.depth / 2).rotate(i.tilt).translate(-b.width / 2, -b.depth / 2) : new DOMMatrix().translate(b.x, b.y);
+          pattern.setTransform(m.scale(1 / px));
           c.fillStyle = pattern;
           fillShape(c, i, r);
         }

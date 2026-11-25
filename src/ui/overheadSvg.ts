@@ -86,9 +86,11 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
     const pts = outlineOnTable(i);
     if (pts) {
       // A shaped feature: its outline, and its name at a spot inside it.
-      const fill = isModule(i) ? (i.color ?? MILS_COLORS[i.kind]) : i.color;
-      out.push(`<polygon class="${isModule(i) ? 'pv-module' : 'pv-footprint'}" data-label="${esc(isModule(i) ? i.label : '')}" points="${pts.map((q) => `${n(q.x)},${n(q.y)}`).join(' ')}" fill="${fill}"/>`);
-      const text = isModule(i) ? moduleDisplayName(i) : i.name;
+      // (Also a tilted piece: its turned corners.)
+      const fill = isModule(i) ? (project.settings.moduleColors === 'plate' && (i.plateColor || !isBase(i)) ? (i.plateColor ?? DEFAULT_PLATE_COLOR) : (i.color ?? MILS_COLORS[i.kind])) : i.color;
+      const cls = isModule(i) ? 'pv-module' : i.type === 'footprint' ? 'pv-footprint' : 'pv-item';
+      out.push(`<polygon class="${cls}" data-label="${esc(isModule(i) ? i.label : '')}" points="${pts.map((q) => `${n(q.x)},${n(q.y)}`).join(' ')}" fill="${fill}"/>`);
+      const text = isModule(i) ? moduleDisplayName(i) : i.type === 'footprint' ? i.name : '';
       const at = labelSpot(pts);
       if (opts.labels && text) out.push(`<text class="${isModule(i) ? 'pv-label' : 'pv-name'}" x="${n(at.x)}" y="${n(at.y)}" font-size="${n(fitText(text, r.width * 0.6, r.depth * 0.3, 5))}">${esc(text)}</text>`);
     } else if (isModule(i)) {

@@ -2,7 +2,7 @@
 // warning acknowledgements. Pure functions, like edits.ts.
 import { newId, nowIso } from './ids';
 import { findFreeSpot, isModule, itemsOnLevel, type Item, type SnapMode } from './edits';
-import { footprint, snap } from './geometry';
+import { baseRect, footprint, snap } from './geometry';
 import { SpatialIndex } from './spatial';
 import { moduleDisplayName, type CanvasObject, type Project, type Shape } from './schema';
 import type { LayoutWarning } from './validation';
@@ -73,7 +73,7 @@ export function resizeObject(p: Project, id: string, width: number, depth: numbe
     objects: p.objects.map((o) => {
       if (o.id !== id) return o;
       const f = footprint(o);
-      const nf = footprint({ ...o, width, depth });
+      const nf = baseRect({ ...o, width, depth });
       return { ...o, width, depth, x: snap(f.x + f.width / 2 - nf.width / 2, mode), y: snap(f.y + f.depth / 2 - nf.depth / 2, mode) };
     }),
   };

@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { footprint } from '../domain/geometry';
-import { addDimension, deleteDimension, dimensionLength, findItem, isModule, resizeModule, setItemPosition, updateModule, updateObject, type Item } from '../domain/edits';
+import { addDimension, angleOf, deleteDimension, dimensionLength, findItem, isModule, resizeModule, setItemPosition, updateModule, updateObject, type Item } from '../domain/edits';
 import { storedNotPlaced, validateLabel } from '../domain/labels';
 import { computeStack, formatHeight, parseHeight, stackAt } from '../domain/heights';
 import { MILS_KINDS, MILS_SIZES, isBase, milsKindForSize, moduleDisplayName, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
 import { formatLength } from '../domain/units';
 import { updateStairs } from './actions';
-import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, saveSelectionAsDesign, ungroupSelection } from './actions';
+import { deleteSelection, duplicateSelection, groupSelection, rotateSelection, saveSelectionAsDesign, setSelectionAngle, turnSelection, ungroupSelection } from './actions';
 import { designable, isOutdated, unlinkCopy, updateCopyToDesign, updateDesignFromCopy } from '../domain/designs';
 import { Modal } from '../ui/Modal';
 import { groupOf, modulesUnder, withCarriedItems, renameGroup, resizeObject, saveShape, setShowName } from '../domain/objects';
@@ -465,10 +465,33 @@ function BuildBox({ store }: { store: EditorStore }) {
   );
 }
 
+/** Turn by hand, a degree or a few at a time, for a piece that doesn't sit square. */
+function TurnButtons({ store }: { store: EditorStore }) {
+  const turn = (deg: number) => turnSelection(store, deg);
+  return (
+    <div className="turn-row" role="group" aria-label="Turn by hand">
+      <span className="small muted">Turn by hand</span>
+      <button type="button" onClick={() => turn(-5)} title="Turn 5° left (Shift+[)">↺ 5°</button>
+      <button type="button" onClick={() => turn(-1)} title="Turn 1° left ([)">↺ 1°</button>
+      <button type="button" onClick={() => turn(1)} title="Turn 1° right (])">↻ 1°</button>
+      <button type="button" onClick={() => turn(5)} title="Turn 5° right (Shift+])">↻ 5°</button>
+    </div>
+  );
+}
+
 function PositionFields({ store, item, unit }: { store: EditorStore; item: Item; unit: 'studs' | 'in' | 'cm' }) {
   const commit = store.getState().commit;
   const hint = (studs: number) => (unit === 'studs' ? undefined : formatLength(studs, unit));
   return (
+    <>
+    <Field
+      label="Angle (°)"
+      type="number"
+      value={angleOf(item)}
+      validate={numberOrError}
+      onCommit={(v) => setSelectionAngle(store, item.id, Number(v))}
+      hint={item.tilt ? 'Not square: turned by hand' : 'Square to the grid'}
+    />
     <div className="row">
       <Field
         label="X (studs)"
@@ -487,6 +510,7 @@ function PositionFields({ store, item, unit }: { store: EditorStore; item: Item;
         hint={hint(item.y)}
       />
     </div>
+    </>
   );
 }
 
@@ -543,6 +567,7 @@ function SelectionActions({ store }: { store: EditorStore }) {
       <button type="button" onClick={() => rotateSelection(store, 1)} title="Rotate right (R)">⟳ Rotate</button>
       <button type="button" onClick={() => duplicateSelection(store)} title="Duplicate (Ctrl+D)">Duplicate</button>
       <button type="button" className="danger" onClick={() => deleteSelection(store)} title="Delete (Del)">Delete</button>
+      <TurnButtons store={store} />
     </div>
   );
 }
