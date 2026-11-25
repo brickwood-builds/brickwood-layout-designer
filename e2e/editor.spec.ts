@@ -141,8 +141,8 @@ test.describe('mouse (desktop Chrome)', () => {
 
   test('a box drawn around plates selects them (even starting on a plate); delete and undo as one step', async ({ page }) => {
     const b01 = (await mod(page, 'B-01'))!;
-    // Around B-01 to B-03 (starting on the plate beside B-01): what's fully inside is picked.
-    await mouseDrag(page, await toPage(page, b01.x - 1, b01.y - 1), await toPage(page, b01.x + 50, b01.y + 17));
+    // Around B-01 to B-03, starting on the plate to their right (C-01): what's fully inside is picked.
+    await mouseDrag(page, await toPage(page, b01.x + 50, b01.y - 1), await toPage(page, b01.x - 1, b01.y + 17));
     const { selection } = await editorState(page);
     expect(selection.length).toBeGreaterThan(2);
     await expect(page.getByRole('heading', { name: `${selection.length} selected` })).toBeVisible();

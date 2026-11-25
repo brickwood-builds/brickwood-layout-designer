@@ -22,9 +22,21 @@ test('drag a box to select; small pieces are easy to pick; panel and tool hint f
   // Nothing selected: no panel; the status bar says what a click does.
   await expect(panel).toHaveCount(0);
   await expect(hint).toContainText('Select');
-  await expect(hint).toContainText('drag a box around things to pick several');
+  await expect(hint).toContainText('drag empty table to move the view');
 
-  // Dragging on empty table draws a box: it selects what it touches, and the view stays put.
+  // Dragging an empty part of the table (nothing under the pointer) moves the view.
+  const v0 = (await st(page)).view;
+  const empty = await at(page, -6, -6);
+  await page.mouse.move(empty.x, empty.y);
+  await page.mouse.down();
+  await page.mouse.move(empty.x + 60, empty.y + 30, { steps: 6 });
+  await page.mouse.up();
+  const v1 = (await st(page)).view;
+  expect(v1.x - v0.x).toBeCloseTo(60, 0);
+  expect((await st(page)).selection).toEqual([]);
+
+  // Dragging over plates draws a box (here starting on A-02, above B-02): it picks what's fully inside,
+  // and the view stays put.
   let s = await st(page);
   const b01 = s.modules.find((m) => m.label === 'B-01')!;
   // Over a plate that isn't selected the pointer is the plain arrow (a drag won't move it).
@@ -33,8 +45,8 @@ test('drag a box to select; small pieces are easy to pick; panel and tool hint f
   await page.mouse.move(over.x, over.y);
   await page.mouse.move(over.x + 1, over.y + 1);
   await expect(canvas).toHaveCSS('cursor', 'default');
-  const from = await at(page, b01.x - 4, b01.y - 4);
-  const to = await at(page, b01.x + b01.width + 2, b01.y + b01.depth + 2);
+  const from = await at(page, b01.x + b01.width + 1, b01.y - 2);
+  const to = await at(page, b01.x - 2, b01.y + b01.depth + 1);
   await page.mouse.move(from.x, from.y);
   await page.mouse.down();
   await page.mouse.move(to.x, to.y, { steps: 6 });

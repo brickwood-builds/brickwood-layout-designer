@@ -309,9 +309,9 @@ export function Canvas({ store }: { store: EditorStore }) {
         }
         return;
       }
-      // Empty table: with a mouse, drag a box to select several (a click lets go of the
-      // selection; Shift/Ctrl adds). With a finger, dragging moves the view.
-      if (touch) {
+      // Empty table (nothing under the pointer): dragging moves the view, a click lets go of
+      // the selection. Shift/Ctrl-drag draws a selection box from here instead (adding to it).
+      if (touch || !(e.shiftKey || e.metaKey || e.ctrlKey)) {
         gesture.current = { type: 'pan', startView: s.view, sx: p.x, sy: p.y, moved: false, clearOnTap: true };
       } else {
         gesture.current = { type: 'marquee', sx: p.x, sy: p.y, x: p.x, y: p.y, additive: e.shiftKey || e.metaKey || e.ctrlKey };
