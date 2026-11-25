@@ -119,6 +119,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     title: 'Tables and levels',
     body: [
       'Table… sets the table’s name, shape and size in inches; overhang warnings use it. Shape: a rectangle, or an L, a U or a ring of tables with an open middle — give the overall size, how deep the tables are, and (for an L or U) which corner or side. It is drawn as one surface; plates can cross the joins between tables, and anything hanging over the open middle gets an overhang warning.',
+      'To show where one table ends and the next begins: Table… → Mark table joins…, then click on the table at each join. The line goes straight across that stretch of table, on whole studs, and onto the corner where a leg meets the back when you click near it. Click a join again to remove it; Shift-click turns a line the other way. Press Escape (or Done) when finished. Joins show as dashed lines on the layout and printouts, and Table… says how many tables they make.',
       'Table… → Add a level… adds another surface — for example a shelf above the main table — with its own table size and height above the floor. Switch levels with the Level picker. Tick Others to see the other levels faintly for lining things up.',
       'A level can be deleted once it’s empty.',
     ],

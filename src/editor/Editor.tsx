@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useStore } from 'zustand';
-import { addLevel, canDeleteLevel, deleteLevel, setLevelTableShape, updateLevel } from '../domain/edits';
-import { L_CORNERS, SHAPE_LABEL, TABLE_SHAPES, U_OPENINGS, shapeProblem, surfaceEdges, tablePieces, type TableShape, type TableShapeKind } from '../domain/tableShape';
+import { addLevel, canDeleteLevel, deleteLevel, setLevelTableShape, toggleTableJoin, updateLevel } from '../domain/edits';
+import { L_CORNERS, SHAPE_LABEL, TABLE_SHAPES, U_OPENINGS, shapeProblem, surfaceEdges, tableCount, tablePieces, type TableShape, type TableShapeKind } from '../domain/tableShape';
 import { duplicateProject } from '../domain/project';
 import { isBase, type Project } from '../domain/schema';
 import { studsToInches, inchesToStuds, formatLength } from '../domain/units';
+import { footprint } from '../domain/geometry';
 import { checkLayout } from '../domain/validation';
 import { acknowledge, canAcknowledge, splitWarnings, unacknowledge, warningKey } from '../domain/objects';
 import type { ProjectRepository } from '../storage/repository';
@@ -453,6 +454,25 @@ function LevelDialog({
           </div>
         )}
         <TableShapePreview shape={shape} ok={!problem} />
+        {level && (
+          <div className="joins-row">
+            <span className="muted small">
+              {(level.tableJoins?.length ?? 0) === 0
+                ? 'No joins marked: shown as one table.'
+                : `${level.tableJoins!.length} join${level.tableJoins!.length === 1 ? '' : 's'} marked: ${tableCount(pieces.map(footprint), level.tableJoins!)} tables.`}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                startMarkingJoins(store);
+              }}
+              title="Show where one table ends and the next begins: click on the table at each join"
+            >
+              Mark table joins…
+            </button>
+          </div>
+        )}
         {problem ? (
           <p className="small" role="alert">
             {problem}
@@ -508,6 +528,23 @@ function LevelDialog({
       </form>
     </Modal>
   );
+}
+
+/** Pick up the join marker: each click on the table adds a join there, or removes one. */
+function startMarkingJoins(store: EditorStore) {
+  store.getState().set({
+    mode: 'select',
+    measure: null,
+    holding: {
+      key: 'joins',
+      label: 'table joins',
+      hint: 'Click across the table where one table ends and the next begins · click a join to remove it · Shift-click turns it · Esc when done',
+      place: (at, opts) => {
+        const s = store.getState();
+        s.commit((p) => toggleTableJoin(p, s.levelId, at.x, at.y, 6 / s.view.scale, opts?.shift));
+      },
+    },
+  });
 }
 
 const SIDE_LABEL: Record<NonNullable<TableShape['side']>, string> = {
@@ -587,9 +624,10 @@ function ToolHint({ store }: { store: EditorStore }) {
   const mode = useStore(store, (s) => s.mode);
   const erase = useStore(store, (s) => s.draw.erase);
   const holding = useStore(store, (s) => s.holding?.label);
+  const holdHint = useStore(store, (s) => s.holding?.hint);
   const selected = useStore(store, (s) => s.selection.length);
   const [tool, hint] = holding
-    ? ['Placing', `${holding}: click where each one goes · Esc to stop`]
+    ? ['Placing', holdHint ?? `${holding}: click where each one goes · Esc to stop`]
     : mode === 'draw'
       ? erase
         ? ['Erase', 'Drag over pieces and items to remove them · Esc for Select']

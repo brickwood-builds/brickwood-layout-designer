@@ -14,8 +14,10 @@ export interface Holding {
   /** Which palette entry (so it can show as picked). */
   key: string;
   label: string;
-  /** Put one down with its middle at this spot (studs). */
-  place: (at: { x: number; y: number }) => void;
+  /** Put one down with its middle at this spot (studs); `shift`: Shift was held. */
+  place: (at: { x: number; y: number }, opts?: { shift?: boolean }) => void;
+  /** What the status bar says while this is held (default: "click where each one goes"). */
+  hint?: string;
   /** Size and look, for the outline that follows the pointer. */
   preview?: { width: number; depth: number; color: string; round?: boolean };
 }

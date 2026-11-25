@@ -39,6 +39,7 @@ export const STANDALONE_STYLE = `
 .pv-table{fill:#d9b27c;stroke:#a67c45;stroke-width:.6}
 .pv-table-fill{fill:#d9b27c}
 .pv-table-edge{fill:none;stroke:#a67c45;stroke-width:.6}
+.pv-table-join{fill:none;stroke:#7a5a2f;stroke-width:.5;stroke-dasharray:2 1.5}
 .pv-module{stroke:rgba(0,0,0,.45);stroke-width:.35}
 .pv-footprint{fill-opacity:.85;stroke:#7a2a24;stroke-width:.5}
 .pv-item{stroke:rgba(0,0,0,.45);stroke-width:.15}
@@ -69,6 +70,8 @@ export function overheadSvg(project: Project, opts: SvgOptions = {}): string {
     for (const r of tableRects) out.push(`<rect class="pv-table-fill" x="${n(r.x)}" y="${n(r.y)}" width="${n(r.width)}" height="${n(r.depth)}" shape-rendering="crispEdges"/>`);
     out.push(`<path class="pv-table-edge" d="${surfaceEdges(tableRects).map((e) => `M${n(e.x1)} ${n(e.y1)}L${n(e.x2)} ${n(e.y2)}`).join('')}"/>`);
   }
+  // Where one table ends and the next begins.
+  if (level.tableJoins?.length) out.push(`<path class="pv-table-join" d="${level.tableJoins.map((j) => `M${n(j.x1)} ${n(j.y1)}L${n(j.x2)} ${n(j.y2)}`).join('')}"/>`);
   const items = drawOrder(
     project,
     allItems(project).filter((i) => i.levelId === level.id && visible.has(i.layerId)),

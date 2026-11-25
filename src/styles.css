@@ -93,6 +93,8 @@ input[type='text'], input:not([type]), input[type='number'] {
 .pv-table { fill: var(--table); stroke: var(--table-edge); stroke-width: 0.6; }
 .pv-table-fill { fill: var(--table); }
 .pv-table-edge { fill: none; stroke: var(--table-edge); stroke-width: 0.6; }
+.pv-table-join { fill: none; stroke: var(--table-edge); stroke-width: 0.5; stroke-dasharray: 2 1.5; }
+.joins-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .table-preview { display: block; width: 100%; max-height: 140px; margin: 4px 0; }
 .pv-module { stroke: var(--module-edge); stroke-width: 0.35; }
 .pv-footprint { fill-opacity: 0.55; stroke: #7a2a24; stroke-width: 0.5; }

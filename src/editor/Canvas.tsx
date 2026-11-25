@@ -7,7 +7,7 @@ import { allItems, isModule, moveItems, type Item } from '../domain/edits';
 import { makeDragChecker } from './dragCheck';
 import { drawOrder, itemAt } from '../domain/hit';
 import { labelSpot, outlineOnTable } from '../domain/outline';
-import { surfaceEdges } from '../domain/tableShape';
+import { joinAt, joinDistance, surfaceEdges, type TableJoin } from '../domain/tableShape';
 import { computeStack, heightColor, type StackInfo } from '../domain/heights';
 import { SpatialIndex } from '../domain/spatial';
 import { MILS_COLORS, isBase, moduleDisplayName, type Project } from '../domain/schema';
@@ -41,7 +41,7 @@ type Gesture =
   | { type: 'draw'; points: { x: number; y: number }[] }
   /** Draw › Curve: a tap/click adds a point; dragging pans instead. */
   /** Also used while holding a palette entry: a tap puts one down (`hold`), dragging pans. */
-  | { type: 'curvePoint'; sx: number; sy: number; startView: View; panning: boolean; hold?: boolean }
+  | { type: 'curvePoint'; sx: number; sy: number; startView: View; panning: boolean; hold?: boolean; shift?: boolean }
   /** Dragging one of a curve's handles. */
   | { type: 'handle'; pathId: string; index: number; points: { x: number; y: number }[]; moved: boolean };
 
@@ -263,7 +263,7 @@ export function Canvas({ store }: { store: EditorStore }) {
       }
       // Holding a palette entry: a tap puts one down (even on top of something), a drag pans.
       if (s.holding && s.mode === 'select' && e.button === 0 && !spaceDownRef.current) {
-        gesture.current = { type: 'curvePoint', sx: p.x, sy: p.y, startView: s.view, panning: false, hold: true };
+        gesture.current = { type: 'curvePoint', sx: p.x, sy: p.y, startView: s.view, panning: false, hold: true, shift: e.shiftKey };
         return;
       }
       if (s.mode === 'draw' && e.button === 0 && !spaceDownRef.current) {
@@ -399,7 +399,7 @@ export function Canvas({ store }: { store: EditorStore }) {
       gesture.current = null;
       if (g.type === 'curvePoint') {
         if (g.hold) {
-          if (!cancelled && !g.panning) s.holding?.place(toWorld(s.view, g.sx, g.sy));
+          if (!cancelled && !g.panning) s.holding?.place(toWorld(s.view, g.sx, g.sy), { shift: g.shift });
           return;
         }
         if (!cancelled && !g.panning) {
@@ -520,7 +520,8 @@ export function Canvas({ store }: { store: EditorStore }) {
                   <LevelContent project={project} levelId={l.id} visibleLayers={visibleLayers} />
                 </Group>
               ))}
-              <TableSurface rects={project.tables.filter((t) => t.levelId === level.id).map(footprint)} fill="#d9b27c" stroke="#a67c45" width={1.5} />
+              <TableSurface rects={project.tables.filter((t) => t.levelId === level.id).map(footprint)} joins={level.tableJoins} fill="#d9b27c" stroke="#a67c45" width={1.5} />
+              {holding?.key === 'joins' && <JoinGhost store={store} />}
               <Grid view={view} viewport={viewport} />
               <Items items={baseItems} dx={0} dy={0} selected={selectedSet} problems={EMPTY} editable={editable} plateColors={plateColors} />
               {studsVisible && <Studs items={baseItems} view={view} viewport={viewport} />}
@@ -735,7 +736,7 @@ const Labels = memo(function Labels({ items, dx, dy, zoom, builtOn }: { items: I
  * A level's table: its pieces filled, and one outline around the whole shape (an L, U or ring
  * of tables reads as one surface, with no seams where the pieces meet).
  */
-function TableSurface({ rects, fill, stroke, width, dash, scaled }: { rects: R[]; fill?: string; stroke: string; width: number; dash?: number[]; scaled?: boolean }) {
+function TableSurface({ rects, joins, fill, stroke, width, dash, scaled }: { rects: R[]; joins?: TableJoin[]; fill?: string; stroke: string; width: number; dash?: number[]; scaled?: boolean }) {
   const edges = useMemo(() => surfaceEdges(rects), [rects]);
   return (
     <>
@@ -756,15 +757,33 @@ function TableSurface({ rects, fill, stroke, width, dash, scaled }: { rects: R[]
           ctx.strokeShape(shape);
         }}
       />
+      {/* Where one table ends and the next begins: dashed, a shade darker than the edge. */}
+      {joins?.map((j, i) => (
+        <Line key={`j${i}`} points={[j.x1, j.y1, j.x2, j.y2]} stroke="#7a5a2f" strokeWidth={scaled ? width : 1.5} strokeScaleEnabled={!!scaled} dash={scaled ? [1, 1] : [6, 4]} listening={false} />
+      ))}
     </>
   );
+}
+
+/** Marking joins: where a click would put one (or which one it would remove). */
+function JoinGhost({ store }: { store: EditorStore }) {
+  const pointer = useStore(store, (s) => s.pointer);
+  const project = useStore(store, (s) => s.project);
+  const levelId = useStore(store, (s) => s.levelId);
+  const scale = useStore(store, (s) => s.view.scale);
+  if (!pointer) return null;
+  const joins = project.levels.find((l) => l.id === levelId)?.tableJoins ?? [];
+  const existing = joins.find((j) => joinDistance(j, pointer.x, pointer.y) <= 6 / scale);
+  const j = existing ?? joinAt(project.tables.filter((t) => t.levelId === levelId).map(footprint), pointer.x, pointer.y);
+  if (!j) return null;
+  return <Line points={[j.x1, j.y1, j.x2, j.y2]} stroke={existing ? WARN : ACCENT} strokeWidth={3} strokeScaleEnabled={false} opacity={0.8} listening={false} />;
 }
 
 /** Static drawing of another level for the combined overview. */
 function LevelContent({ project, levelId, visibleLayers }: { project: Project; levelId: string; visibleLayers: Set<string> }) {
   return (
     <>
-      <TableSurface rects={project.tables.filter((t) => t.levelId === levelId).map(footprint)} stroke="#7a5a2f" width={0.5} dash={[2, 2]} scaled />
+      <TableSurface rects={project.tables.filter((t) => t.levelId === levelId).map(footprint)} joins={project.levels.find((l) => l.id === levelId)?.tableJoins} stroke="#7a5a2f" width={0.5} dash={[2, 2]} scaled />
       {allItems(project)
         .filter((i) => i.levelId === levelId && visibleLayers.has(i.layerId))
         .map((i) => {

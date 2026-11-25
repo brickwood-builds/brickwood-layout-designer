@@ -122,3 +122,98 @@ export function surfaceEdges(surfaces: Rect[]): { x1: number; y1: number; x2: nu
   }
   return out;
 }
+
+// ---------- Joins: where one physical table ends and the next begins ----------
+
+/** A join line across the table, studs (on the level). Straight across one stretch of table. */
+export const TableJoinSchema = z.object({ x1: z.number().finite(), y1: z.number().finite(), x2: z.number().finite(), y2: z.number().finite() });
+export type TableJoin = z.infer<typeof TableJoinSchema>;
+
+/** A click this near (studs) to where two stretches of table meet puts the join right there. */
+const SNAP_TO_EDGE = 3;
+
+/**
+ * The join a click at (x, y) would make: straight across the stretch of table clicked (across
+ * its short way — a long table is split along its length), on whole studs, and onto the edge
+ * where two stretches meet (the corner of an L) when within a few studs of it. `turned`: the
+ * other way (Shift-click). Null off the table, or on its outer edge.
+ */
+export function joinAt(surfaces: Rect[], x: number, y: number, turned = false): TableJoin | null {
+  const piece = surfaces.find((s) => within(s, x, y));
+  if (!piece) return null;
+  // A wide stretch is split by an up-and-down line; `turned` (Shift-click) the other way.
+  const across = piece.width >= piece.depth !== turned;
+  const at = across ? x : y;
+  const lo = across ? piece.x : piece.y;
+  const hi = across ? piece.x + piece.width : piece.y + piece.depth;
+  // Edges this stretch shares with another one (where a join is real, not the table's outside).
+  const shared = surfaces
+    .filter((s) => s !== piece && touches(piece, s))
+    .flatMap((s) => (across ? [s.x, s.x + s.width] : [s.y, s.y + s.depth]).filter((e) => Math.abs(e - lo) < EPS || Math.abs(e - hi) < EPS));
+  const near = shared.find((e) => Math.abs(e - at) <= SNAP_TO_EDGE);
+  const pos = near ?? Math.round(at);
+  if (near === undefined && (pos <= lo + EPS || pos >= hi - EPS)) return null;
+  return across ? { x1: pos, y1: piece.y, x2: pos, y2: piece.y + piece.depth } : { x1: piece.x, y1: pos, x2: piece.x + piece.width, y2: pos };
+}
+
+/** Two stretches meet along an edge (not just at a corner). */
+function touches(a: Rect, b: Rect): boolean {
+  const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+  const overlapY = Math.min(a.y + a.depth, b.y + b.depth) - Math.max(a.y, b.y);
+  return (overlapX > EPS && Math.abs(overlapY) < EPS) || (overlapY > EPS && Math.abs(overlapX) < EPS);
+}
+
+/** Distance from a point to a join line. */
+export function joinDistance(j: TableJoin, x: number, y: number): number {
+  const dx = j.x2 - j.x1;
+  const dy = j.y2 - j.y1;
+  const t = Math.max(0, Math.min(1, ((x - j.x1) * dx + (y - j.y1) * dy) / (dx * dx + dy * dy || 1)));
+  return Math.hypot(x - (j.x1 + t * dx), y - (j.y1 + t * dy));
+}
+
+/**
+ * Joins after the table changed shape: each one still on the table is fitted again across
+ * its stretch (same direction); ones now off the table go.
+ */
+export function keepJoins(surfaces: Rect[], joins: TableJoin[]): TableJoin[] {
+  const out: TableJoin[] = [];
+  for (const j of joins) {
+    const mx = (j.x1 + j.x2) / 2;
+    const my = (j.y1 + j.y2) / 2;
+    const piece = surfaces.find((s) => within(s, mx, my));
+    if (!piece) continue;
+    const upDown = Math.abs(j.x1 - j.x2) < EPS;
+    // joinAt picks the direction from the stretch; turn it if that's not this join's.
+    const fitted = joinAt(surfaces, upDown ? j.x1 : mx, upDown ? my : j.y1, upDown !== piece.width >= piece.depth);
+    if (fitted && !out.some((o) => o.x1 === fitted.x1 && o.y1 === fitted.y1 && o.x2 === fitted.x2 && o.y2 === fitted.y2)) out.push(fitted);
+  }
+  return out;
+}
+
+/** How many separate tables the joins make (the surface cut at every join). */
+export function tableCount(surfaces: Rect[], joins: TableJoin[]): number {
+  if (!surfaces.length) return 0;
+  const vertical = joins.filter((j) => Math.abs(j.x1 - j.x2) < EPS);
+  const horizontal = joins.filter((j) => Math.abs(j.y1 - j.y2) < EPS);
+  const xs = [...new Set([...surfaces.flatMap((s) => [s.x, s.x + s.width]), ...vertical.map((j) => j.x1)])].sort((a, b) => a - b);
+  const ys = [...new Set([...surfaces.flatMap((s) => [s.y, s.y + s.depth]), ...horizontal.map((j) => j.y1)])].sort((a, b) => a - b);
+  const nx = xs.length - 1;
+  const ny = ys.length - 1;
+  const on = (i: number, j: number) => i >= 0 && j >= 0 && i < nx && j < ny && surfaces.some((s) => within(s, (xs[i]! + xs[i + 1]!) / 2, (ys[j]! + ys[j + 1]!) / 2));
+  const parent = Array.from({ length: nx * ny }, (_, k) => k);
+  const find = (k: number): number => (parent[k] === k ? k : (parent[k] = find(parent[k]!)));
+  const join = (a: number, b: number) => (parent[find(a)] = find(b));
+  // Is the edge between two neighbouring cells on a join line?
+  const cutX = (x: number, y1: number, y2: number) => vertical.some((j) => Math.abs(j.x1 - x) < EPS && Math.min(j.y1, j.y2) <= y1 + EPS && Math.max(j.y1, j.y2) >= y2 - EPS);
+  const cutY = (y: number, x1: number, x2: number) => horizontal.some((j) => Math.abs(j.y1 - y) < EPS && Math.min(j.x1, j.x2) <= x1 + EPS && Math.max(j.x1, j.x2) >= x2 - EPS);
+  for (let i = 0; i < nx; i++) {
+    for (let j = 0; j < ny; j++) {
+      if (!on(i, j)) continue;
+      if (on(i + 1, j) && !cutX(xs[i + 1]!, ys[j]!, ys[j + 1]!)) join(i * ny + j, (i + 1) * ny + j);
+      if (on(i, j + 1) && !cutY(ys[j + 1]!, xs[i]!, xs[i + 1]!)) join(i * ny + j, i * ny + j + 1);
+    }
+  }
+  const roots = new Set<number>();
+  for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) if (on(i, j)) roots.add(find(i * ny + j));
+  return roots.size;
+}

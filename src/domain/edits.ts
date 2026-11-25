@@ -5,7 +5,7 @@ import { nextLabel } from './labels';
 import { footprint, snap, unionRect, type Rect } from './geometry';
 import { SpatialIndex } from './spatial';
 import { cleanOutline, outlineBox, scaleOutline, type Pt } from './outline';
-import { onSurface, tablePieces, type TableShape } from './tableShape';
+import { joinAt, joinDistance, keepJoins, onSurface, tablePieces, type TableJoin, type TableShape } from './tableShape';
 import { MILS_SIZES, milsKindForSize, type CanvasObject, type Dimension, type Level, type MilsKind, type MilsModule, type Project, type Rotation, type Table } from './schema';
 
 export type Item = MilsModule | CanvasObject;
@@ -322,11 +322,40 @@ export function setLevelTableShape(p: Project, levelId: string, name: string, sh
   }));
   const levels = p.levels.map((l) => {
     if (l.id !== levelId) return l;
-    const { tableShape: _old, ...rest } = l;
+    const { tableShape: _old, tableJoins, ...rest } = l;
     void _old;
-    return shape.kind === 'rect' ? rest : { ...rest, tableShape: shape };
+    // Joins that are still on the table stay; ones left off it (the shape changed) go.
+    const joins = keepJoins(pieces.map(footprint), tableJoins ?? []);
+    return { ...rest, ...(shape.kind === 'rect' ? {} : { tableShape: shape }), ...(joins.length ? { tableJoins: joins } : {}) };
   });
   return { ...p, levels, tables: [...p.tables.filter((t) => t.levelId !== levelId), ...pieces] };
+}
+
+/**
+ * Mark (or unmark) where two tables meet: a click on an existing join (within `reach` studs)
+ * removes it; elsewhere on the table it adds one straight across (see joinAt).
+ */
+export function toggleTableJoin(p: Project, levelId: string, x: number, y: number, reach: number, turned = false): Project {
+  const level = p.levels.find((l) => l.id === levelId);
+  if (!level) return p;
+  const joins = level.tableJoins ?? [];
+  const near = joins.findIndex((j) => joinDistance(j, x, y) <= reach);
+  let next: TableJoin[];
+  if (near >= 0) next = joins.filter((_, i) => i !== near);
+  else {
+    const j = joinAt(levelSurface(p, levelId), x, y, turned);
+    if (!j || joins.some((o) => o.x1 === j.x1 && o.y1 === j.y1 && o.x2 === j.x2 && o.y2 === j.y2)) return p;
+    next = [...joins, j];
+  }
+  return {
+    ...p,
+    levels: p.levels.map((l) => {
+      if (l.id !== levelId) return l;
+      const { tableJoins: _old, ...rest } = l;
+      void _old;
+      return next.length ? { ...rest, tableJoins: next } : rest;
+    }),
+  };
 }
 
 /** The table pieces of a level (its surface). */
