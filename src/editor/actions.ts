@@ -286,7 +286,8 @@ export function finishOutline(store: EditorStore): boolean {
       id = r.id;
       return r.project;
     });
-    s.set({ mode: 'select' });
+    // Straight into editing its corners, to fix any that aren't quite right.
+    s.set({ mode: 'select', editingPath: id });
     s.select([id]);
     return true;
   }
@@ -298,8 +299,8 @@ export function finishOutline(store: EditorStore): boolean {
     id = r.id;
     return r.project;
   });
-  // Done drawing: back to Select with the new feature picked.
-  s.set({ mode: 'select' });
+  // Done drawing: back to Select with the new feature picked, its corners ready to adjust.
+  s.set({ mode: 'select', editingPath: id });
   s.select([id]);
   return true;
 }

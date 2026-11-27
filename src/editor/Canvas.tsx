@@ -3,7 +3,7 @@ import { Circle, Ellipse, Group, Layer, Line, Rect, Shape, Stage, Text } from 'r
 import type Konva from 'konva';
 import { useStore } from 'zustand';
 import { baseRect, footprint, rectContains, snap, unionRect, type Rect as R } from '../domain/geometry';
-import { allItems, isModule, moveItems, type Item } from '../domain/edits';
+import { allItems, canEditShape, isModule, moveItems, reshapeItem, shapeCorners, type Item } from '../domain/edits';
 import { makeDragChecker } from './dragCheck';
 import { drawOrder, itemAt } from '../domain/hit';
 import { labelSpot, outlineOnTable } from '../domain/outline';
@@ -43,7 +43,9 @@ type Gesture =
   /** Also used while holding a palette entry: a tap puts one down (`hold`), dragging pans. */
   | { type: 'curvePoint'; sx: number; sy: number; startView: View; panning: boolean; hold?: boolean; shift?: boolean }
   /** Dragging one of a curve's handles. */
-  | { type: 'handle'; pathId: string; index: number; points: { x: number; y: number }[]; moved: boolean };
+  | { type: 'handle'; pathId: string; index: number; points: { x: number; y: number }[]; moved: boolean }
+  /** Editing a shape: dragging a corner (or a new corner pulled out of a side). */
+  | { type: 'corner'; itemId: string; index: number; points: { x: number; y: number }[]; moved: boolean };
 
 const HANDLE_PX = 14;
 
@@ -58,6 +60,20 @@ function editablePath(s: EditorState) {
   const points = currentPoints(s.project, rec);
   return points ? { id: rec.id, curve, stairs, points } : null;
 }
+
+/** The feature or small item whose shape is being edited (its corners showing), if any. */
+function editableShape(s: EditorState): { id: string; points: { x: number; y: number }[] } | null {
+  if (!s.editingPath || s.mode !== 'select' || s.holding) return null;
+  const item = allItems(s.project).find((i) => i.id === s.editingPath);
+  if (!item || item.levelId !== s.levelId || !canEditShape(item) || !s.selection.includes(item.id)) return null;
+  return { id: item.id, points: shapeCorners(item) };
+}
+
+/** Where a new corner can be pulled out of each side (the middle of the side). */
+const sideMiddles = (pts: { x: number; y: number }[]) => pts.map((q, i) => {
+  const r = pts[(i + 1) % pts.length]!;
+  return { x: (q.x + r.x) / 2, y: (q.y + r.y) / 2 };
+});
 
 /** Font size (studs) that keeps a one-line label inside its rectangle. */
 function fitText(text: string, width: number, depth: number, max: number) {
@@ -78,6 +94,7 @@ export function Canvas({ store }: { store: EditorStore }) {
   const curveDraft = useStore(store, (s) => s.curveDraft);
   const drawShape = useStore(store, (s) => s.draw.shape);
   const editing = useStore(store, editablePathKey);
+  const editingShape = useStore(store, editableShapeKey);
   /** Draw › Curve: where the pointer is, to preview the next point. */
   const [curveHover, setCurveHover] = useState<{ x: number; y: number } | null>(null);
   /** A curve handle being dragged: the curve's points as they would be. */
@@ -191,7 +208,7 @@ export function Canvas({ store }: { store: EditorStore }) {
 
   useEffect(() => {
     const el = containerRef.current!;
-    const local = (e: PointerEvent | WheelEvent) => {
+    const local = (e: MouseEvent) => {
       const r = el.getBoundingClientRect();
       return { x: e.clientX - r.left, y: e.clientY - r.top };
     };
@@ -209,6 +226,16 @@ export function Canvas({ store }: { store: EditorStore }) {
       // Stairs straighten onto whole studs anyway; curves may be finer.
       const mode = s.project.stairs.some((x) => x.id === g.pathId) ? 'full' : s.project.settings.snap === 'free' ? 'free' : 'half';
       const next = { x: snap(w.x, mode), y: snap(w.y, mode) };
+      const cur = g.points[g.index]!;
+      if (next.x === cur.x && next.y === cur.y) return;
+      g.points[g.index] = next;
+      g.moved = true;
+    };
+    /** Put a shape's corner under the pointer (on the snap grid). */
+    const moveCorner = (g: Extract<Gesture, { type: 'corner' }>, p: { x: number; y: number }) => {
+      const s = store.getState();
+      const w = toWorld(s.view, p.x, p.y);
+      const next = { x: snap(w.x, s.project.settings.snap), y: snap(w.y, s.project.settings.snap) };
       const cur = g.points[g.index]!;
       if (next.x === cur.x && next.y === cur.y) return;
       g.points[g.index] = next;
@@ -240,6 +267,36 @@ export function Canvas({ store }: { store: EditorStore }) {
       if (pointers.current.size > 2) return;
       const touch = e.pointerType === 'touch';
       touchHit.current = touch;
+      const es = e.button === 0 && !spaceDownRef.current ? editableShape(s) : null;
+      if (es) {
+        // A corner: drag it. A side's middle: pull a new corner out of it.
+        const reach = touch ? HANDLE_PX * 1.6 : HANDLE_PX;
+        const near = (q: { x: number; y: number }) => {
+          const sp = toScreen(s.view, q.x, q.y);
+          return Math.hypot(sp.x - p.x, sp.y - p.y);
+        };
+        let best = -1;
+        let bestD = reach;
+        es.points.forEach((q, i) => {
+          if (near(q) <= bestD) {
+            best = i;
+            bestD = near(q);
+          }
+        });
+        if (best >= 0) {
+          gesture.current = { type: 'corner', itemId: es.id, index: best, points: es.points.map((q) => ({ ...q })), moved: false };
+          return;
+        }
+        const mids = sideMiddles(es.points);
+        const side = mids.findIndex((q) => near(q) <= reach * 0.8);
+        if (side >= 0) {
+          const points = es.points.map((q) => ({ ...q }));
+          points.splice(side + 1, 0, { ...mids[side]! });
+          gesture.current = { type: 'corner', itemId: es.id, index: side + 1, points, moved: false };
+          setHandleDrag(points);
+          return;
+        }
+      }
       const ec = e.button === 0 && !spaceDownRef.current ? editablePath(s) : null;
       if (ec) {
         let best = -1;
@@ -365,6 +422,9 @@ export function Canvas({ store }: { store: EditorStore }) {
       } else if (g.type === 'handle') {
         moveHandle(g, p);
         setHandleDrag([...g.points]);
+      } else if (g.type === 'corner') {
+        moveCorner(g, p);
+        setHandleDrag([...g.points]);
       } else if (g.type === 'draw') {
         g.points.push(toWorld(s.view, p.x, p.y));
         if (isStamping(s.draw)) setStamps(strokeStamps(store, g.points));
@@ -407,6 +467,14 @@ export function Canvas({ store }: { store: EditorStore }) {
           s.set({ curveDraft: [...(s.curveDraft ?? []), w] });
           setCurveHover(w);
         }
+        return;
+      }
+      if (g.type === 'corner') {
+        setHandleDrag(null);
+        if (!cancelled) moveCorner(g, local(e));
+        // A corner pulled out of a side counts even if not moved further (it's a new corner).
+        const added = g.points.length !== (editableShape(s)?.points.length ?? g.points.length);
+        if (!cancelled && (g.moved || added)) s.commit((pr) => reshapeItem(pr, g.itemId, g.points, pr.settings.snap));
         return;
       }
       if (g.type === 'handle') {
@@ -463,9 +531,19 @@ export function Canvas({ store }: { store: EditorStore }) {
       store.getState().set({ pointer: null });
       setCurveHover(null);
     };
-    const onDbl = () => {
+    const onDbl = (e: MouseEvent) => {
       const s = store.getState();
       if (s.mode === 'draw' && isPointByPoint(s.draw)) finishCurve(store);
+      // Editing a shape: double-click a corner to remove it (a shape keeps at least three).
+      const es = editableShape(s);
+      if (es && es.points.length > 3) {
+        const p = local(e);
+        const i = es.points.findIndex((q) => {
+          const sp = toScreen(s.view, q.x, q.y);
+          return Math.hypot(sp.x - p.x, sp.y - p.y) <= HANDLE_PX;
+        });
+        if (i >= 0) s.commit((pr) => reshapeItem(pr, es.id, es.points.filter((_, k) => k !== i), pr.settings.snap));
+      }
     };
     const onUpEvt = (e: PointerEvent) => onUp(e);
     const onCancel = (e: PointerEvent) => onUp(e, true);
@@ -565,6 +643,7 @@ export function Canvas({ store }: { store: EditorStore }) {
               {stamps && <StampsPreview plan={stamps} store={store} />}
               {curveDraft && curveDraft.length > 0 && <CurveDraftPreview store={store} points={curveHover ? [...curveDraft, curveHover] : curveDraft} ctrl={curveDraft} scale={view.scale} />}
               {holding?.preview && <HoldGhost store={store} preview={holding.preview} />}
+              {editingShape && <ShapeHandles points={handleDrag ?? editingShape.points} scale={view.scale} />}
               {editing && <CurveHandles store={store} points={handleDrag ?? editing.points} scale={view.scale} dragging={!!handleDrag} />}
             </Group>
             <Rulers view={view} viewport={viewport} unit={project.settings.displayUnit} />
@@ -1040,6 +1119,33 @@ function editablePathKey(s: EditorState) {
   const key = ec ? `${ec.id}:${ec.points.map((q) => `${q.x},${q.y}`).join(';')}` : '';
   if (key !== lastEditing.key) lastEditing = { key, value: ec };
   return lastEditing.value;
+}
+
+let lastShape: { key: string; value: ReturnType<typeof editableShape> } = { key: '', value: null };
+function editableShapeKey(s: EditorState) {
+  const es = editableShape(s);
+  const key = es ? `${es.id}:${es.points.map((q) => `${q.x},${q.y}`).join(';')}` : '';
+  if (key !== lastShape.key) lastShape = { key, value: es };
+  return lastShape.value;
+}
+
+/** Editing a shape: its outline, a round handle on each corner, a small + on each side. */
+function ShapeHandles({ points, scale }: { points: { x: number; y: number }[]; scale: number }) {
+  return (
+    <>
+      <Line points={flat(points)} closed stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} dash={[6 / scale, 4 / scale]} listening={false} />
+      {sideMiddles(points).map((q, i) => (
+        <Group key={`m${i}`} x={q.x} y={q.y} listening={false}>
+          <Rect x={-5 / scale} y={-5 / scale} width={10 / scale} height={10 / scale} fill="#fff" stroke={ACCENT} strokeWidth={1} strokeScaleEnabled={false} cornerRadius={2 / scale} />
+          <Line points={[-3 / scale, 0, 3 / scale, 0]} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} />
+          <Line points={[0, -3 / scale, 0, 3 / scale]} stroke={ACCENT} strokeWidth={1.5} strokeScaleEnabled={false} />
+        </Group>
+      ))}
+      {points.map((q, i) => (
+        <Circle key={i} x={q.x} y={q.y} radius={7 / scale} fill="#fff" stroke={ACCENT} strokeWidth={2} strokeScaleEnabled={false} listening={false} />
+      ))}
+    </>
+  );
 }
 
 function curveCells(points: { x: number; y: number }[], width: number, t: { width: number; depth: number }): Cell[] {

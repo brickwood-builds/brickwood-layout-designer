@@ -627,6 +627,7 @@ function ToolHint({ store }: { store: EditorStore }) {
   const holding = useStore(store, (s) => s.holding?.label);
   const holdHint = useStore(store, (s) => s.holding?.hint);
   const selected = useStore(store, (s) => s.selection.length);
+  const editingShape = useStore(store, (s) => !!s.editingPath && s.selection.includes(s.editingPath));
   const [tool, hint] = holding
     ? ['Placing', holdHint ?? `${holding}: click where each one goes · Esc to stop`]
     : mode === 'draw'
@@ -638,7 +639,9 @@ function ToolHint({ store }: { store: EditorStore }) {
         : mode === 'pan'
           ? ['Pan', 'Drag to move the view · Esc for Select']
           : selected
-            ? ['Select', 'Drag what’s selected to move it · Delete removes · R turns · Esc lets go']
+            ? editingShape
+              ? ['Edit shape', 'Drag a corner to move it · drag a + to add one · double-click a corner to remove it · Esc when done']
+              : ['Select', 'Drag what’s selected to move it · Delete removes · R turns · Esc lets go']
             : ['Select', 'Click to pick something, then drag it to move · drag over things to box them · drag empty table to move the view'];
   return (
     <span className="tool-hint" data-testid="tool-hint" title={`${tool}: ${hint}`}>

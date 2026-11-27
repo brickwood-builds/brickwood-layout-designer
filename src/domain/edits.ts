@@ -4,7 +4,7 @@ import { newId } from './ids';
 import { nextLabel } from './labels';
 import { baseRect, footprint, snap, unionRect, type Rect } from './geometry';
 import { SpatialIndex } from './spatial';
-import { cleanOutline, outlineBox, scaleOutline, type Pt } from './outline';
+import { cleanOutline, outlineBox, outlineOnTable, scaleOutline, type Pt } from './outline';
 import { joinAt, joinDistance, keepJoins, onSurface, tablePieces, type TableJoin, type TableShape } from './tableShape';
 import { MILS_SIZES, milsKindForSize, type CanvasObject, type Dimension, type Level, type MilsKind, type MilsModule, type Project, type Rotation, type Table } from './schema';
 
@@ -126,6 +126,43 @@ export function turnItems(p: Project, ids: Iterable<string>, degrees: number): P
 /** Set one item's angle exactly (degrees, clockwise), turning it about its middle. */
 export function setItemAngle(p: Project, id: string, degrees: number): Project {
   return mapItems(p, new Set([id]), (i) => atAngle(i, degrees));
+}
+
+/** Features (bases) and small items can have their shape edited corner by corner. */
+export function canEditShape(i: Item): boolean {
+  return isModule(i) ? !i.label.trim() && !!i.name.trim() : i.type === 'item' || i.type === 'footprint';
+}
+
+/** An item's corners on the table: its drawn shape, or its box's four corners (turned if it is). */
+export function shapeCorners(i: Item): Pt[] {
+  return outlineOnTable(i) ?? (() => {
+    const b = baseRect(i);
+    return [
+      { x: b.x, y: b.y },
+      { x: b.x + b.width, y: b.y },
+      { x: b.x + b.width, y: b.y + b.depth },
+      { x: b.x, y: b.y + b.depth },
+    ];
+  })();
+}
+
+/**
+ * Give an item a new shape from its corners on the table (after dragging, adding or removing
+ * corners). The corners are snapped and tidied; the item is square to the grid afterwards
+ * (its corners stay exactly where they were dragged). Unchanged when they don't make a shape.
+ */
+export function reshapeItem(p: Project, id: string, corners: Pt[], mode: SnapMode): Project {
+  const pts = cleanOutline(corners, mode);
+  if (!pts) return p;
+  const box = outlineBox(pts);
+  const plainBox = pts.length === 4 && box.outline.every((q) => (q.x === 0 || q.x === box.width) && (q.y === 0 || q.y === box.depth));
+  return mapItems(p, new Set([id]), (i) => {
+    const { tilt: _t, outline: _o, ...rest } = i;
+    void _t;
+    void _o;
+    const next = { ...rest, x: box.x, y: box.y, width: box.width, depth: box.depth, rotation: 0 as Rotation, ...(plainBox ? {} : { outline: box.outline }) };
+    return isModule(i) ? ({ ...next, kind: milsKindForSize(box.width, box.depth) } as Item) : (next as Item);
+  });
 }
 
 /** Deleting a labelled module keeps its ID reserved: the plate still exists. */

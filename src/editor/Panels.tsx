@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { footprint } from '../domain/geometry';
-import { addDimension, angleOf, deleteDimension, dimensionLength, findItem, isModule, resizeModule, setItemPosition, updateModule, updateObject, type Item } from '../domain/edits';
+import { addDimension, angleOf, canEditShape, deleteDimension, dimensionLength, findItem, isModule, resizeModule, setItemPosition, updateModule, updateObject, type Item } from '../domain/edits';
 import { storedNotPlaced, validateLabel } from '../domain/labels';
 import { computeStack, formatHeight, parseHeight, stackAt } from '../domain/heights';
 import { MILS_KINDS, MILS_SIZES, isBase, milsKindForSize, moduleDisplayName, type MilsKind, type MilsModule, type CanvasObject } from '../domain/schema';
@@ -111,6 +111,7 @@ export function Properties({ store }: { store: EditorStore }) {
   return (
     <aside className="props" aria-label="Properties" key={item.id}>
       {isModule(item) ? <ModuleFields store={store} m={item} unit={unit} /> : <ObjectFields store={store} o={item} unit={unit} />}
+      {canEditShape(item) && <ShapeEditBox store={store} item={item} />}
       <PositionFields store={store} item={item} unit={unit} />
       {((isModule(item) && isBase(item)) || (!isModule(item) && item.type === 'footprint')) && <ZoneFields store={store} item={item} />}
       {project.features.heights && <HeightFields store={store} item={item} />}
@@ -461,6 +462,29 @@ function BuildBox({ store }: { store: EditorStore }) {
           Track as a physical build
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Edit a feature's or small item's shape corner by corner. */
+function ShapeEditBox({ store, item }: { store: EditorStore; item: Item }) {
+  const editing = useStore(store, (s) => s.editingPath === item.id);
+  return (
+    <div className="design-box">
+      <button
+        type="button"
+        className={editing ? undefined : 'primary'}
+        aria-pressed={editing}
+        onClick={() => store.getState().set({ editingPath: editing ? null : item.id, mode: 'select', holding: null })}
+        title="Move, add or remove the corners of this shape"
+      >
+        {editing ? 'Done editing shape' : 'Edit shape'}
+      </button>
+      {editing && (
+        <span className="muted small">
+          Drag a round corner to move it · drag a + in the middle of a side to add a corner · double-click a corner to remove it. Each change is one Undo.
+        </span>
+      )}
     </div>
   );
 }
