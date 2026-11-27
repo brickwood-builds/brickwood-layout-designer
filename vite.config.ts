@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -35,14 +36,17 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
+    // Each page under its own address (the app, and the trial interface at next.html).
+    const url = new URL(req.url);
+    const key = url.pathname.endsWith('/next.html') ? './next.html' : './';
     e.respondWith(
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('./', copy));
+          caches.open(CACHE).then((c) => c.put(key, copy));
           return res;
         })
-        .catch(() => caches.match('./', { ignoreVary: true })),
+        .catch(() => caches.match(key, { ignoreVary: true })),
     );
     return;
   }
@@ -59,6 +63,12 @@ self.addEventListener('fetch', (e) => {
 export default defineConfig({
   base: './',
   plugins: [react(), offlineServiceWorker()],
+  // Two pages: the app (index.html) and a trial of a new interface (next.html), sharing code.
+  build: {
+    rollupOptions: {
+      input: { main: fileURLToPath(new URL('./index.html', import.meta.url)), next: fileURLToPath(new URL('./next.html', import.meta.url)) },
+    },
+  },
   test: {
     include: ['tests/**/*.test.{ts,tsx}'],
     environment: 'jsdom',

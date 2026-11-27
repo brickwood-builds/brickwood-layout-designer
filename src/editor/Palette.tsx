@@ -33,7 +33,7 @@ function toggleHold(store: EditorStore, hold: Hold, place: Place) {
  * there, until another is picked, it is clicked again, or Escape. Dragging it onto the
  * canvas drops one where it is released. Pointer events, so it works with a finger too.
  */
-function PaletteItem({ store, place, title, hold, children }: { store: EditorStore; place: Place; title: string; hold: Hold; children: ReactNode }) {
+export function PaletteItem({ store, place, title, hold, children }: { store: EditorStore; place: Place; title: string; hold: Hold; children: ReactNode }) {
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const held = useStore(store, (s) => s.holding?.key === hold.key);
   const drag = useRef<{ x: number; y: number; active: boolean } | null>(null);

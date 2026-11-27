@@ -330,7 +330,7 @@ function LevelControls({ store }: { store: EditorStore }) {
   );
 }
 
-function LevelDialog({
+export function LevelDialog({
   store,
   levelId,
   onAddLevel,
@@ -771,7 +771,7 @@ function StatusBar({ store, file, parts, builds, versions, packing, shows, setup
 }
 
 /** Keyboard shortcuts. Ignored while typing in a field or when a dialog is open. */
-function useKeyboard(store: EditorStore) {
+export function useKeyboard(store: EditorStore) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -837,7 +837,7 @@ function startDraw(store: EditorStore, erase: boolean) {
 }
 
 /** iPad Safari may kill a backgrounded tab: save as soon as the page is hidden. */
-function useFlushWhenHidden(autosave: Autosave) {
+export function useFlushWhenHidden(autosave: Autosave) {
   const ref = useRef(autosave);
   useEffect(() => {
     ref.current = autosave;
