@@ -6,7 +6,7 @@
 //  • a details card only when asked for;
 //  • the tools in a dock at the bottom, with one line saying what a click does now.
 // Underneath it is the same editor as the app (canvas, store, saving, undo, keyboard).
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import type { ProjectRepository } from '../storage/repository';
 import { createEditorStore, type EditorStore } from '../editor/store';
@@ -125,6 +125,11 @@ function Screen({ store, autosave, repo, links, registerOnSaved, onBack }: { sto
   const [details, setDetails] = useState(false);
   /** Right-click menu: where on screen (in the layout area) and where on the table. */
   const [menu, setMenu] = useState<{ x: number; y: number; world: { x: number; y: number } } | null>(null);
+  const longPress = useRef<{ start: { x: number; y: number }; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const cancelLongPress = () => {
+    if (longPress.current) clearTimeout(longPress.current.timer);
+    longPress.current = null;
+  };
   const openMenu = (cx: number, cy: number, r: DOMRect) => {
     const s = store.getState();
     const x = cx - r.left;
@@ -174,7 +179,23 @@ function Screen({ store, autosave, repo, links, registerOnSaved, onBack }: { sto
       <Banners store={store} repo={repo} autosave={autosave} file={file} />
       <div className="nx-body">
         {library && <NextLibrary store={store} onClose={() => setLibrary(false)} />}
-        <div className="nx-stage" onContextMenu={(e) => openMenu(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect())}>
+        <div
+          className="nx-stage"
+          onContextMenu={(e) => openMenu(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect())}
+          onPointerDown={(e) => {
+            // iPad: a long press (holding still) opens the same menu as a right-click.
+            if (e.pointerType !== 'touch') return;
+            const r = e.currentTarget.getBoundingClientRect();
+            const start = { x: e.clientX, y: e.clientY };
+            longPress.current = { start, timer: setTimeout(() => openMenu(start.x, start.y, r), 550) };
+          }}
+          onPointerMove={(e) => {
+            const lp = longPress.current;
+            if (lp && Math.hypot(e.clientX - lp.start.x, e.clientY - lp.start.y) > 10) cancelLongPress();
+          }}
+          onPointerUp={cancelLongPress}
+          onPointerCancel={cancelLongPress}
+        >
           <Canvas store={store} />
           {menu && <ContextMenu store={store} at={menu} onClose={() => setMenu(null)} onDetails={() => setDetails(true)} />}
           {mode === 'select' && selection.length > 0 && <SelectionBar store={store} details={details} onDetails={() => setDetails(!details)} />}
@@ -225,7 +246,7 @@ function TopBar({
     await autosave.flush();
     window.location.hash = hash;
   };
-  const [tableDialog, setTableDialog] = useState(false);
+  const [tableDialog, setTableDialog] = useState<'edit' | 'add' | null>(null);
   const warnings = useMemo(() => splitWarnings(project, checkLayout(project).filter((w) => w.levelId === levelId)).open, [project, levelId]);
   const s = store.getState();
   return (
@@ -339,7 +360,7 @@ function TopBar({
               type="button"
               className="nx-menu-item"
               onClick={() => {
-                setTableDialog(true);
+                setTableDialog('edit');
                 setMenu(null);
               }}
             >
@@ -362,7 +383,22 @@ function TopBar({
           </div>
         )}
       </div>
-      {tableDialog && <LevelDialog store={store} levelId={levelId} onAddLevel={() => setTableDialog(false)} onClose={() => setTableDialog(false)} onCreated={() => setTableDialog(false)} />}
+      {tableDialog && (
+        <LevelDialog
+          key={tableDialog}
+          store={store}
+          levelId={tableDialog === 'edit' ? levelId : null}
+          onAddLevel={() => setTableDialog('add')}
+          onClose={() => setTableDialog(null)}
+          onCreated={(id) => {
+            // A new level (e.g. a shelf above the table): go to it.
+            setTableDialog(null);
+            store.getState().set({ levelId: id });
+            store.getState().select([]);
+            fitToLevel(store);
+          }}
+        />
+      )}
     </header>
   );
 }

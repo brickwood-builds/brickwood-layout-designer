@@ -124,3 +124,17 @@ test('projects screen: duplicate, save as a file, archive and show archived', as
   await page.getByLabel('Show archived layouts').check();
   await expect(page.getByRole('button', { name: /^Open Development \(copy\)/ })).toBeVisible();
 });
+
+test('add a shelf level from the Table dialog; the level picker appears and switches', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop');
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open Development' }).click();
+  await ready(page);
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('button', { name: /Table shape and size/ }).click();
+  await page.getByRole('button', { name: 'Add a level…' }).click();
+  await page.getByRole('dialog', { name: 'Add level' }).getByRole('button', { name: 'Add level' }).click();
+  await expect(page.getByLabel('Level')).toBeVisible();
+  const levels = await page.getByLabel('Level').locator('option').allTextContents();
+  expect(levels.length).toBe(2);
+});
