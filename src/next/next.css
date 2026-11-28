@@ -84,6 +84,8 @@
 
 /* Floating things over the layout */
 .nx-selbar { position: absolute; z-index: 8; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--nx-shadow); }
+.nx-selbar { transition: opacity 0.3s, visibility 0s; }
+.nx-selbar.nx-faded { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s, visibility 0s 0.3s; }
 .nx-selbar-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px 0 6px; font-size: 0.85rem; font-weight: 600; }
 .nx-dock { position: absolute; z-index: 8; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; gap: 4px; padding: 6px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--nx-shadow); }
 .nx-dock .nx-icon-btn { width: 42px; height: 42px; border-radius: 10px; }
@@ -149,3 +151,5 @@ a.nx-menu-item { text-decoration: none; }
 .nx-online > .nx-tile, .nx-online .nx-tile { display: inline-block; width: calc(33% - 6px); margin-right: 6px; }
 .nx-page .help-nav input { height: 36px; border-radius: 18px; }
 .nx-page .help-body h3 { margin-top: 0; }
+.nx-check { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; }
+.nx-check input { width: 18px; height: 18px; margin: 0; }

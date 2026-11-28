@@ -125,6 +125,32 @@ function Screen({ store, autosave, repo, links, registerOnSaved, onBack }: { sto
     [store],
   );
   const [details, setDetails] = useState(false);
+  // Something just put down (placed, pasted, duplicated): its bar shows for a moment, then
+  // fades so it doesn't cover the table. Clicking the item again brings it back.
+  const [barFaded, setBarFaded] = useState(false);
+  const fadeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const keepBar = () => {
+    clearTimeout(fadeTimer.current);
+    setBarFaded(false);
+  };
+  useEffect(
+    () =>
+      store.subscribe((s, prev) => {
+        if (s.selection === prev.selection) return;
+        const same = s.selection.length === prev.selection.length && s.selection.every((id) => prev.selection.includes(id));
+        // The same things picked again: leave the bar as it is (clicking them brings it back).
+        if (same) return;
+        // A different selection: the Details card closes (it opens again from the bar).
+        setDetails(false);
+        keepBar();
+        // New if it wasn't there before the last change (placing commits, then selects).
+        const before = s.past[s.past.length - 1];
+        if (before && s.selection.length > 0 && s.selection.every((id) => !findItem(before, id))) fadeTimer.current = setTimeout(() => setBarFaded(true), 2000);
+      }),
+    [store],
+  );
+  useEffect(() => () => clearTimeout(fadeTimer.current), []);
+  const holding = useStore(store, (s) => !!s.holding);
   /** Right-click menu: where on screen (in the layout area) and where on the table. */
   const [menu, setMenu] = useState<{ x: number; y: number; world: { x: number; y: number } } | null>(null);
   const longPress = useRef<{ start: { x: number; y: number }; timer: ReturnType<typeof setTimeout> } | null>(null);
@@ -185,6 +211,14 @@ function Screen({ store, autosave, repo, links, registerOnSaved, onBack }: { sto
           className="nx-stage"
           onContextMenu={(e) => openMenu(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect())}
           onPointerDown={(e) => {
+            // Clicking (or tapping) what's selected brings its bar back.
+            if (barFaded) {
+              const st = store.getState();
+              const r0 = e.currentTarget.getBoundingClientRect();
+              const w = toWorld(st.view, e.clientX - r0.left, e.clientY - r0.top);
+              const hit = itemAt(st.project, st.levelId, w.x, w.y, undefined, 6 / st.view.scale);
+              if (hit && expandToGroups(st.project, [hit.id]).some((id) => st.selection.includes(id))) keepBar();
+            }
             // iPad: a long press (holding still) opens the same menu as a right-click.
             if (e.pointerType !== 'touch') return;
             const r = e.currentTarget.getBoundingClientRect();
@@ -200,7 +234,9 @@ function Screen({ store, autosave, repo, links, registerOnSaved, onBack }: { sto
         >
           <Canvas store={store} />
           {menu && <ContextMenu store={store} at={menu} onClose={() => setMenu(null)} onDetails={() => setDetails(true)} />}
-          {mode === 'select' && selection.length > 0 && <SelectionBar store={store} details={details} onDetails={() => setDetails(!details)} />}
+          {mode === 'select' && !holding && selection.length > 0 && (
+            <SelectionBar store={store} details={details} faded={barFaded && !details} onHover={keepBar} onDetails={() => setDetails(!details)} />
+          )}
           <Dock store={store} />
           <Hint store={store} />
           <Zoom store={store} />
@@ -567,7 +603,7 @@ function ContextMenu({ store, at, onClose, onDetails }: { store: EditorStore; at
 }
 
 /** Small floating bar just above what's selected. */
-function SelectionBar({ store, details, onDetails }: { store: EditorStore; details: boolean; onDetails: () => void }) {
+function SelectionBar({ store, details, faded, onHover, onDetails }: { store: EditorStore; details: boolean; faded: boolean; onHover: () => void; onDetails: () => void }) {
   const project = useStore(store, (s) => s.project);
   const selection = useStore(store, (s) => s.selection);
   const view = useStore(store, (s) => s.view);
@@ -587,7 +623,7 @@ function SelectionBar({ store, details, onDetails }: { store: EditorStore; detai
   const grouped = selection.some((id) => groupOf(project, id));
   const editing = !!one && editingPath === one.id;
   return (
-    <div className="nx-selbar" style={{ left, top }} role="toolbar" aria-label="Selection">
+    <div className={`nx-selbar ${faded ? 'nx-faded' : ''}`} style={{ left, top }} role="toolbar" aria-label="Selection" onPointerEnter={onHover}>
       <span className="nx-selbar-name">{one ? (isModule(one) ? moduleDisplayName(one) : one.name || 'Item') : `${items.length} selected`}</span>
       <BarBtn icon="rotate" label="Turn a quarter (R)" onClick={() => rotateSelection(store, 1)} />
       <BarBtn icon="turn" label="Turn 5° (Shift+])" onClick={() => turnSelection(store, 5)} />
@@ -656,6 +692,11 @@ function QuickFields({ store, item }: { store: EditorStore; item: Item }) {
       </div>
       <Quick label="Angle" suffix="°" value={String(angleOf(item))} numeric onCommit={(v) => Number.isFinite(Number(v)) && setSelectionAngle(store, item.id, Number(v))} />
       {!isModule(item) && <LegoColorPicker label="Colour" value={item.color} onChange={(hex) => hex && commit((p) => updateObject(p, item.id, { color: hex }))} />}
+      {!isModule(item) && !item.outline && (
+        <label className="nx-check">
+          <input type="checkbox" checked={!!item.round} onChange={(e) => commit((p) => updateObject(p, item.id, { round: e.target.checked }))} /> Round
+        </label>
+      )}
     </div>
   );
 }

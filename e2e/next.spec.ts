@@ -21,8 +21,17 @@ test('add a plate from the library, change it in Details; the classic version sh
   expect(s.project.modules).toHaveLength(1);
   const plate = s.project.modules[0]!;
 
-  // Selected: the floating bar shows; Details changes its width.
-  await expect(page.getByRole('toolbar', { name: 'Selection' })).toBeVisible();
+  // Just placed: the floating bar shows for a moment, then gets out of the way.
+  const bar = page.getByRole('toolbar', { name: 'Selection' });
+  await expect(bar).toBeVisible();
+  await expect(bar).toBeHidden({ timeout: 5000 });
+  expect((await st(page)).selection).toEqual([plate.id]);
+  // Clicking the plate brings it back; Details changes its width.
+  const c = await at(page, plate.x + 8, plate.y + 8);
+  await page.mouse.click(c.x, c.y);
+  await expect(bar).toBeVisible();
+  await page.waitForTimeout(2500);
+  await expect(bar).toBeVisible(); // stays when you picked it yourself
   await page.getByRole('button', { name: 'Details' }).click();
   await page.getByLabel('Width').fill('32');
   await page.getByLabel('Width').press('Enter');
@@ -157,4 +166,23 @@ test('help opens on the topic for what you are doing, and searches', async ({ pa
   // The planning tools' topics point to the Plan menu.
   await help.getByRole('button', { name: 'Versions', exact: true }).click();
   await expect(help.getByText(/Plan → Choose tools/).first()).toBeVisible();
+});
+
+test('a new small item can be round, and Details can change it', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop');
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open Development' }).click();
+  await ready(page);
+  await page.getByRole('tab', { name: 'Items' }).click();
+  await page.getByRole('button', { name: /New item/ }).click();
+  const sheet = page.getByRole('form', { name: 'New item' });
+  await sheet.getByLabel('Name').fill('Fountain');
+  await sheet.getByLabel(/Round/).check();
+  await sheet.getByRole('button', { name: 'Add' }).click();
+  type R = { project: { objects: { name: string; round?: boolean }[] } };
+  const fountain = async () => ((await st(page)) as unknown as R).project.objects.find((o) => o.name === 'Fountain');
+  await expect.poll(async () => (await fountain())?.round).toBe(true);
+  await page.getByRole('button', { name: 'Details' }).click();
+  await page.getByLabel('Round', { exact: true }).uncheck();
+  await expect.poll(async () => (await fountain())?.round).toBe(false);
 });

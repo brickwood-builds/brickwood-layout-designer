@@ -252,6 +252,7 @@ function MakeDialog({ store, what, onClose }: { store: EditorStore; what: 'build
   const [w, setW] = useState(what === 'building' ? 32 : 2);
   const [d, setD] = useState(what === 'building' ? 32 : 2);
   const [color, setColor] = useState(lego('Light Bluish Gray'));
+  const [round, setRound] = useState(false);
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !(w > 0) || !(d > 0)) return;
@@ -259,11 +260,11 @@ function MakeDialog({ store, what, onClose }: { store: EditorStore; what: 'build
     else {
       let shapeId = '';
       store.getState().commit((p) => {
-        const r = addShape(p, { name: name.trim(), type: 'item', width: w, depth: d, color });
+        const r = addShape(p, { name: name.trim(), type: 'item', width: w, depth: d, color, ...(round ? { round } : {}) });
         shapeId = r.id;
         return r.project;
       });
-      addObjectAt(store, { type: 'item', name: name.trim(), width: w, depth: d, color, catalogKey: `shape:${shapeId}` });
+      addObjectAt(store, { type: 'item', name: name.trim(), width: w, depth: d, color, ...(round ? { round } : {}), catalogKey: `shape:${shapeId}` });
     }
     onClose();
   };
@@ -285,6 +286,11 @@ function MakeDialog({ store, what, onClose }: { store: EditorStore; what: 'build
             <input type="number" min={1} value={d} onChange={(e) => setD(Number(e.target.value))} />
           </label>
         </div>
+        {what === 'item' && (
+          <label className="nx-check">
+            <input type="checkbox" checked={round} onChange={(e) => setRound(e.target.checked)} /> Round (e.g. a tree, a fountain)
+          </label>
+        )}
         {what === 'item' && <LegoColorPicker label="Colour" value={color} onChange={(hex) => hex && setColor(hex)} />}
         <div className="nx-row nx-end">
           <button type="button" className="nx-btn" onClick={onClose}>
