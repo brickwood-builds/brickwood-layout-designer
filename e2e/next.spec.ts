@@ -138,3 +138,23 @@ test('add a shelf level from the Table dialog; the level picker appears and swit
   const levels = await page.getByLabel('Level').locator('option').allTextContents();
   expect(levels.length).toBe(2);
 });
+
+test('help opens on the topic for what you are doing, and searches', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop');
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Help' }).click();
+  const help = page.getByRole('dialog', { name: 'Help' });
+  await expect(help.getByRole('heading', { name: 'Quick start' })).toBeVisible();
+  await help.getByLabel('Search help').fill('joins');
+  await expect(help.getByRole('button', { name: /The table/ })).toBeVisible();
+  await help.getByRole('button', { name: 'Close' }).click();
+
+  await page.getByRole('button', { name: 'Open Development' }).click();
+  await ready(page);
+  await page.getByRole('button', { name: 'Draw pieces, e.g. a walkway (B)' }).click();
+  await page.keyboard.press('?');
+  await expect(help.getByRole('heading', { name: /Drawing walkways/ })).toBeVisible();
+  // The planning tools' topics point to the Plan menu.
+  await help.getByRole('button', { name: 'Versions', exact: true }).click();
+  await expect(help.getByText(/Plan → Choose tools/).first()).toBeVisible();
+});

@@ -358,11 +358,11 @@ export const HELP_TOPICS: HelpTopic[] = [
   },
 ];
 
-export function findTopics(query: string): HelpTopic[] {
+export function findTopics(query: string, topics: HelpTopic[] = HELP_TOPICS): HelpTopic[] {
   const q = query.trim().toLowerCase();
-  if (!q) return HELP_TOPICS;
+  if (!q) return topics;
   const words = q.split(/\s+/);
-  return HELP_TOPICS.filter((t) => {
+  return topics.filter((t) => {
     const text = `${t.title} ${t.body.join(' ')}`.toLowerCase();
     return words.every((w) => text.includes(w));
   });

@@ -15,6 +15,8 @@ import { CloudBar } from '../ui/CloudBar';
 import { cloud } from '../cloud/service';
 import { bringInFromTrial, trialLayouts } from './NextApp';
 import { Icon } from './icons';
+import { HelpButton } from '../help/HelpDialog';
+import { NEXT_HELP_START, NEXT_HELP_TOPICS } from './help';
 
 type Dialog = { kind: 'rename'; project: Project } | { kind: 'checkpoints'; id: string; name: string } | null;
 
@@ -122,6 +124,7 @@ export function NextHome({ repo, links, onOpen }: { repo: ProjectRepository; lin
           <button type="button" className="nx-btn nx-primary" onClick={() => setCreating(true)}>
             <Icon name="plus" /> New layout
           </button>
+          <HelpButton topics={NEXT_HELP_TOPICS} start={NEXT_HELP_START.home} className="nx-icon-btn nx-help" label="?" />
           <input
             ref={fileInput}
             type="file"

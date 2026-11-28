@@ -56,6 +56,8 @@ import { toScreen, toWorld } from '../editor/view';
 import { itemAt } from '../domain/hit';
 import { expandToGroups } from '../domain/objects';
 import { NextLibrary } from './NextLibrary';
+import { HelpButton } from '../help/HelpDialog';
+import { NEXT_HELP_START, NEXT_HELP_TOPICS } from './help';
 import { DrawCard, EraseCard, ShapeCard } from './NextToolCards';
 import { Icon } from './icons';
 
@@ -242,6 +244,13 @@ function TopBar({
   const [menu, setMenu] = useState<'warnings' | 'more' | 'plan' | null>(null);
   const features = project.features;
   const maxTop = useMemo(() => (features.heights ? Math.max(0, ...[...computeStack(project, levelId).values()].map((i) => i.top)) : 0), [project, levelId, features.heights]);
+  // Help opens on the topic for what you're doing.
+  const mode = useStore(store, (s) => s.mode);
+  const drawShape = useStore(store, (s) => s.draw.shape);
+  const erasing = useStore(store, (s) => s.draw.erase);
+  const holding = useStore(store, (s) => !!s.holding);
+  const helpStart =
+    mode === 'measure' ? NEXT_HELP_START.measure : mode === 'draw' ? (drawShape === 'outline' ? NEXT_HELP_START.shape : erasing ? NEXT_HELP_START.erase : NEXT_HELP_START.draw) : holding ? NEXT_HELP_START.placing : NEXT_HELP_START.editor;
   const go = async (hash: string) => {
     await autosave.flush();
     window.location.hash = hash;
@@ -350,6 +359,7 @@ function TopBar({
           </div>
         )}
       </div>
+      <HelpButton topics={NEXT_HELP_TOPICS} start={helpStart} className="nx-icon-btn nx-help" label="?" />
       <div className="nx-pop-wrap">
         <button type="button" className="nx-icon-btn" aria-expanded={menu === 'more'} onClick={() => setMenu(menu === 'more' ? null : 'more')} title="More" aria-label="More">
           <Icon name="more" />

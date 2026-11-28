@@ -13,6 +13,7 @@ import { libraryIfLoaded, libraryTemplate, loadLibrary, searchLibrary, shownPart
 import { lego } from '../domain/legoColors';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
 import { Icon } from './icons';
+import { OnlineLookup } from '../editor/OnlineLookup';
 
 type Kind = 'plates' | 'buildings' | 'items' | 'pieces' | 'designs';
 const KINDS: [Kind, string][] = [
@@ -134,14 +135,13 @@ export function NextLibrary({ store, onClose }: { store: EditorStore; onClose: (
             ))}
           </Section>
         )}
-        {show('buildings') && (
+        {show('buildings') && !q && (
           <Section title="Buildings and rides">
             {!q && <ActionTile icon="plus" title="New building…" sub="a box, any size" onClick={() => setMaking('building')} />}
             {!q && <ActionTile icon="shape" title="Draw a shape…" sub="click its corners" onClick={() => drawShape('feature')} />}
-            {q && <span className="nx-muted">Buildings are made new each time (no list to search).</span>}
           </Section>
         )}
-        {show('items') && (
+        {show('items') && (!q || shapes.length > 0) && (
           <Section title="Items and markers">
             {shapes.map(shapeTile)}
             {!q && <ActionTile icon="plus" title="New item…" sub="bench, lamp, tree…" onClick={() => setMaking('item')} />}
@@ -221,7 +221,7 @@ function Pieces({ store, query }: { store: EditorStore; query: string }) {
       />
     );
   };
-  if (!starters.length && !more.length) return query ? null : null;
+  if (!starters.length && !more.length && !query) return null;
   return (
     <Section title="LEGO pieces">
       {starters.map((part) => (
@@ -237,6 +237,11 @@ function Pieces({ store, query }: { store: EditorStore; query: string }) {
       ))}
       {more.map(libTile)}
       {!query && <span className="nx-muted">Search for any other part by name, size or number.</span>}
+      {query && (
+        <div className="nx-online">
+          <OnlineLookup query={query} skip={[...starters.map((s) => s.rbNo ?? ''), ...more.map((p) => p.partNo)]} render={libTile} />
+        </div>
+      )}
     </Section>
   );
 }

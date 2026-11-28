@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Modal } from '../ui/Modal';
-import { HELP_CONTEXT, HELP_TOPICS, findTopics, type HelpContext } from './topics';
+import { HELP_CONTEXT, HELP_TOPICS, findTopics, type HelpContext, type HelpTopic } from './topics';
 
-/** Searchable help, opened on the topic for the current screen. */
-export function HelpDialog({ context, onClose }: { context: HelpContext; onClose: () => void }) {
+/**
+ * Searchable help, opened on the topic for the current screen. `topics` and `start`: another
+ * set of topics (the app's new interface has its own).
+ */
+export function HelpDialog({ context, onClose, topics = HELP_TOPICS, start }: { context?: HelpContext; onClose: () => void; topics?: HelpTopic[]; start?: string }) {
   const [query, setQuery] = useState('');
-  const [topicId, setTopicId] = useState<string>(HELP_CONTEXT[context]);
-  const results = findTopics(query);
-  const topic = HELP_TOPICS.find((t) => t.id === topicId) ?? HELP_TOPICS[0]!;
+  const [topicId, setTopicId] = useState<string>(start ?? (context ? HELP_CONTEXT[context] : topics[0]!.id));
+  const results = findTopics(query, topics);
+  const topic = topics.find((t) => t.id === topicId) ?? topics[0]!;
   return (
     <Modal title="Help" onClose={onClose} wide>
       <div className="help">
@@ -34,7 +37,7 @@ export function HelpDialog({ context, onClose }: { context: HelpContext; onClose
 }
 
 /** "?" button plus the ? / F1 shortcut. */
-export function HelpButton({ context }: { context: HelpContext }) {
+export function HelpButton({ context, topics, start, className = 'help-btn', label = '?' }: { context?: HelpContext; topics?: HelpTopic[]; start?: string; className?: string; label?: string }) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -50,10 +53,10 @@ export function HelpButton({ context }: { context: HelpContext }) {
   }, []);
   return (
     <>
-      <button type="button" className="help-btn" aria-label="Help" title="Help (?)" onClick={() => setOpen(true)}>
-        ?
+      <button type="button" className={className} aria-label="Help" title="Help (?)" onClick={() => setOpen(true)}>
+        {label}
       </button>
-      {open && <HelpDialog context={context} onClose={() => setOpen(false)} />}
+      {open && <HelpDialog context={context} topics={topics} start={start} onClose={() => setOpen(false)} />}
     </>
   );
 }

@@ -144,3 +144,8 @@ a.nx-menu-item { text-decoration: none; }
 .nx-card-menu .nx-pop { top: 40px; }
 .nx-archived .nx-card { opacity: 0.6; }
 .nx-show-archived { margin: 18px 0 6px; gap: 8px; }
+.nx-help { font-weight: 700; font-size: 1rem; border: 1px solid var(--border); border-radius: 50%; width: 32px; height: 32px; }
+.nx-online { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
+.nx-online > .nx-tile, .nx-online .nx-tile { display: inline-block; width: calc(33% - 6px); margin-right: 6px; }
+.nx-page .help-nav input { height: 36px; border-radius: 18px; }
+.nx-page .help-body h3 { margin-top: 0; }
