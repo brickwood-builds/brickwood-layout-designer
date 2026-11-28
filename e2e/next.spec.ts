@@ -105,3 +105,22 @@ test('the app opens offline after the first visit (the iPad at a show)', async (
   await expect(page.getByRole('heading', { name: 'Your layouts' })).toBeVisible();
   await context.setOffline(false);
 });
+
+test('projects screen: duplicate, save as a file, archive and show archived', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop');
+  await page.goto('/');
+  await page.getByRole('button', { name: 'More for Development' }).click();
+  await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+  await expect(page.getByRole('status')).toContainText('Duplicated “Development”');
+  await expect(page.getByRole('button', { name: /^Open Development \(copy\)/ })).toBeVisible();
+
+  await page.getByRole('button', { name: 'More for Development', exact: true }).click();
+  const [file] = await Promise.all([page.waitForEvent('download'), page.getByRole('menuitem', { name: 'Save as a file' }).click()]);
+  expect(file.suggestedFilename()).toBe('development.brickwood.json');
+
+  await page.getByRole('button', { name: /^More for Development \(copy\)/ }).click();
+  await page.getByRole('menuitem', { name: /Archive/ }).click();
+  await expect(page.getByRole('button', { name: /^Open Development \(copy\)/ })).toHaveCount(0);
+  await page.getByLabel('Show archived layouts').check();
+  await expect(page.getByRole('button', { name: /^Open Development \(copy\)/ })).toBeVisible();
+});

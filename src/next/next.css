@@ -134,3 +134,13 @@
 .nx-plan .popover-wrap > button { height: 36px; border-radius: 8px; }
 .nx-menu-file { padding: 4px 6px; }
 a.nx-menu-item { text-decoration: none; }
+.nx-wrap { flex-wrap: wrap; }
+.nx-note-error { background: var(--error-bg, #ffebe9); color: var(--error-text); }
+.nx-cloud { display: flex; flex-direction: column; gap: 8px; }
+.nx-card-wrap { position: relative; }
+.nx-card-wrap .nx-card { width: 100%; height: 100%; }
+.nx-card-menu { position: absolute; top: 8px; right: 8px; }
+.nx-card-menu > .nx-icon-btn { background: var(--surface); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.nx-card-menu .nx-pop { top: 40px; }
+.nx-archived .nx-card { opacity: 0.6; }
+.nx-show-archived { margin: 18px 0 6px; gap: 8px; }

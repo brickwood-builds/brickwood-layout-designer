@@ -86,6 +86,6 @@ export function NextApp() {
   return route ? (
     <NextEditor key={route.id} repo={repo} links={links} id={route.id} box={route.box} onBack={() => (window.location.hash = '')} />
   ) : (
-    <NextHome repo={repo} onOpen={(pid) => (window.location.hash = `#/project/${pid}`)} />
+    <NextHome repo={repo} links={links} onOpen={(pid) => (window.location.hash = `#/project/${pid}`)} />
   );
 }
