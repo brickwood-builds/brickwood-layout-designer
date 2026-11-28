@@ -11,7 +11,7 @@ const at = (page: Page, x: number, y: number) => page.evaluate(([x, y]) => (wind
 
 test('copy and paste from the toolbar, then erase from the toolbar', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Development', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   const copy = page.getByRole('button', { name: 'Copy', exact: true });

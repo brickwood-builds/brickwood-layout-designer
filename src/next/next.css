@@ -127,3 +127,10 @@
 .nx-context { position: absolute; top: 0; min-width: 220px; z-index: 40; }
 .nx-keys { font-size: 0.75rem; color: var(--muted); }
 .nx-folded { width: auto; min-width: 200px; padding: 8px 8px 8px 14px; }
+.nx-cloud { margin-bottom: 16px; } .nx-cloud .backup-bar { border-radius: 12px; }
+.nx-plan { width: 340px; gap: 8px; padding: 12px; }
+.nx-plan-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.nx-plan-tools:empty { display: none; }
+.nx-plan .popover-wrap > button { height: 36px; border-radius: 8px; }
+.nx-menu-file { padding: 4px 6px; }
+a.nx-menu-item { text-decoration: none; }

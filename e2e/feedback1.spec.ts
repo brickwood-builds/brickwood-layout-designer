@@ -14,7 +14,7 @@ type St = {
 const state = (page: Page) => page.evaluate(() => (window as unknown as { __brickwoodEditor: { state(): St } }).__brickwoodEditor.state().project) as Promise<St['project']>;
 
 async function newBlankProject(page: Page) {
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('button', { name: 'New project' }).click();
   await page.getByRole('textbox', { name: 'Name' }).fill('testing – development');
   await page.getByRole('button', { name: 'Create' }).click();

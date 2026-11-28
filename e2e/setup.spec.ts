@@ -8,7 +8,7 @@ const st = (page: Page) => page.evaluate(() => (window as unknown as { __brickwo
 
 test('setup plan: tasks, out-of-order with a reason, helpers, timing, progress file', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Brickwood Adventure Park', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
 

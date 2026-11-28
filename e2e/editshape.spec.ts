@@ -14,7 +14,7 @@ async function drag(page: Page, from: { x: number; y: number }, to: { x: number;
 
 test('edit a feature’s shape: move a corner, add one from a side, remove one', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Development', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   await page.getByText('Features', { exact: true }).click();

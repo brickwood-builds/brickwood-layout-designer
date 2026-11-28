@@ -6,16 +6,19 @@ import { createProject } from '../domain/project';
 import type { ProjectRepository } from '../storage/repository';
 import { OverheadPreview } from '../ui/OverheadPreview';
 import { formatDate, tableSize } from '../ui/format';
-import { copyFromApp } from './NextApp';
+import { bringInFromTrial, trialLayouts } from './NextApp';
+import { CloudBar } from '../ui/CloudBar';
 import { Icon } from './icons';
 
 export function NextHome({ repo, onOpen }: { repo: ProjectRepository; onOpen: (id: string) => void }) {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState('');
+  const [fromTrial, setFromTrial] = useState<Awaited<ReturnType<typeof trialLayouts>>>([]);
   const load = () => repo.listProjects().then((r) => setProjects(r.projects.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))));
   useEffect(() => {
     void load();
+    void trialLayouts().then(setFromTrial, () => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -25,28 +28,41 @@ export function NextHome({ repo, onOpen }: { repo: ProjectRepository; onOpen: (i
         <div>
           <h1>Your layouts</h1>
           <p className="nx-muted">
-            A trial of a new look. It keeps its own copies, so nothing here changes your layouts in the{' '}
-            <a href="./">main app</a>.
+            Backups, importing a file, archiving and deleting are in the <a href="./classic.html">classic version</a> for now (same layouts).
           </p>
         </div>
         <div className="nx-row">
-          <button
-            type="button"
-            className="nx-btn"
-            onClick={async () => {
-              const n = await copyFromApp();
-              setMessage(n ? `Copied ${n} layout${n === 1 ? '' : 's'} from the app.` : 'There were no layouts in the app on this device to copy.');
-              await load();
-            }}
-            title="Bring in copies of the layouts you have in the main app (on this device). The app's own aren't changed."
-          >
-            <Icon name="download" /> Copy my layouts in
-          </button>
           <button type="button" className="nx-btn nx-primary" onClick={() => setCreating(true)}>
             <Icon name="plus" /> New layout
           </button>
         </div>
       </header>
+      <div className="nx-cloud">
+        <CloudBar onChanged={() => void load()} />
+      </div>
+      {fromTrial.length > 0 && (
+        <div className="nx-note nx-row" role="status">
+          <span className="nx-grow">
+            You changed {fromTrial.length === 1 ? <strong>{fromTrial[0]!.name}</strong> : `${fromTrial.length} layouts`} in the trial page after the copy here. Bring{' '}
+            {fromTrial.length === 1 ? 'it' : 'them'} in? (The version here is kept as a checkpoint.)
+          </span>
+          <button
+            type="button"
+            className="nx-btn nx-primary"
+            onClick={async () => {
+              const n = await bringInFromTrial(fromTrial.map((t) => t.id));
+              setFromTrial([]);
+              setMessage(`Brought in ${n} layout${n === 1 ? '' : 's'} from the trial.`);
+              await load();
+            }}
+          >
+            Bring in
+          </button>
+          <button type="button" className="nx-btn" onClick={() => setFromTrial([])}>
+            Not now
+          </button>
+        </div>
+      )}
       {message && <p className="nx-note">{message}</p>}
       <div className="nx-cards">
         {projects?.map((p) => (

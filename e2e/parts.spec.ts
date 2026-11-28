@@ -8,7 +8,7 @@ const st = (page: Page) => page.evaluate(() => (window as unknown as { __brickwo
 
 test('search all parts, place one, favourite it; colours it is made in come first', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Development', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   await page.getByText('Single pieces', { exact: true }).click();

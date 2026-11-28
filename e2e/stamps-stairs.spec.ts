@@ -11,7 +11,7 @@ const at = (page: Page, x: number, y: number) =>
   page.evaluate(([x, y]) => (window as unknown as { __brickwoodEditor: Hook }).__brickwoodEditor.toPage(x, y), [x, y] as const);
 
 async function openPark(page: Page) {
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Brickwood Adventure Park', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   const c05 = (await st(page)).project.modules.find((m) => m.label === 'C-05')!;

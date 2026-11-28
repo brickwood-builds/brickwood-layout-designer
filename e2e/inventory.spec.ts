@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 // Phase 3B: parts list — needed, have, to buy, and the shopping list download.
 test('parts list: switch it on, type what I have, download the shopping list', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Development', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   // Hidden until switched on.

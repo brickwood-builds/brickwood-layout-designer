@@ -28,7 +28,7 @@ type Doc = { project: { name: string; revisionId: string; modules: { label: stri
 const fileDoc = (page: Page, name = FILE) => page.evaluate((n) => JSON.parse(sessionStorage.getItem(`file:${n}`) || 'null'), name) as Promise<Doc | null>;
 
 async function openPark(page: Page) {
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: PARK, exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
 }
@@ -97,7 +97,7 @@ test.describe('save to a file (desktop Chrome)', () => {
   });
 
   test('"Open file…" on another computer opens the project and keeps saving to that file', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/classic.html');
     // A project file that arrived through OneDrive (a copy of the Kingdom with a new name).
     const exported = await page.evaluate(async () => {
       const req = indexedDB.open('brickwood-layout-designer');

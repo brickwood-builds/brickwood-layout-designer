@@ -8,7 +8,7 @@ const ready = (page: Page) => page.waitForFunction(() => (window as unknown as {
 
 test('save a version, change the layout, compare, prefer, branch, go back', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Brickwood Adventure Park', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await ready(page);
   await page.getByRole('button', { name: 'More tools' }).click();

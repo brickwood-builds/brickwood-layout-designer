@@ -67,7 +67,7 @@ function fakeMicrosoft() {
 }
 
 async function connect(page: Page) {
-  await page.goto('/');
+  await page.goto('/classic.html');
   // Built in: no setup step on any device, just sign in.
   await expect(page.getByRole('button', { name: 'Set up OneDrive sync…' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Sign in to OneDrive' }).click();

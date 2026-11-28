@@ -12,7 +12,7 @@ const at = (page: Page, x: number, y: number) =>
 const plates = async (page: Page) => (await st(page)).project.objects.filter((o) => o.name === 'Plate Round 1×1');
 
 async function openPark(page: Page) {
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Brickwood Adventure Park', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   const c05 = (await st(page)).project.modules.find((m) => m.label === 'C-05')!;

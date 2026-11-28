@@ -281,7 +281,7 @@ function Toolbar({ store, onBack, onPrint }: { store: EditorStore; onBack: () =>
   );
 }
 
-function LevelControls({ store }: { store: EditorStore }) {
+export function LevelControls({ store }: { store: EditorStore }) {
   const project = useStore(store, (s) => s.project);
   const levelId = useStore(store, (s) => s.levelId);
   const showOther = useStore(store, (s) => s.showOtherLevels);
@@ -576,7 +576,7 @@ function TableShapePreview({ shape, ok }: { shape: TableShape; ok: boolean }) {
 }
 
 /** Status-bar control for "Save to a file" (Chrome/Edge on a computer). */
-function FileStatus({ file }: { file: ReturnType<typeof useFileSync> }) {
+export function FileStatus({ file }: { file: ReturnType<typeof useFileSync> }) {
   const s = file.state;
   const [menu, setMenu] = useState(false);
   switch (s.kind) {

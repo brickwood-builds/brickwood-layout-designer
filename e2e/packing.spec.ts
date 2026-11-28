@@ -8,7 +8,7 @@ const ready = (page: Page) => page.waitForFunction(() => (window as unknown as {
 
 test('pack modules into a tote, look it up by its QR address, take it to a show', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Brickwood Adventure Park', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await ready(page);
   await page.getByRole('button', { name: 'More tools' }).click();
@@ -49,6 +49,10 @@ test('pack modules into a tote, look it up by its QR address, take it to a show'
   await ready(page);
   await expect(page.getByRole('dialog', { name: 'BX-001 Modules B' })).toBeVisible();
   await page.getByRole('dialog', { name: 'BX-001 Modules B' }).getByRole('button', { name: 'Close' }).click();
+  // (That was the app's address, as printed on labels. The rest uses the classic version.)
+  await page.goto(`/classic.html#/project/${id}`);
+  await page.reload();
+  await ready(page);
 
   // A show: leave the Carousel home; tick Packed for the tote; a trip; done keeps the record.
   await page.getByRole('button', { name: /^Shows/ }).click();

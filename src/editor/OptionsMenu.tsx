@@ -17,7 +17,8 @@ const OPTIONS: { key: keyof Features; label: string; hint: string }[] = [
   { key: 'inventory', label: 'Parts & inventory', hint: 'A parts list for this layout: what it needs, what you have, and a shopping list to download' },
 ];
 
-export function OptionsMenu({ store }: { store: EditorStore }) {
+/** `label`: what the button says (the classic toolbar shows ⋯). */
+export function OptionsMenu({ store, label = '⋯' }: { store: EditorStore; label?: string }) {
   const features = useStore(store, (s) => s.project.features);
   const snap = useStore(store, (s) => s.project.settings.snap);
   const [open, setOpen] = useState(false);
@@ -25,7 +26,7 @@ export function OptionsMenu({ store }: { store: EditorStore }) {
   return (
     <div className="popover-wrap">
       <button type="button" aria-label="More tools" aria-expanded={open} title="More tools (switch on advanced features)" onClick={() => setOpen(!open)}>
-        ⋯
+        {label}
       </button>
       {open && (
         <div ref={popRef} className="popover options-pop" role="dialog" aria-label="More tools">

@@ -12,7 +12,7 @@ async function cardAction(page: Page, name: string, action: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/classic.html');
   await expect(card(page, PARK)).toBeVisible();
 });
 

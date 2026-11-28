@@ -10,7 +10,7 @@ const at = (page: Page, x: number, y: number) =>
 
 test('draw an L-shaped building, pick it by its shape, and turn it', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Development', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   // An empty spot to the right of everything.

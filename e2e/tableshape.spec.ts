@@ -7,7 +7,7 @@ const st = (page: Page) => page.evaluate(() => (window as unknown as { __brickwo
 
 test('make the table a U, then a ring; the preview and the layout show the shape', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Development', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
 

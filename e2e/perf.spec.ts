@@ -15,7 +15,7 @@ for (const [label, build] of fixtures) {
     test.skip(info.project.name !== 'chrome-desktop', 'measured once, on desktop');
     const file = info.outputPath('large.brickwood.json');
     writeFileSync(file, exportProject(build()));
-    await page.goto('/');
+    await page.goto('/classic.html');
     await page.getByTestId('import-input').setInputFiles(file);
     const t0 = Date.now();
     await page.getByRole('article', { name: 'Large exhibition fixture' }).getByRole('button', { name: 'Open', exact: true }).click();

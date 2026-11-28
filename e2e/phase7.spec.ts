@@ -6,7 +6,7 @@ const PARK = 'Brickwood Adventure Park';
 
 test('back up everything, then restore an older project with a preview', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await expect(page.getByText('No backup yet.')).toBeVisible();
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Back up everything' }).click()]);
   expect(dl.suggestedFilename()).toMatch(/^brickwood-backup-\d{4}-\d{2}-\d{2}\.brickwood-backup\.json$/);
@@ -34,7 +34,7 @@ test('back up everything, then restore an older project with a preview', async (
 
 test('display report and a read-only view to share', async ({ page, isMobile, context }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: PARK, exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
 

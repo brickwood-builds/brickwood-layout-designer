@@ -8,7 +8,7 @@ const at = (page: Page, x: number, y: number) => page.evaluate(([x, y]) => (wind
 
 test('turn a piece a few degrees with the buttons, the keys, or by typing the angle', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: 'Development', exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   await page.getByText('Single pieces', { exact: true }).click();

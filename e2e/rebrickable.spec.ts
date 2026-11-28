@@ -27,7 +27,7 @@ test('enter a Rebrickable key, look a part up, place it; it is still found offli
     return route.fulfill({ json: { count: results.length, results } });
   });
 
-  await page.goto('/');
+  await page.goto('/classic.html');
   await openEditor(page);
   const search = page.getByLabel('Search single pieces');
   await search.fill('zipline');
@@ -65,7 +65,7 @@ test('enter a Rebrickable key, look a part up, place it; it is still found offli
 test('a wrong key is not saved', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop');
   await page.route('https://rebrickable.com/api/v3/**', (route) => route.fulfill({ status: 401, json: { detail: 'Invalid token.' } }));
-  await page.goto('/');
+  await page.goto('/classic.html');
   await openEditor(page);
   await page.getByLabel('Search single pieces').fill('zipline');
   await page.getByRole('button', { name: 'Not here? Look it up online…' }).click();

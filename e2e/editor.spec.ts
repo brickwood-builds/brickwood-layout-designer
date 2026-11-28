@@ -12,7 +12,7 @@ type Hook = {
 };
 
 async function openPark(page: Page) {
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: PARK, exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page.getByTestId('canvas').locator('canvas').first()).toBeVisible();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);

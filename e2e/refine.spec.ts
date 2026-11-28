@@ -16,7 +16,7 @@ const hook = (page: Page) => ({
 });
 
 async function openPark(page: Page) {
-  await page.goto('/');
+  await page.goto('/classic.html');
   await page.getByRole('article', { name: PARK, exact: true }).getByRole('button', { name: 'Open', exact: true }).click();
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   await expect(page.locator('footer.statusbar').getByText('92 modules')).toBeVisible();
@@ -98,7 +98,7 @@ test.describe('refinement (desktop)', () => {
 
 test('works offline after the first visit', async ({ page, context }, info) => {
   test.skip(info.project.name !== 'chrome-desktop', 'desktop');
-  await page.goto('/');
+  await page.goto('/classic.html');
   await expect(page.getByRole('article', { name: PARK, exact: true })).toBeVisible();
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload(); // now controlled by the service worker

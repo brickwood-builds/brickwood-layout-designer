@@ -15,7 +15,9 @@ function offlineServiceWorker(): Plugin {
     generateBundle(_options, bundle) {
       const files = Object.keys(bundle).filter((f) => !f.endsWith('.map'));
       const version = createHash('sha256').update(files.sort().join('|')).digest('hex').slice(0, 12);
-      const assets = JSON.stringify(['./', ...files.map((f) => `./${f}`)]);
+      // The pages themselves (the app and the classic version) are added by name: Vite writes
+      // the HTML files after this list is made.
+      const assets = JSON.stringify(['./', './classic.html', ...files.filter((f) => !f.endsWith('.html')).map((f) => `./${f}`)]);
       this.emitFile({
         type: 'asset',
         fileName: 'sw.js',
@@ -37,8 +39,9 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
     // Each page under its own address (the app, and the trial interface at next.html).
-    const url = new URL(req.url);
-    const key = url.pathname.endsWith('/next.html') ? './next.html' : './';
+    // The app (./) and the classic interface (classic.html), each kept under its own address.
+    const page = new URL(req.url).pathname.split('/').pop() ?? '';
+    const key = page === 'classic.html' || page === 'next.html' ? './' + page : './';
     e.respondWith(
       fetch(req)
         .then((res) => {
@@ -63,10 +66,15 @@ self.addEventListener('fetch', (e) => {
 export default defineConfig({
   base: './',
   plugins: [react(), offlineServiceWorker()],
-  // Two pages: the app (index.html) and a trial of a new interface (next.html), sharing code.
+  // Pages: the app (index.html, the new interface), the classic interface (classic.html), and
+  // next.html, which now just leads to the app (it was the trial's address).
   build: {
     rollupOptions: {
-      input: { main: fileURLToPath(new URL('./index.html', import.meta.url)), next: fileURLToPath(new URL('./next.html', import.meta.url)) },
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        classic: fileURLToPath(new URL('./classic.html', import.meta.url)),
+        next: fileURLToPath(new URL('./next.html', import.meta.url)),
+      },
     },
   },
   test: {

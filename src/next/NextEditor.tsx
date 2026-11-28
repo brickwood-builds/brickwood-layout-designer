@@ -14,7 +14,21 @@ import { startAutosave, type Autosave } from '../editor/autosave';
 import { Canvas } from '../editor/Canvas';
 import { Properties } from '../editor/Panels';
 import { LayersMenu } from '../editor/LayersMenu';
-import { LevelDialog, useFlushWhenHidden, useKeyboard } from '../editor/Editor';
+import { FileStatus, LevelControls, LevelDialog, useFlushWhenHidden, useKeyboard } from '../editor/Editor';
+import { useFileSync } from '../editor/fileSync';
+import type { FileLinks } from '../storage/fileLink';
+import type { Project } from '../domain/schema';
+import { duplicateProject } from '../domain/project';
+import { computeStack } from '../domain/heights';
+import { cloud } from '../cloud/service';
+import { CloudChip } from '../ui/CloudBar';
+import { HeightFilter, HeightShadingToggle, OptionsMenu } from '../editor/OptionsMenu';
+import { PartsListButton } from '../editor/PartsList';
+import { VersionsButton } from '../editor/Versions';
+import { BuildsButton, BuildsDialog } from '../editor/Builds';
+import { PackingButton, PackingDialog } from '../editor/Packing';
+import { ShowsButton, ShowsDialog } from '../editor/Shows';
+import { SetupButton, SetupDialog } from '../editor/Setup';
 import { ERASE_SHAPES } from '../editor/drawTool';
 import {
   copySelection,
@@ -45,8 +59,10 @@ import { NextLibrary } from './NextLibrary';
 import { DrawCard, EraseCard, ShapeCard } from './NextToolCards';
 import { Icon } from './icons';
 
-export function NextEditor({ repo, id, onBack }: { repo: ProjectRepository; id: string; onBack: () => void }) {
-  const [loaded, setLoaded] = useState<{ store: EditorStore; autosave: Autosave } | null>(null);
+type OnSaved = (p: Project) => void;
+
+export function NextEditor({ repo, links, id, box, onBack }: { repo: ProjectRepository; links: FileLinks; id: string; box?: string; onBack: () => void }) {
+  const [loaded, setLoaded] = useState<{ store: EditorStore; autosave: Autosave; registerOnSaved: (fn: OnSaved) => void } | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
     let autosave: Autosave | undefined;
@@ -55,8 +71,13 @@ export function NextEditor({ repo, id, onBack }: { repo: ProjectRepository; id: 
       (p) => {
         if (cancelled) return;
         const store = createEditorStore(p);
-        autosave = startAutosave(store, repo, 600);
-        setLoaded({ store, autosave });
+        // Lets the linked-file sync hear about each save; OneDrive sends it shortly after.
+        let onSaved: OnSaved | undefined;
+        autosave = startAutosave(store, repo, 600, (saved) => {
+          onSaved?.(saved);
+          cloud()?.syncSoon();
+        });
+        setLoaded({ store, autosave, registerOnSaved: (fn) => (onSaved = fn) });
       },
       (e: Error) => setError(e.message),
     );
@@ -65,6 +86,13 @@ export function NextEditor({ repo, id, onBack }: { repo: ProjectRepository; id: 
       if (autosave) autosave.flush().finally(() => autosave!.stop());
     };
   }, [repo, id]);
+  // A box label's QR code: show that box (lookup only — nothing is ticked off).
+  useEffect(() => {
+    if (!loaded || !box) return;
+    const s = loaded.store.getState();
+    const c = s.project.containers.find((x) => x.code.toLowerCase() === box.toLowerCase());
+    s.set({ packingDialog: c ? c.id : 'list' });
+  }, [loaded, box]);
   if (error)
     return (
       <div className="nx nx-home">
@@ -75,12 +103,13 @@ export function NextEditor({ repo, id, onBack }: { repo: ProjectRepository; id: 
       </div>
     );
   if (!loaded) return null;
-  return <Screen store={loaded.store} autosave={loaded.autosave} onBack={onBack} />;
+  return <Screen store={loaded.store} autosave={loaded.autosave} repo={repo} links={links} registerOnSaved={loaded.registerOnSaved} onBack={onBack} />;
 }
 
-function Screen({ store, autosave, onBack }: { store: EditorStore; autosave: Autosave; onBack: () => void }) {
+function Screen({ store, autosave, repo, links, registerOnSaved, onBack }: { store: EditorStore; autosave: Autosave; repo: ProjectRepository; links: FileLinks; registerOnSaved: (fn: OnSaved) => void; onBack: () => void }) {
   useKeyboard(store);
   useFlushWhenHidden(autosave);
+  const file = useFileSync(store, repo, links, autosave, registerOnSaved);
   // On a narrow screen (an iPad upright) the library sits over the layout: it starts closed,
   // and gets out of the way as soon as something is picked from it.
   const narrow = () => window.innerWidth <= 900;
@@ -132,6 +161,9 @@ function Screen({ store, autosave, onBack }: { store: EditorStore; autosave: Aut
     <div className="nx nx-editor">
       <TopBar
         store={store}
+        repo={repo}
+        autosave={autosave}
+        file={file}
         library={library}
         onLibrary={() => setLibrary(!library)}
         onBack={async () => {
@@ -139,6 +171,7 @@ function Screen({ store, autosave, onBack }: { store: EditorStore; autosave: Aut
           onBack();
         }}
       />
+      <Banners store={store} repo={repo} autosave={autosave} file={file} />
       <div className="nx-body">
         {library && <NextLibrary store={store} onClose={() => setLibrary(false)} />}
         <div className="nx-stage" onContextMenu={(e) => openMenu(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect())}>
@@ -148,6 +181,10 @@ function Screen({ store, autosave, onBack }: { store: EditorStore; autosave: Aut
           <Dock store={store} />
           <Hint store={store} />
           <Zoom store={store} />
+          <SetupDialog store={store} />
+          <PackingDialog store={store} />
+          <ShowsDialog store={store} />
+          <BuildsDialog store={store} repo={repo} />
           {toolCard ?? (
             details && selection.length > 0 && <DetailsCard store={store} onClose={() => setDetails(false)} />
           )}
@@ -158,14 +195,36 @@ function Screen({ store, autosave, onBack }: { store: EditorStore; autosave: Aut
 }
 
 /** Slim bar: back, name (click to rename), undo/redo, warnings, view and more. */
-function TopBar({ store, library, onLibrary, onBack }: { store: EditorStore; library: boolean; onLibrary: () => void; onBack: () => void }) {
+function TopBar({
+  store,
+  repo,
+  autosave,
+  file,
+  library,
+  onLibrary,
+  onBack,
+}: {
+  store: EditorStore;
+  repo: ProjectRepository;
+  autosave: Autosave;
+  file: ReturnType<typeof useFileSync>;
+  library: boolean;
+  onLibrary: () => void;
+  onBack: () => void;
+}) {
   const project = useStore(store, (s) => s.project);
   const levelId = useStore(store, (s) => s.levelId);
   const canUndo = useStore(store, (s) => s.past.length > 0);
   const canRedo = useStore(store, (s) => s.future.length > 0);
   const saveState = useStore(store, (s) => s.saveState);
   const [renaming, setRenaming] = useState<string | null>(null);
-  const [menu, setMenu] = useState<'warnings' | 'more' | null>(null);
+  const [menu, setMenu] = useState<'warnings' | 'more' | 'plan' | null>(null);
+  const features = project.features;
+  const maxTop = useMemo(() => (features.heights ? Math.max(0, ...[...computeStack(project, levelId).values()].map((i) => i.top)) : 0), [project, levelId, features.heights]);
+  const go = async (hash: string) => {
+    await autosave.flush();
+    window.location.hash = hash;
+  };
   const [tableDialog, setTableDialog] = useState(false);
   const warnings = useMemo(() => splitWarnings(project, checkLayout(project).filter((w) => w.levelId === levelId)).open, [project, levelId]);
   const s = store.getState();
@@ -196,7 +255,9 @@ function TopBar({ store, library, onLibrary, onBack }: { store: EditorStore; lib
         />
       )}
       <span className={`nx-saved ${saveState}`} title={saveState === 'saved' ? 'All changes saved' : 'Saving…'} aria-label={saveState === 'saved' ? 'Saved' : 'Saving'} />
+      <CloudChip />
       <div className="nx-grow" />
+      {project.levels.length > 1 && <LevelControls store={store} />}
       <button type="button" className={`nx-btn ${library ? 'nx-on' : ''}`} onClick={onLibrary} aria-pressed={library} title="Add plates, buildings, items and pieces">
         <Icon name="plus" /> Add
       </button>
@@ -246,6 +307,29 @@ function TopBar({ store, library, onLibrary, onBack }: { store: EditorStore; lib
       </div>
       <LayersMenu store={store} />
       <div className="nx-pop-wrap">
+        <button type="button" className="nx-btn" aria-expanded={menu === 'plan'} onClick={() => setMenu(menu === 'plan' ? null : 'plan')} title="Parts list, versions, builds, packing, shows, heights — and switching them on">
+          Plan
+        </button>
+        {menu === 'plan' && (
+          <div className="nx-pop nx-plan" role="dialog" aria-label="Plan">
+            <div className="nx-plan-tools">
+              {features.inventory && <PartsListButton store={store} repo={repo} />}
+              {features.versions && <VersionsButton store={store} repo={repo} autosave={autosave} />}
+              {features.builds && <BuildsButton store={store} />}
+              {features.transport && <PackingButton store={store} />}
+              {features.exhibitions && <ShowsButton store={store} />}
+              {features.helpers && <SetupButton store={store} />}
+              {features.heights && <HeightShadingToggle store={store} maxTop={maxTop} />}
+              {features.heights && <HeightFilter store={store} maxTop={maxTop} />}
+            </div>
+            {!(features.inventory || features.versions || features.builds || features.transport || features.exhibitions || features.helpers || features.heights) && (
+              <p className="nx-muted">Planning tools — parts list and shopping, versions, builds, packing, shows, heights — are switched on per layout, so a layout stays simple until you need them.</p>
+            )}
+            <OptionsMenu store={store} label="Choose tools…" />
+          </div>
+        )}
+      </div>
+      <div className="nx-pop-wrap">
         <button type="button" className="nx-icon-btn" aria-expanded={menu === 'more'} onClick={() => setMenu(menu === 'more' ? null : 'more')} title="More" aria-label="More">
           <Icon name="more" />
         </button>
@@ -261,14 +345,110 @@ function TopBar({ store, library, onLibrary, onBack }: { store: EditorStore; lib
             >
               <Icon name="table" /> Table shape and size…
             </button>
-            <button type="button" className="nx-menu-item" onClick={() => window.open(`./#/project/${project.id}`, '_blank')} title="The full app (your real layouts, not this trial copy)">
-              <Icon name="print" /> Open the main app
+            <button type="button" className="nx-menu-item" onClick={() => void go(`#/project/${project.id}/print`)}>
+              <Icon name="print" /> Print, PDF and pictures…
             </button>
+            {features.builds || features.exhibitions || features.inventory ? (
+              <button type="button" className="nx-menu-item" onClick={() => void go(`#/project/${project.id}/report`)}>
+                <Icon name="info" /> Display report…
+              </button>
+            ) : null}
+            <div className="nx-menu-file">
+              <FileStatus file={file} />
+            </div>
+            <a className="nx-menu-item" href={`./classic.html#/project/${project.id}`} onClick={() => void autosave.flush()} title="The same layout in the classic version, for anything not here yet">
+              <Icon name="back" /> Open in the classic version
+            </a>
           </div>
         )}
       </div>
       {tableDialog && <LevelDialog store={store} levelId={levelId} onAddLevel={() => setTableDialog(false)} onClose={() => setTableDialog(false)} onCreated={() => setTableDialog(false)} />}
     </header>
+  );
+}
+
+/** The same warnings as the classic version: changed on another device, in another tab, file trouble, not saved. */
+function Banners({ store, repo, autosave, file }: { store: EditorStore; repo: ProjectRepository; autosave: Autosave; file: ReturnType<typeof useFileSync> }) {
+  const saveState = useStore(store, (s) => s.saveState);
+  const saveError = useStore(store, (s) => s.saveError);
+  const project = useStore(store, (s) => s.project);
+  const [updatedElsewhere, setUpdatedElsewhere] = useState(false);
+  useEffect(() => {
+    const c = cloud();
+    if (!c) return;
+    const offBefore = c.addBeforeSync(() => autosave.flush());
+    const offTaken = c.onTaken((ids) => ids.includes(store.getState().project.id) && setUpdatedElsewhere(true));
+    return () => {
+      offBefore();
+      offTaken();
+    };
+  }, [autosave, store]);
+  return (
+    <>
+      {updatedElsewhere && (
+        <div className="banner" role="alert">
+          <span>This layout was updated from your other device (OneDrive). Your copy from before is kept as a checkpoint.</span>
+          <button type="button" className="primary" onClick={() => window.location.reload()}>
+            Load the update
+          </button>
+        </div>
+      )}
+      {saveState === 'conflict' && (
+        <div className="banner error" role="alert">
+          <span>This layout was changed in another tab or window, so your latest changes here were not saved.</span>
+          <span className="banner-actions">
+            <button
+              type="button"
+              onClick={async () => {
+                const copy = duplicateProject(project, `${project.name} (my changes)`);
+                await repo.createProject(copy);
+                window.location.hash = `#/project/${copy.id}`;
+              }}
+            >
+              Save mine as a copy
+            </button>
+            <button type="button" onClick={() => window.location.reload()}>
+              Reload latest
+            </button>
+          </span>
+        </div>
+      )}
+      {file.state.kind === 'changed' && (
+        <div className="banner error" role="alert">
+          <span>
+            <strong>{file.state.link.fileName}</strong> was changed somewhere else (probably on another computer), so this version wasn’t saved to it. Whichever you don’t pick is kept as a checkpoint.
+          </span>
+          <span className="banner-actions">
+            <button type="button" onClick={() => file.useFileVersion()}>
+              Use the file’s version
+            </button>
+            <button type="button" onClick={() => file.keepThisVersion()}>
+              Keep this version
+            </button>
+          </span>
+        </div>
+      )}
+      {file.state.kind === 'error' && (
+        <div className="banner error" role="alert">
+          <span>
+            Couldn’t save to <strong>{file.state.link.fileName}</strong>: {file.state.message}
+          </span>
+          <span className="banner-actions">
+            <button type="button" onClick={() => file.writeNow()}>
+              Try again
+            </button>
+            <button type="button" onClick={() => file.stop()}>
+              Stop saving to the file
+            </button>
+          </span>
+        </div>
+      )}
+      {saveState === 'error' && (
+        <div className="banner error" role="alert">
+          <span>Could not save: {saveError}. Your next change will try again; export a copy if this keeps happening.</span>
+        </div>
+      )}
+    </>
   );
 }
 

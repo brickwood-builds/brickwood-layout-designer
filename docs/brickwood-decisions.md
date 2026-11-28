@@ -55,3 +55,9 @@ Scaffold Vite+React+TS, Vitest, Playwright, CI; Zod domain model (project, table
 - **BrickLink numbers remain the part IDs shown and stored** (from Rebrickable `external_ids`), so BrickLink/Brickwith sourcing keeps working.
 - Owner to review https://rebrickable.com/terms for data-use terms.
 - **19 Nov 2026 — owner confirmed: placed pieces store the BrickLink number** (`catalogKey: "bl:<no>"`; project format 2). Format-1 projects (`"rb:<no>"`) and parts books keyed by Rebrickable numbers are converted when read. Bundled parts get their BrickLink number from `src/data/bricklink-numbers.json` (Rebrickable/BrickLink differences only; `scripts/update-bricklink-numbers.mjs`, ~25 batched API calls with the owner's key — run after `update-parts-catalog.mjs`). The Rebrickable-format shopping list converts back to Rebrickable numbers.
+
+## New interface becomes the app (28 Nov 2026)
+- Owner tried a cleaner interface (trial at next.html) and preferred it: **it is now the app at the normal address** (index.html → src/next/), working on the same layouts (same browser storage, OneDrive sync, Save to a file, print/report pages, box QR links).
+- The previous interface stays available at **classic.html** (src/App.tsx), same layouts, for anything not yet brought over (backups, import, archive/delete, and redesigned versions of the planning tools). next.html now just leads to the app.
+- Direction for the interface: the layout fills the screen; controls come to the user (library on the left, floating bar at the selection, details card on request, tool dock at the bottom, right-click menu); fewer always-visible buttons. Planning tools (parts list, versions, builds, packing, shows, heights) open from a Plan menu; to be restyled one by one.
+- OneDrive sign-in must happen from the app's normal address (the registered redirect).
