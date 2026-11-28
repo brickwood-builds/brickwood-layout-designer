@@ -113,7 +113,7 @@ function ContainerList({ store, onClose }: { store: EditorStore; onClose: () => 
   return (
     <Modal title="Packing" onClose={onClose} wide>
       <div className="packing">
-        <p className="muted small">Boxes, totes, crates and carrying boards, each with a permanent ID (never reused). Put modules and features in them here, or select them on the plan and use “Put in”.</p>
+        <p className="muted small">Boxes, totes, crates and carrying boards, each with a permanent ID (never reused). Put modules and features in them here, or select them on the plan and choose “Put in a box” — on the right-click menu (long-press on an iPad) or in their details.</p>
         <NewContainerForm store={store} onAdded={open} />
         {activeContainers(project).length > 0 && (
           <table className="print-table packing-table">
@@ -162,7 +162,17 @@ function ContainerList({ store, onClose }: { store: EditorStore; onClose: () => 
               </select>
             )}
           </h3>
-          <p className="small">{left.length ? left.map(itemName).join(', ') : 'Everything is packed.'}</p>
+          {left.length ? (
+            <div className="unpacked-list" title="Click one to see it on the plan">
+              {left.map((i) => (
+                <button key={i.id} type="button" className="unpacked-chip" onClick={() => (onClose(), showItems(store, [i.id]))}>
+                  {itemName(i)}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="small">Everything is packed.</p>
+          )}
         </section>
         <div className="actions">
           <button type="button" disabled={!activeContainers(project).length} onClick={() => printPage(labelsHtml(project, activeContainers(project)))}>

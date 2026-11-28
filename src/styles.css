@@ -428,3 +428,8 @@ td.less { color: #16a34a; }
    ("Saving…" / "Saved 5:49 PM") used to flip it between one and two rows, moving the canvas. */
 .toolbar h1 { flex: 1 1 60px; }
 .save-state { display: inline-block; width: 6.6em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+
+/* Packing: what's not packed yet, as small buttons that show each one on the plan. */
+.unpacked-list { display: flex; flex-wrap: wrap; gap: 4px; max-height: 150px; overflow-y: auto; padding: 2px 0 6px; }
+.unpacked-chip { min-height: 0; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: inherit; font: inherit; font-size: 0.8rem; cursor: pointer; }
+.unpacked-chip:hover { background: var(--info-bg); }

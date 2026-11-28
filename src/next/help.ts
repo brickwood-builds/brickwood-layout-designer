@@ -32,8 +32,8 @@ function from(id: string, title?: string, extra: string[] = []): HelpTopic {
       .replace(/in the bottom bar/g, 'in the Plan menu')
       .replace(/in the details panel/g, 'in Details → All details')
       .replace(/Table…/g, '⋯ → Table shape and size…')
-      .replace(/choose Track as a physical build/g, 'choose Track as a physical build (Details → All details…)')
-      .replace(/choose a container under Put in/g, 'choose a container under Put in (Details → All details…)')
+      .replace(/choose Track as a physical build/g, 'right-click it (long-press on an iPad) and choose Track as a physical build')
+      .replace(/choose a container under Put in/g, 'right-click them (long-press on an iPad), choose Put in a box…, then pick the box')
       .replace(/…\. /g, '… ')
       .replace(/…\.$/g, '…');
   return { id: t.id, title: title ?? t.title, body: [...t.body.map(fix), ...extra] };

@@ -7,7 +7,7 @@ import { HEIGHT_RAMP_CSS } from '../domain/heights';
 import { viewerFileName, viewerHtml } from '../ui/viewer';
 
 /** Advanced areas stay hidden until switched on here (owner rule: the app must feel basic). */
-const OPTIONS: { key: keyof Features; label: string; hint: string }[] = [
+export const OPTIONS: { key: keyof Features; label: string; hint: string }[] = [
   { key: 'heights', label: 'Heights', hint: 'Building heights, automatic stacking, a height filter and shelf clearance warnings' },
   { key: 'versions', label: 'Versions', hint: 'Save named versions of this layout (e.g. 2026 show, 12 ft), compare them, and see which parts changed' },
   { key: 'builds', label: 'Physical builds', hint: 'Give real builds (the castle, a ride) a permanent ID: storage, condition, repairs, photos and build progress' },
@@ -16,6 +16,20 @@ const OPTIONS: { key: keyof Features; label: string; hint: string }[] = [
   { key: 'helpers', label: 'Setup & helpers', hint: 'A setup and teardown plan for each show: tasks from the layout, helpers, timing, a printed guide (switches on Shows too)' },
   { key: 'inventory', label: 'Parts & inventory', hint: 'A parts list for this layout: what it needs, what you have, and a shopping list to download' },
 ];
+
+/** Download a read-only web page of the layout to share. */
+export function shareReadOnlyView(p: Project) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([viewerHtml(p)], { type: 'text/html' }));
+  a.download = viewerFileName(p);
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/** Switch a planning tool on or off (setup plans belong to shows, so Setup switches Shows on). */
+export function setFeature(store: EditorStore, key: keyof Features, on: boolean) {
+  store.getState().commit((p) => ({ ...p, features: { ...p.features, [key]: on, ...(key === 'helpers' && on ? { exhibitions: true } : {}) } }));
+}
 
 /** `label`: what the button says (the classic toolbar shows ⋯). */
 export function OptionsMenu({ store, label = '⋯' }: { store: EditorStore; label?: string }) {
@@ -49,14 +63,7 @@ export function OptionsMenu({ store, label = '⋯' }: { store: EditorStore; labe
             </button>
             <button
               type="button"
-              onClick={() => {
-                const p = store.getState().project;
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(new Blob([viewerHtml(p)], { type: 'text/html' }));
-                a.download = viewerFileName(p);
-                a.click();
-                setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-              }}
+              onClick={() => shareReadOnlyView(store.getState().project)}
               title="A read-only web page of this layout to share: anyone can look, pan, zoom and find modules, but not change anything"
             >
               Share a read-only view…
@@ -67,13 +74,7 @@ export function OptionsMenu({ store, label = '⋯' }: { store: EditorStore; labe
               <input
                 type="checkbox"
                 checked={features[o.key]}
-                onChange={(e) =>
-                  store.getState().commit((p) => ({
-                    ...p,
-                    // Setup plans belong to shows.
-                    features: { ...p.features, [o.key]: e.target.checked, ...(o.key === 'helpers' && e.target.checked ? { exhibitions: true } : {}) },
-                  }))
-                }
+                onChange={(e) => setFeature(store, o.key, e.target.checked)}
               />
               <span>
                 <strong>{o.label}</strong>

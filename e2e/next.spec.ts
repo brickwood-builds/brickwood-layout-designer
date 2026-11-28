@@ -65,7 +65,7 @@ test('Plan menu, print page and the classic link are there', async ({ page, isMo
   await ready(page);
   await page.getByRole('button', { name: 'Plan', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Plan' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'More tools' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Choose tools/ })).toBeVisible();
   await page.getByRole('button', { name: 'Plan', exact: true }).click();
   await page.getByRole('button', { name: 'More', exact: true }).click();
   await expect(page.getByRole('link', { name: /Open in the classic version/ })).toHaveAttribute('href', /classic\.html#\/project\//);
@@ -185,4 +185,38 @@ test('a new small item can be round, and Details can change it', async ({ page, 
   await page.getByRole('button', { name: 'Details' }).click();
   await page.getByLabel('Round', { exact: true }).uncheck();
   await expect.poll(async () => (await fountain())?.round).toBe(false);
+});
+
+test('planning tools: switch on, open from the Plan menu, and the right-click shortcuts', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop');
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open Brickwood Adventure Park' }).click();
+  await ready(page);
+  await page.getByRole('button', { name: 'Plan', exact: true }).click();
+  await page.getByRole('button', { name: /Choose tools/ }).click();
+  const tools = page.getByRole('dialog', { name: 'Planning tools' });
+  for (const t of ['Parts & inventory', 'Physical builds', 'Packing']) await tools.getByRole('switch', { name: t }).check();
+  await tools.getByRole('button', { name: 'Done' }).click();
+
+  // Plan → Parts list: the menu closes and the list stays open.
+  await page.getByRole('button', { name: 'Plan', exact: true }).click();
+  const plan = page.getByRole('dialog', { name: 'Plan' });
+  await expect(plan.getByRole('button', { name: /^Packing.*still to pack/ })).toBeVisible();
+  await plan.getByRole('button', { name: /^Parts list/ }).click();
+  await expect(plan).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Parts list' })).toBeVisible();
+  await page.getByRole('dialog', { name: 'Parts list' }).getByRole('button', { name: /Close/ }).click();
+
+  // Right-click a module: put it in a new tote, then track it as a build.
+  const c05 = (await st(page)).project.modules.find((m) => m.label === 'C-05')!;
+  const q = await at(page, c05.x + 16, c05.y + 16);
+  await page.mouse.click(q.x, q.y, { button: 'right' });
+  await page.getByRole('menuitem', { name: 'Put in a box…' }).click();
+  await page.getByRole('dialog', { name: 'Put in a box' }).getByRole('button', { name: /A new tote/ }).click();
+  await expect(page.getByRole('dialog', { name: /TO-001|Tote/ }).first()).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.mouse.click(q.x, q.y, { button: 'right' });
+  await expect(page.getByRole('menuitem', { name: 'Move to another box…' })).toBeVisible();
+  await page.getByRole('menuitem', { name: 'Track as a physical build' }).click();
+  await expect(page.getByRole('dialog').filter({ hasText: /PB-001/ }).first()).toBeVisible();
 });

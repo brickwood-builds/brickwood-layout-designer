@@ -81,7 +81,7 @@ function MoneyInput({ value, placeholder, label, onSave }: { value: number | nul
   );
 }
 
-function PartsListDialog({ store, repo, onClose }: { store: EditorStore; repo: ProjectRepository; onClose: () => void }) {
+export function PartsListDialog({ store, repo, onClose }: { store: EditorStore; repo: ProjectRepository; onClose: () => void }) {
   const project = useStore(store, (s) => s.project);
   const [inv, setInv] = useState<Inventory | null>(null);
   const [lib, setLib] = useState<PartsLibrary | null>(null);
@@ -173,7 +173,7 @@ function PartsListDialog({ store, repo, onClose }: { store: EditorStore; repo: P
         {!inv ? (
           <p className="muted">Loading…</p>
         ) : rows.length === 0 ? (
-          <p className="muted">No real LEGO parts in this layout yet. Pieces from Single pieces (and Draw) are listed here.</p>
+          <p className="muted">No real LEGO parts in this layout yet. Pieces from the library (and Draw) are listed here.</p>
         ) : (
           <div className="parts-table-wrap">
             <table className="print-table parts-table">

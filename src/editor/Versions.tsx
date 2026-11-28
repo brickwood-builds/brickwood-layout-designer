@@ -40,7 +40,7 @@ export function VersionsButton({ store, repo, autosave }: { store: EditorStore; 
 
 const NOW = 'now';
 
-function VersionsDialog({ store, repo, autosave, onClose }: { store: EditorStore; repo: ProjectRepository; autosave: Autosave; onClose: () => void }) {
+export function VersionsDialog({ store, repo, autosave, onClose }: { store: EditorStore; repo: ProjectRepository; autosave: Autosave; onClose: () => void }) {
   const project = useStore(store, (s) => s.project);
   const [versions, setVersions] = useState<VersionInfo[] | null>(null);
   const [name, setName] = useState('');

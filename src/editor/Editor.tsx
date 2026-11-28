@@ -775,7 +775,7 @@ export function useKeyboard(store: EditorStore) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t?.closest('input, textarea, select') || document.querySelector('dialog[open]')) return;
+      if (t?.closest('input, textarea, select') || document.querySelector('dialog[open], .nx-scrim')) return;
       const s = store.getState();
       const mod = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();

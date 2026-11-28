@@ -1,6 +1,14 @@
 // Simple line icons for the trial interface (24×24, drawn with the text colour).
 const PATHS: Record<string, string> = {
   plus: 'M12 5v14M5 12h14',
+  list: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+  history: 'M3 12a9 9 0 109-9 9 9 0 00-7 3.3M3 4v4h4M12 7v5l3 2',
+  tag: 'M3 12V4h8l10 10-8 8zM7.5 7.5h.01',
+  box: 'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+  people: 'M9 11a3 3 0 100-6 3 3 0 000 6zM3 20a6 6 0 0112 0M16 11a3 3 0 100-6M18 20a6 6 0 00-3-5.2',
+  mountain: 'M3 19l6-10 4 6 3-4 5 8z',
+  chevron: 'M9 6l6 6-6 6',
   minus: 'M5 12h14',
   download: 'M12 4v11m0 0l-4-4m4 4l4-4M5 19h14',
   back: 'M15 18l-6-6 6-6',

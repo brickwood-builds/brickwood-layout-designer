@@ -22,13 +22,16 @@ import { duplicateProject } from '../domain/project';
 import { computeStack } from '../domain/heights';
 import { cloud } from '../cloud/service';
 import { CloudChip } from '../ui/CloudBar';
-import { HeightFilter, HeightShadingToggle, OptionsMenu } from '../editor/OptionsMenu';
-import { PartsListButton } from '../editor/PartsList';
-import { VersionsButton } from '../editor/Versions';
-import { BuildsButton, BuildsDialog } from '../editor/Builds';
-import { PackingButton, PackingDialog } from '../editor/Packing';
-import { ShowsButton, ShowsDialog } from '../editor/Shows';
-import { SetupButton, SetupDialog } from '../editor/Setup';
+import { PartsListDialog } from '../editor/PartsList';
+import { VersionsDialog } from '../editor/Versions';
+import { BuildsDialog } from '../editor/Builds';
+import { PackingDialog } from '../editor/Packing';
+import { ShowsDialog } from '../editor/Shows';
+import { SetupDialog } from '../editor/Setup';
+import { shareReadOnlyView } from '../editor/OptionsMenu';
+import { PlanMenu, PutInSheet, ToolsSheet, packable, type PlanTool } from './NextPlan';
+import { buildOfItem, createBuild, suggestedName } from '../domain/builds';
+import { containerOf } from '../domain/packing';
 import { ERASE_SHAPES } from '../editor/drawTool';
 import {
   copySelection,
@@ -46,7 +49,7 @@ import {
 } from '../editor/actions';
 import { allItems, angleOf, canEditShape, findItem, isModule, resizeModule, updateModule, updateObject, type Item } from '../domain/edits';
 import { footprint, unionRect } from '../domain/geometry';
-import { groupOf, resizeObject } from '../domain/objects';
+import { groupOf, resizeObject, withCarriedItems } from '../domain/objects';
 import { checkLayout } from '../domain/validation';
 import { splitWarnings } from '../domain/objects';
 import { milsKindForSize, moduleDisplayName } from '../domain/schema';
@@ -125,6 +128,7 @@ function Screen({ store, autosave, repo, links, registerOnSaved, onBack }: { sto
     [store],
   );
   const [details, setDetails] = useState(false);
+  const [putIn, setPutIn] = useState(false);
   // Something just put down (placed, pasted, duplicated): its bar shows for a moment, then
   // fades so it doesn't cover the table. Clicking the item again brings it back.
   const [barFaded, setBarFaded] = useState(false);
@@ -233,7 +237,8 @@ function Screen({ store, autosave, repo, links, registerOnSaved, onBack }: { sto
           onPointerCancel={cancelLongPress}
         >
           <Canvas store={store} />
-          {menu && <ContextMenu store={store} at={menu} onClose={() => setMenu(null)} onDetails={() => setDetails(true)} />}
+          {menu && <ContextMenu store={store} at={menu} onClose={() => setMenu(null)} onDetails={() => setDetails(true)} onPutIn={() => setPutIn(true)} />}
+          {putIn && <PutInSheet store={store} onClose={() => setPutIn(false)} />}
           {mode === 'select' && !holding && selection.length > 0 && (
             <SelectionBar store={store} details={details} faded={barFaded && !details} onHover={keepBar} onDetails={() => setDetails(!details)} />
           )}
@@ -292,6 +297,8 @@ function TopBar({
     window.location.hash = hash;
   };
   const [tableDialog, setTableDialog] = useState<'edit' | 'add' | null>(null);
+  const [planTool, setPlanTool] = useState<PlanTool | null>(null);
+  const [choosing, setChoosing] = useState(false);
   const warnings = useMemo(() => splitWarnings(project, checkLayout(project).filter((w) => w.levelId === levelId)).open, [project, levelId]);
   const s = store.getState();
   return (
@@ -376,24 +383,7 @@ function TopBar({
         <button type="button" className="nx-btn" aria-expanded={menu === 'plan'} onClick={() => setMenu(menu === 'plan' ? null : 'plan')} title="Parts list, versions, builds, packing, shows, heights — and switching them on">
           Plan
         </button>
-        {menu === 'plan' && (
-          <div className="nx-pop nx-plan" role="dialog" aria-label="Plan">
-            <div className="nx-plan-tools">
-              {features.inventory && <PartsListButton store={store} repo={repo} />}
-              {features.versions && <VersionsButton store={store} repo={repo} autosave={autosave} />}
-              {features.builds && <BuildsButton store={store} />}
-              {features.transport && <PackingButton store={store} />}
-              {features.exhibitions && <ShowsButton store={store} />}
-              {features.helpers && <SetupButton store={store} />}
-              {features.heights && <HeightShadingToggle store={store} maxTop={maxTop} />}
-              {features.heights && <HeightFilter store={store} maxTop={maxTop} />}
-            </div>
-            {!(features.inventory || features.versions || features.builds || features.transport || features.exhibitions || features.helpers || features.heights) && (
-              <p className="nx-muted">Planning tools — parts list and shopping, versions, builds, packing, shows, heights — are switched on per layout, so a layout stays simple until you need them.</p>
-            )}
-            <OptionsMenu store={store} label="Choose tools…" />
-          </div>
-        )}
+        {menu === 'plan' && <PlanMenu store={store} maxTop={maxTop} onTool={setPlanTool} onChoose={() => setChoosing(true)} onClose={() => setMenu(null)} />}
       </div>
       <HelpButton topics={NEXT_HELP_TOPICS} start={helpStart} className="nx-icon-btn nx-help" label="?" />
       <div className="nx-pop-wrap">
@@ -420,6 +410,29 @@ function TopBar({
                 <Icon name="info" /> Display report…
               </button>
             ) : null}
+            <button
+              type="button"
+              className="nx-menu-item"
+              onClick={() => {
+                shareReadOnlyView(project);
+                setMenu(null);
+              }}
+              title="A web page of this layout anyone can look at, pan, zoom and search, but not change"
+            >
+              <Icon name="download" /> Share a read-only view…
+            </button>
+            <label className="nx-menu-snap">
+              <span>Snap</span>
+              <select
+                aria-label="Snap"
+                value={project.settings.snap}
+                onChange={(e) => s.commit((p) => ({ ...p, settings: { ...p.settings, snap: e.target.value as Project['settings']['snap'] } }))}
+              >
+                <option value="full">To whole studs</option>
+                <option value="half">To half studs</option>
+                <option value="free">Off (anywhere)</option>
+              </select>
+            </label>
             <div className="nx-menu-file">
               <FileStatus file={file} />
             </div>
@@ -429,6 +442,9 @@ function TopBar({
           </div>
         )}
       </div>
+      {choosing && <ToolsSheet store={store} onClose={() => setChoosing(false)} />}
+      {planTool === 'parts' && <PartsListDialog store={store} repo={repo} onClose={() => setPlanTool(null)} />}
+      {planTool === 'versions' && <VersionsDialog store={store} repo={repo} autosave={autosave} onClose={() => setPlanTool(null)} />}
       {tableDialog && (
         <LevelDialog
           key={tableDialog}
@@ -535,7 +551,7 @@ function Banners({ store, repo, autosave, file }: { store: EditorStore; repo: Pr
 }
 
 /** Right-click menu: the usual actions for what's under the pointer, or for the table. */
-function ContextMenu({ store, at, onClose, onDetails }: { store: EditorStore; at: { x: number; y: number; world: { x: number; y: number } }; onClose: () => void; onDetails: () => void }) {
+function ContextMenu({ store, at, onClose, onDetails, onPutIn }: { store: EditorStore; at: { x: number; y: number; world: { x: number; y: number } }; onClose: () => void; onDetails: () => void; onPutIn: () => void }) {
   const project = useStore(store, (s) => s.project);
   const selection = useStore(store, (s) => s.selection);
   const clipboard = useStore(store, (s) => s.clipboard.length);
@@ -575,6 +591,29 @@ function ContextMenu({ store, at, onClose, onDetails }: { store: EditorStore; at
     if (items.length > 1 && !grouped) rows.push(['group', 'Group', 'Ctrl+G', () => groupSelection(store)]);
     if (grouped) rows.push(['group', 'Ungroup', 'Ctrl+Shift+G', () => ungroupSelection(store)]);
     rows.push(['info', 'Details', null, onDetails]);
+    if (project.features.builds) {
+      const build = selection.map((id) => buildOfItem(project, id)).find((b) => !!b);
+      if (build) rows.push(['tag', `Build ${build.code}…`, null, () => store.getState().set({ buildDialog: build.id })]);
+      else
+        rows.push([
+          'tag',
+          'Track as a physical build',
+          null,
+          () => {
+            let buildId = '';
+            store.getState().commit((p) => {
+              const r = createBuild(p, withCarriedItems(p, selection), suggestedName(p, selection));
+              buildId = r?.buildId ?? '';
+              return r?.project ?? p;
+            });
+            if (buildId) store.getState().set({ buildDialog: buildId });
+          },
+        ]);
+    }
+    if (project.features.transport && packable(project, selection).length) {
+      const packed = packable(project, selection).some((i) => containerOf(project, i.id));
+      rows.push(['box', packed ? 'Move to another box…' : 'Put in a box…', null, onPutIn]);
+    }
   }
   if (clipboard) rows.push(['copy', 'Paste here', null, () => pasteAt(store, at.world)]);
   if (!items.length) {

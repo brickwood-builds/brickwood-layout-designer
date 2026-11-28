@@ -55,7 +55,7 @@ function BuildList({ store, onClose }: { store: EditorStore; onClose: () => void
     <Modal title="Physical builds" onClose={onClose} wide>
       <div className="builds">
         <p className="muted small">
-          Each real build has a permanent ID that stays through repairs and rebuilds. To add one, select it on the plan (for example the castle and everything on it) and choose “Track as a physical build”.
+          Each real build has a permanent ID that stays through repairs and rebuilds. To add one, select it on the plan (for example the castle and everything on it) and choose “Track as a physical build” — on the right-click menu (long-press on an iPad) or in its details.
         </p>
         {builds.some((b) => b.status === 'replaced') && (
           <label className="check">
