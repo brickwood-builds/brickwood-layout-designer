@@ -1,6 +1,7 @@
 /* Trial interface (next.html). Uses the app's colour variables, so light and dark both work. */
 .nx { --nx-radius: 10px; --nx-shadow: 0 6px 24px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.08); font-size: 0.95rem; }
-.nx button { min-height: 0; }
+/* The trial's own controls set their own size (the app's buttons are 40px tall for touch). */
+.nx-btn, .nx-icon-btn, .nx-chip, .nx-quick-btn, .nx-menu-item, .nx-link, .nx-title, .nx-zoom-fit, .nx-card, .nx-tile > button { min-height: 0; }
 .nx-muted { color: var(--muted); font-size: 0.85rem; }
 .nx-row { display: flex; gap: 8px; align-items: center; }
 .nx-end { justify-content: flex-end; }
@@ -99,3 +100,30 @@
 @media (max-width: 900px) {
   .nx-library { position: absolute; z-index: 20; top: 52px; bottom: 0; left: 0; box-shadow: var(--nx-shadow); }
 }
+
+/* Tool cards */
+.nx-chips-tight { padding: 0; }
+.nx-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px; }
+.nx-quick-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: inherit; font: inherit; font-size: 0.75rem; cursor: pointer; }
+.nx-swatch { display: block; height: 18px; max-width: 36px; border-radius: 3px; border: 1px solid rgba(0, 0, 0, 0.3); }
+.nx-swatch.round { border-radius: 50%; }
+.nx-points { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; background: var(--bg); }
+.nx-card-panel select, .nx-page .modal select { height: 36px; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: inherit; font: inherit; }
+
+/* The shared dialogs (Table, colours, …) and pop-ups (Layers), in the trial's look */
+.nx-page .modal { border: 0; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25); padding-bottom: 4px; }
+.nx-page .modal::backdrop { background: rgba(0, 0, 0, 0.3); }
+.nx-page .modal-head { padding: 16px 12px 8px 20px; }
+.nx-page .modal-head h2 { font-size: 1.15rem; }
+.nx-page .modal > :not(.modal-head) { margin-left: 20px; margin-right: 20px; }
+.nx-page .modal input:not([type='checkbox']):not([type='radio']), .nx-page .popover input:not([type='checkbox']):not([type='radio']) { height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: inherit; font: inherit; box-sizing: border-box; }
+.nx-page .modal button, .nx-page .popover button { border-radius: 8px; }
+.nx-page .modal button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.nx-page .modal .seg { gap: 6px; }
+.nx-page .modal .seg button { border-radius: 16px; padding: 0 12px; }
+.nx-page .popover { border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--nx-shadow, 0 6px 24px rgba(0, 0, 0, 0.14)); padding: 14px; }
+.nx-page .nx-card-panel .props h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 6px; }
+.nx-page .nx-card-panel .measure-result { font-size: 1.6rem; font-weight: 600; margin: 4px 0; }
+.nx-context { position: absolute; top: 0; min-width: 220px; z-index: 40; }
+.nx-keys { font-size: 0.75rem; color: var(--muted); }
+.nx-folded { width: auto; min-width: 200px; padding: 8px 8px 8px 14px; }

@@ -41,3 +41,36 @@ test('trial interface: add a plate from the library, change it in Details; the a
   await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
   expect((await st(page)).project.modules.find((m) => m.id === plate.id)).toBeUndefined();
 });
+
+test('trial interface: right-click menu, and the Draw card paints with a quick pick', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'desktop');
+  await page.goto('/next.html');
+  await page.getByRole('button', { name: 'Open Brickwood Adventure Park' }).click();
+  await page.waitForFunction(() => (window as unknown as { __brickwoodEditor?: unknown }).__brickwoodEditor);
+  const before = (await st(page)).project.modules.length;
+  const c05 = (await st(page)).project.modules.find((m) => m.label === 'C-05')!;
+  const q = await at(page, c05.x + 16, c05.y + 16);
+  await page.mouse.click(q.x, q.y, { button: 'right' });
+  await expect(page.getByRole('menu', { name: 'Actions' })).toBeVisible();
+  expect((await st(page)).selection).toEqual([c05.id]);
+  await page.getByRole('menuitem', { name: /Duplicate/ }).click();
+  expect((await st(page)).project.modules).toHaveLength(before + 1);
+  await expect(page.getByRole('menu', { name: 'Actions' })).toHaveCount(0);
+
+  // Draw: the card's quick pick, then a stroke on the empty end of the table.
+  await page.getByRole('button', { name: 'Draw pieces, e.g. a walkway (B)' }).click();
+  const card = page.getByRole('complementary', { name: 'Draw' });
+  await card.getByRole('button', { name: 'Plate 1×2', exact: true }).click();
+  await card.getByRole('group', { name: 'Width (studs)' }).getByRole('button', { name: '1', exact: true }).click();
+  // Below the table on the left (clear of the card on the right): pieces may go off the table.
+  const a = await at(page, 60, 150.5);
+  const b = await at(page, 90, 150.5);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 8 });
+  await page.mouse.up();
+  const pieces = await page.evaluate(() => (window as unknown as { __brickwoodEditor: { state(): { project: { objects: { name: string }[] } } } }).__brickwoodEditor.state().project.objects.filter((o) => o.name === 'Plate 1×2').length);
+  expect(pieces).toBeGreaterThan(10);
+  await page.keyboard.press('Escape');
+  await expect(card).toHaveCount(0);
+});

@@ -6,6 +6,9 @@ import { NextApp } from './NextApp';
 import '../styles.css';
 import './next.css';
 
+// Lets the trial's look reach the shared dialogs and pop-ups (they render outside the app root).
+document.body.classList.add('nx-page');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <NextApp />

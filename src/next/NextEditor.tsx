@@ -17,6 +17,9 @@ import { LayersMenu } from '../editor/LayersMenu';
 import { LevelDialog, useFlushWhenHidden, useKeyboard } from '../editor/Editor';
 import { ERASE_SHAPES } from '../editor/drawTool';
 import {
+  copySelection,
+  pasteAt,
+  selectAll,
   deleteSelection,
   duplicateSelection,
   fitToLevel,
@@ -35,8 +38,11 @@ import { splitWarnings } from '../domain/objects';
 import { milsKindForSize, moduleDisplayName } from '../domain/schema';
 import { formatLength } from '../domain/units';
 import { LegoColorPicker } from '../ui/LegoColorPicker';
-import { toScreen } from '../editor/view';
+import { toScreen, toWorld } from '../editor/view';
+import { itemAt } from '../domain/hit';
+import { expandToGroups } from '../domain/objects';
 import { NextLibrary } from './NextLibrary';
+import { DrawCard, EraseCard, ShapeCard } from './NextToolCards';
 import { Icon } from './icons';
 
 export function NextEditor({ repo, id, onBack }: { repo: ProjectRepository; id: string; onBack: () => void }) {
@@ -75,8 +81,32 @@ export function NextEditor({ repo, id, onBack }: { repo: ProjectRepository; id: 
 function Screen({ store, autosave, onBack }: { store: EditorStore; autosave: Autosave; onBack: () => void }) {
   useKeyboard(store);
   useFlushWhenHidden(autosave);
-  const [library, setLibrary] = useState(true);
+  // On a narrow screen (an iPad upright) the library sits over the layout: it starts closed,
+  // and gets out of the way as soon as something is picked from it.
+  const narrow = () => window.innerWidth <= 900;
+  const [library, setLibrary] = useState(() => !narrow());
+  useEffect(
+    () =>
+      store.subscribe((s, prev) => {
+        const shape = (x: typeof s) => x.mode === 'draw' && x.draw.shape === 'outline';
+        if (narrow() && ((s.holding && s.holding !== prev.holding) || (shape(s) && !shape(prev)))) setLibrary(false);
+      }),
+    [store],
+  );
   const [details, setDetails] = useState(false);
+  /** Right-click menu: where on screen (in the layout area) and where on the table. */
+  const [menu, setMenu] = useState<{ x: number; y: number; world: { x: number; y: number } } | null>(null);
+  const openMenu = (cx: number, cy: number, r: DOMRect) => {
+    const s = store.getState();
+    const x = cx - r.left;
+    const y = cy - r.top;
+    const world = toWorld(s.view, x, y);
+    // Right-clicking something picks it (unless it's already part of what's selected).
+    const hit = s.mode === 'select' ? itemAt(s.project, s.levelId, world.x, world.y, undefined, 6 / s.view.scale) : null;
+    if (hit && !s.selection.includes(hit.id)) s.select(expandToGroups(s.project, [hit.id]));
+    if (!hit && s.mode === 'select') s.select([]);
+    setMenu({ x, y, world });
+  };
   const mode = useStore(store, (s) => s.mode);
   const selection = useStore(store, (s) => s.selection);
   // Fit the table into view once the canvas has its size.
@@ -86,8 +116,17 @@ function Screen({ store, autosave, onBack }: { store: EditorStore; autosave: Aut
     // Only when the canvas first gets its size.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewport > 0]);
-  // Draw, Erase and Measure have settings: show them in the card while the tool is on.
-  const toolCard = mode === 'draw' || mode === 'measure';
+  // Draw, Erase, drawing a shape and Measure have settings: a card while the tool is on.
+  const erase = useStore(store, (s) => s.draw.erase);
+  const drawShape = useStore(store, (s) => s.draw.shape);
+  const toolCard =
+    mode === 'measure' ? (
+      <aside className="nx-card-panel nx-tool-card" aria-label="Measure">
+        <Properties store={store} />
+      </aside>
+    ) : mode === 'draw' ? (
+      drawShape === 'outline' ? <ShapeCard store={store} /> : erase ? <EraseCard store={store} /> : <DrawCard store={store} />
+    ) : null;
 
   return (
     <div className="nx nx-editor">
@@ -102,17 +141,14 @@ function Screen({ store, autosave, onBack }: { store: EditorStore; autosave: Aut
       />
       <div className="nx-body">
         {library && <NextLibrary store={store} onClose={() => setLibrary(false)} />}
-        <div className="nx-stage">
+        <div className="nx-stage" onContextMenu={(e) => openMenu(e.clientX, e.clientY, e.currentTarget.getBoundingClientRect())}>
           <Canvas store={store} />
+          {menu && <ContextMenu store={store} at={menu} onClose={() => setMenu(null)} onDetails={() => setDetails(true)} />}
           {mode === 'select' && selection.length > 0 && <SelectionBar store={store} details={details} onDetails={() => setDetails(!details)} />}
           <Dock store={store} />
           <Hint store={store} />
           <Zoom store={store} />
-          {toolCard ? (
-            <aside className="nx-card-panel nx-tool-card" aria-label="Tool settings">
-              <Properties store={store} />
-            </aside>
-          ) : (
+          {toolCard ?? (
             details && selection.length > 0 && <DetailsCard store={store} onClose={() => setDetails(false)} />
           )}
         </div>
@@ -233,6 +269,74 @@ function TopBar({ store, library, onLibrary, onBack }: { store: EditorStore; lib
       </div>
       {tableDialog && <LevelDialog store={store} levelId={levelId} onAddLevel={() => setTableDialog(false)} onClose={() => setTableDialog(false)} onCreated={() => setTableDialog(false)} />}
     </header>
+  );
+}
+
+/** Right-click menu: the usual actions for what's under the pointer, or for the table. */
+function ContextMenu({ store, at, onClose, onDetails }: { store: EditorStore; at: { x: number; y: number; world: { x: number; y: number } }; onClose: () => void; onDetails: () => void }) {
+  const project = useStore(store, (s) => s.project);
+  const selection = useStore(store, (s) => s.selection);
+  const clipboard = useStore(store, (s) => s.clipboard.length);
+  const viewport = useStore(store, (s) => s.viewport);
+  useEffect(() => {
+    const close = (e: Event) => {
+      if (e instanceof KeyboardEvent && e.key !== 'Escape') return;
+      onClose();
+    };
+    // On the next tick, so the right-click that opened it doesn't close it.
+    const t = setTimeout(() => {
+      window.addEventListener('pointerdown', close);
+      window.addEventListener('keydown', close);
+      window.addEventListener('wheel', close, { passive: true });
+    });
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', close);
+      window.removeEventListener('wheel', close);
+    };
+  }, [onClose]);
+  const items = allItems(project).filter((i) => selection.includes(i.id));
+  const one = items.length === 1 ? items[0]! : null;
+  const grouped = selection.some((id) => groupOf(project, id));
+  const run = (f: () => void) => () => {
+    f();
+    onClose();
+  };
+  const rows: [string, string, string | null, () => void][] = [];
+  if (items.length) {
+    rows.push(['rotate', 'Turn a quarter', 'R', () => rotateSelection(store, 1)]);
+    rows.push(['turn', 'Turn 5°', 'Shift+]', () => turnSelection(store, 5)]);
+    rows.push(['copy', 'Duplicate', 'Ctrl+D', () => duplicateSelection(store)]);
+    rows.push(['copy', 'Copy', 'Ctrl+C', () => copySelection(store)]);
+    if (one && canEditShape(one)) rows.push(['shape', 'Edit shape', null, () => store.getState().set({ editingPath: one.id })]);
+    if (items.length > 1 && !grouped) rows.push(['group', 'Group', 'Ctrl+G', () => groupSelection(store)]);
+    if (grouped) rows.push(['group', 'Ungroup', 'Ctrl+Shift+G', () => ungroupSelection(store)]);
+    rows.push(['info', 'Details', null, onDetails]);
+  }
+  if (clipboard) rows.push(['copy', 'Paste here', null, () => pasteAt(store, at.world)]);
+  if (!items.length) {
+    rows.push(['cursor', 'Select all', 'Ctrl+A', () => selectAll(store)]);
+    rows.push(['fit', 'Show the whole table', 'F', () => fitToLevel(store)]);
+  }
+  const height = rows.length * 36 + (items.length ? 46 : 12);
+  const left = Math.min(at.x, viewport.width - 230);
+  const top = Math.min(at.y, viewport.height - height - 8);
+  return (
+    <div className="nx-pop nx-context" style={{ left, top, right: 'auto' }} role="menu" aria-label="Actions" onPointerDown={(e) => e.stopPropagation()}>
+      {rows.map(([icon, label, keys, f]) => (
+        <button key={label} type="button" role="menuitem" className="nx-menu-item" onClick={run(f)}>
+          <Icon name={icon} /> <span className="nx-grow">{label}</span>
+          {keys && <span className="nx-keys">{keys}</span>}
+        </button>
+      ))}
+      {items.length > 0 && (
+        <button type="button" role="menuitem" className="nx-menu-item nx-danger" onClick={run(() => deleteSelection(store))}>
+          <Icon name="trash" /> <span className="nx-grow">Delete</span>
+          <span className="nx-keys">Del</span>
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -381,19 +485,21 @@ function Dock({ store }: { store: EditorStore }) {
 function Hint({ store }: { store: EditorStore }) {
   const mode = useStore(store, (s) => s.mode);
   const erase = useStore(store, (s) => s.draw.erase);
+  const drawShape = useStore(store, (s) => s.draw.shape);
   const holding = useStore(store, (s) => s.holding);
   const editing = useStore(store, (s) => !!s.editingPath && s.selection.includes(s.editingPath));
   let text: ReactNode = null;
   if (holding)
     text = (
       <>
-        <strong>{holding.label}</strong> — {holding.hint ?? 'click where each one goes'}
+        <strong>{holding.label}</strong> — {holding.hint ?? 'click (or tap) where each one goes'}
         <button type="button" className="nx-link" onClick={() => store.getState().set({ holding: null })}>
           Done
         </button>
       </>
     );
   else if (editing) text = 'Drag a corner to move it · drag a + to add one · double-click a corner to remove it · Esc when done';
+  else if (mode === 'draw' && drawShape === 'outline') text = 'Click each corner, all the way round · Finish shape when done · Esc to stop';
   else if (mode === 'draw') text = erase ? 'Drag over pieces and items to remove them · Esc to stop' : 'Drag to paint pieces · Esc to stop';
   else if (mode === 'measure') text = 'Drag between two points · Esc to stop';
   else if (mode === 'pan') text = 'Drag to move the view · Esc to stop';

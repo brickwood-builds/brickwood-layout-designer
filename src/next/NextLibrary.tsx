@@ -117,7 +117,7 @@ export function NextLibrary({ store, onClose }: { store: EditorStore; onClose: (
           ))}
         </div>
       )}
-      <p className="nx-muted nx-lib-tip">Pick one, then click on the table for each — or drag it there.</p>
+      <p className="nx-muted nx-lib-tip">Pick one, then click (or tap) on the table for each — or drag it there.</p>
       <div className="nx-lib-scroll">
         {show('plates') && plates.length > 0 && (
           <Section title="Plates (MILS)">
